@@ -1,5 +1,5 @@
-\name{testranfix.asreml}
-\alias{testranfix.asreml}
+\name{testranfix.asrtests}
+\alias{testranfix.asrtests}
 \title{Tests for a single fixed or random term in model fitted using \code{asreml}}
 \description{Tests for a single term, using a REML LRT for a random term or based 
   on Wald statistics for a fixed term. The term must be in the fitted model. 
@@ -7,7 +7,7 @@
   performed using \code{\link{reml.lrt.asreml}}. It compares the fit of the model in 
   \code{asreml.obj} and the newly fitted model without the \code{term}. 
   If the newly fitted model is retained, any boundary terms are then removed
-  using \code{\link{rmboundary.asreml}}. 
+  using \code{\link{rmboundary.asrtests}}. 
   For a fixed term, the probability of the Wald 
   statistics is extracted from the pseudo-anova table produced by 
   \code{wald.asreml}. If this is available in the \code{\link{asrtests}} object, it is 
@@ -15,12 +15,12 @@
   object. Whether nonsignificant terms are dropped is controlled by \code{drop.ran.ns}  
   for random terms and \code{drop.fix.ns} for fixed terms. A row is 
   added to the \code{test.summary} \code{data.frame} for the term that is tested.}
-\usage{testranfix.asreml(term=NULL, asrtests.obj, alpha = 0.05, 
-                  drop.ran.ns = TRUE, positive.zero = FALSE, 
-                  drop.fix.ns = FALSE, denDF="default", dDF.na = "none", 
-                  dDF.values = NULL, trace = FALSE, update = TRUE,
-                  set.terms = NULL, ignore.suffices = TRUE, 
-                  constraints = "P", initial.values = NA, ...)}
+\usage{testranfix.asrtests(term=NULL, asrtests.obj, alpha = 0.05, 
+                    drop.ran.ns = TRUE, positive.zero = FALSE, 
+                    drop.fix.ns = FALSE, denDF="default", dDF.na = "none", 
+                    dDF.values = NULL, trace = FALSE, update = TRUE,
+                    set.terms = NULL, ignore.suffices = TRUE, 
+                    constraints = "P", initial.values = NA, ...)}
 \arguments{
  \item{term}{a single model term that is valid in \code{asreml}, stored 
              as a \code{character}.}
@@ -133,10 +133,10 @@
 }
 
 \seealso{\code{\link{asremlPlus-package}}, \code{\link{asrtests}}, 
-         \code{\link{choose.model.asreml}}, \code{\link{reml.lrt.asreml}}, 
-         \code{\link{rmboundary.asreml}}, \cr
-         \code{\link{newfit.asreml}}, \code{\link{sig.devn.reparam.asreml}}, 
-         \code{\link{addrm.terms.asreml}}}
+         \code{\link{choose.model.asrtests}}, \code{\link{reml.lrt.asreml}}, 
+         \code{\link{rmboundary.asrtests}}, \cr
+         \code{\link{newfit.asreml}}, \code{\link{sig.devn.reparam.asrtests}}, 
+         \code{\link{addrm.terms.asrtests}}}
 \examples{\dontrun{
 data(Wheat.dat)
 current.asr <- asreml(yield ~ Rep + WithinColPairs + Variety, 
@@ -144,9 +144,9 @@ current.asr <- asreml(yield ~ Rep + WithinColPairs + Variety,
                       rcov = ~ ar1(Row):ar1(Column), 
                       data=Wheat.dat)
 current.asrt <- asrtests(current.asr, NULL, NULL)
-current.asrt <- rmboundary.asreml(current.asrt)
+current.asrt <- rmboundary.asrtests(current.asrt)
 # Test nugget term
-current.asrt <- testranfix.asreml("units", current.asrt, positive=TRUE)
+current.asrt <- testranfix.asrtests("units", current.asrt, positive=TRUE)
 }}
 \keyword{asreml}
 \keyword{htest}

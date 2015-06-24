@@ -16,7 +16,7 @@
              and \code{set.terms} is not set.}
 \usage{newfit.asreml(asreml.obj, fixed., random., sparse., rcov., 
               update = TRUE, keep.order = TRUE, set.terms = NULL, 
-              ignore.suffices = TRUE, constraints = "P", initial.values = NA, ...)}
+               ignore.suffices = TRUE, constraints = "P", initial.values = NA, ...)}
 \arguments{
  \item{asreml.obj}{a valid \code{asreml} object with with 
                    a component named \code{call} (from a previous 

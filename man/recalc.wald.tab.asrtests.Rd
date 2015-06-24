@@ -1,5 +1,5 @@
-\name{recalc.wald.tab.asreml}
-\alias{recalc.wald.tab.asreml}
+\name{recalc.wald.tab.asrtests}
+\alias{recalc.wald.tab.asrtests}
 \title{Recalculates the denDF, F.inc and P values for a table of Wald test statistics obtained 
        using \code{wald.asreml}}
 \description{If some or all denDF are not available, either because they are NA or because 
@@ -7,9 +7,9 @@
   approximate denDF values are to be obtained. This is done through the \code{dDF.na} and 
   \code{dDF.values} arguments. Note that if denDF values are available in the Wald table then 
   only those that are \code{NA} will be replaced.}
-\usage{recalc.wald.tab.asreml(asrtests.obj, recalc.wald = FALSE,
-                              denDF="default", dDF.na = "none", 
-                              dDF.values = NULL, trace = FALSE, ...)}
+\usage{recalc.wald.tab.asrtests(asrtests.obj, recalc.wald = FALSE,
+                         denDF="default", dDF.na = "none", 
+                         dDF.values = NULL, trace = FALSE, ...)}
 \arguments{
  \item{asrtests.obj}{an \code{\link{asrtests}} object for a fitted model that is a list 
                 containing an \code{asreml} object, a \code{wald.tab} 
@@ -52,11 +52,11 @@
                pseudo-anova table for the fixed terms produced by \code{wald.asreml}.
 }
 
-\seealso{\code{\link{asrtests}}, \code{\link{testranfix.asreml}}}
+\seealso{\code{\link{asrtests}}, \code{\link{testranfix.asrtests}}}
 \examples{\dontrun{
-  wald.tab <- recalc.wald.tab.asreml(current.asrt, 
-                                     dDF.na = "supplied", 
-                                     dDF.values = c(NA,rep(c(330,346), c(4,3))))
+  wald.tab <- recalc.wald.tab.asrtests(current.asrt, 
+                                       dDF.na = "supplied", 
+                                       dDF.values = c(NA,rep(c(330,346), c(4,3))))
 }}
 \keyword{asreml}
 \keyword{htest}

@@ -69,9 +69,9 @@
                    data=quote(dat)) ##use quote to stop evaluation of dat here 
    terms <- c("Block:Plot+Block:Plot:csDay.num!us(2).2:1", "R!variance")
    m1.asreml <- setvarianceterms.asreml(m1.call, terms, 
-                                      constraints=c("U","P"), 
-                                      initial=c(NA,3), 
-                                      ignore.suffices=c(FALSE,TRUE))
+                                        constraints=c("U","P"), 
+                                        initial=c(NA,3), 
+                                        ignore.suffices=c(FALSE,TRUE))
    summary(m1.asreml)
 }}
 \keyword{asreml}

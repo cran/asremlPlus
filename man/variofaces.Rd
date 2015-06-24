@@ -16,7 +16,7 @@ Stefanova, Smith & Cullis (2009)}
              such as experiments in different environments. In this case, the two 
              variogram faces are produced for each section.}
 \usage{variofaces.asreml(object, V, nsim=100, seed = NULL, tolerance=1E-10, 
-                         units = "ignore", update = TRUE, trace = FALSE, ...)}
+                  units = "ignore", update = TRUE, trace = FALSE, ...)}
 \arguments{
  \item{object}{An \code{asreml} object from a call to \code{asreml} in which the 
                 \code{data} argument has been set.}
@@ -83,7 +83,7 @@ current.asr <- asreml(yield ~ Rep + WithinColPairs + Variety,
                       rcov = ~ ar1(Row):ar1(Column), 
                       data=Wheat.dat)
 current.asrt <- asrtests(current.asr, NULL, NULL)
-current.asrt <- rmboundary.asreml(current.asrt)
+current.asrt <- rmboundary.asrtests(current.asrt)
 # Form variance matrix based on estimated variance parameters
 s2 <- current.asr$sigma2
 gamma.Row <- current.asr$gammas[1]
@@ -93,8 +93,8 @@ rho.c <- current.asr$gammas[5]
 row.ar1 <- mat.ar1(order=10, rho=rho.r)
 col.ar1 <- mat.ar1(order=15, rho=rho.c)
 V <- gamma.Row * fac.sumop(Wheat.dat$Row) + 
-  gamma.unit * diag(1, nrow=150, ncol=150) + 
-  mat.dirprod(col.ar1, row.ar1)
+     gamma.unit * diag(1, nrow=150, ncol=150) + 
+     mat.dirprod(col.ar1, row.ar1)
 V <- s2*V
 
 #Produce variogram faces plot (Stefanaova et al, 2009)

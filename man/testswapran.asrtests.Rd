@@ -1,5 +1,5 @@
-\name{testswapran.asreml}
-\alias{testswapran.asreml}
+\name{testswapran.asrtests}
+\alias{testswapran.asrtests}
 \title{Tests, using a REMLRT, whether the difference between current random model 
        and one in which oldterms are dropped and newterms are added is significant.}
 \description{Fits a new random model using \code{asreml} by removing \code{oldterms} 
@@ -14,13 +14,13 @@
        \code{asrtest.obj}. A row is added to the \code{test.summary} 
        \code{data.frame} using the supplied \code{label}. If the newly fitted model 
        is retained, any boundary terms are then removed using 
-       \code{\link{rmboundary.asreml}}. }
-\usage{testswapran.asreml(oldterms = NULL, newterms = NULL, asrtests.obj, 
-                   label = "Swap in random model", simpler = FALSE, 
-                   alpha = 0.05, positive.zero = FALSE, denDF="default", 
-                   trace = FALSE, update = TRUE,
-                   set.terms = NULL, ignore.suffices = TRUE, 
-                   constraints = "P", initial.values = NA, ...)}
+       \code{\link{rmboundary.asrtests}}. }
+\usage{testswapran.asrtests(oldterms = NULL, newterms = NULL, asrtests.obj, 
+                     label = "Swap in random model", simpler = FALSE, 
+                     alpha = 0.05, positive.zero = FALSE, denDF="default", 
+                     trace = FALSE, update = TRUE,
+                     set.terms = NULL, ignore.suffices = TRUE, 
+                     constraints = "P", initial.values = NA, ...)}
 \arguments{
  \item{oldterms}{terms, stored as a \code{character}, that are to be removed from the 
                  random model using \code{asreml}.}
@@ -117,14 +117,16 @@
        its name, a p-value set to \code{NA}, and action set to Absent.
 }
 
-\seealso{\code{\link{asrtests}}, \code{\link{choose.model.asreml}}, 
-         \code{\link{reml.lrt.asreml}}, \code{\link{rmboundary.asreml}}, \cr
-         \code{\link{newfit.asreml}}, \code{\link{testrcov.asreml}}, 
-         \code{\link{addrm.terms.asreml}}, \code{\link{sig.devn.reparam.asreml}}}
+\seealso{\code{\link{asrtests}}, \code{\link{choose.model.asrtests}}, 
+         \code{\link{reml.lrt.asreml}}, \code{\link{rmboundary.asrtests}}, \cr
+         \code{\link{newfit.asreml}}, \code{\link{testrcov.asrtests}}, 
+         \code{\link{addrm.terms.asrtests}}, \code{\link{sig.devn.reparam.asrtests}}}
 \examples{\dontrun{
-  current.asrt <- testswapran.asreml(oldterms = "str(~ Cart/xDays, ~us(2):id(184))",
-                                     newterms = "Cart/xDays", current.asrt, pos = FALSE, 
-                                     label = "Intercept/Slope correlation", simpler = TRUE)
+  current.asrt <- testswapran.asrtests(oldterms = "str(~ Cart/xDays, ~us(2):id(184))",
+                                       newterms = "Cart/xDays", 
+                                       current.asrt, pos = FALSE, 
+                                       label = "Intercept/Slope correlation", 
+                                       simpler = TRUE)
   print(current.asrt)
 }}
 \keyword{asreml}

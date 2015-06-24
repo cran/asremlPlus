@@ -6,9 +6,8 @@ quantites related to the simulated data}
              along with its fitted values and residuals. A variance matrix \code{V},
              corresponding to the \code{random} and \code{rcov} models must be 
              supplied. What to save is specified by the \code{which} argument.}
-\usage{\method{simulate}{asreml}(object, nsim=100, seed = NULL, means=NULL, V, 
-                              tolerance = 1E-10, update = TRUE, trace = FALSE, 
-                              which="data", units = "ignore", ...)}
+\usage{\method{simulate}{asreml}(object, nsim=100, seed = NULL, means=NULL, V, tolerance = 1E-10, 
+         update = TRUE, trace = FALSE, which="data", units = "ignore", ...)}
 \arguments{
  \item{object}{An \code{asreml} object from a call to \code{asreml} in which the 
                 \code{data} argument has been set.}
@@ -76,7 +75,7 @@ current.asr <- asreml(yield ~ Rep + WithinColPairs + Variety,
                       rcov = ~ ar1(Row):ar1(Column), 
                       data=Wheat.dat)
 current.asrt <- asrtests(current.asr, NULL, NULL)
-current.asrt <- rmboundary.asreml(current.asrt)
+current.asrt <- rmboundary.asrtests(current.asrt)
 # Form variance matrix based on estimated variance parameters
 s2 <- current.asr$sigma2
 gamma.Row <- current.asr$gammas[1]
@@ -86,12 +85,12 @@ rho.c <- current.asr$gammas[5]
 row.ar1 <- mat.ar1(order=10, rho=rho.r)
 col.ar1 <- mat.ar1(order=15, rho=rho.c)
 V <- gamma.Row * fac.sumop(Wheat.dat$Row) + 
-  gamma.unit * diag(1, nrow=150, ncol=150) + 
-  mat.dirprod(col.ar1, row.ar1)
+     gamma.unit * diag(1, nrow=150, ncol=150) + 
+     mat.dirprod(col.ar1, row.ar1)
 V <- s2*V
 
 #Produce residuals from 100 simulated data sets
-resid <- simulate.asreml(current.asr, V=V, which="residuals")
+resid <- simulate(current.asr, V=V, which="residuals")
 }}
 \keyword{hplot}
 \keyword{dplot}

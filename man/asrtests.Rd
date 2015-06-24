@@ -51,10 +51,10 @@
 \value{An object of S3-class \code{asrtests}.}
 
 
-\seealso{\code{\link{asremlPlus-package}}, \code{\link{testranfix.asreml}}, 
-         \code{\link{choose.model.asreml}}, 
-         \code{\link{rmboundary.asreml}}, \cr
-         \code{\link{sig.devn.reparam.asreml}}}
+\seealso{\code{\link{asremlPlus-package}}, \code{\link{testranfix.asrtests}}, 
+         \code{\link{choose.model.asrtests}}, 
+         \code{\link{rmboundary.asrtests}}, \cr
+         \code{\link{sig.devn.reparam.asrtests}}}
 \examples{\dontrun{
 data(Wheat.dat)
 
@@ -68,7 +68,7 @@ current.asr <- asreml(yield ~ Rep + WithinColPairs + Variety,
 current.asrt <- asrtests(current.asr, NULL, NULL)
 
 # Check for and remove any boundary terms
-current.asrt <- rmboundary.asreml(current.asrt)
+current.asrt <- rmboundary.asrtests(current.asrt)
 }}
 \keyword{asreml}
 \keyword{htest}

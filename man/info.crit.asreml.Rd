@@ -1,10 +1,8 @@
 \name{info.crit.asreml}
 \alias{info.crit.asreml}
-\alias{info.crit}
 \title{Computes AIC and BIC for a model.}
 \description{Computes Akiake and Bayesian (Schwarz) Information Criteria for a model. The function \code{info.crit} is provided for backwards compatibility.}
-\usage{info.crit.asreml(asreml.obj)
-       info.crit(asreml.obj)}
+\usage{info.crit.asreml(asreml.obj)}
 \arguments{
  \item{asreml.obj}{An \code{asreml} object resulting from the fitting of 
                a model using REML.}

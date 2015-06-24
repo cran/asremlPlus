@@ -1,5 +1,5 @@
-\name{testrcov.asreml}
-\alias{testrcov.asreml}
+\name{testrcov.asrtests}
+\alias{testrcov.asrtests}
 \title{Fits a new rcov formula using \code{asreml} and tests whether the change 
        is significant.}
 \description{Fits a new rcov formula using \code{asreml} and tests whether the 
@@ -9,18 +9,18 @@
        However, if \code{simpler = TRUE} the model to be fitted must be simpler 
        than the one whose fit has been stored in \code{asrtests.obj} in that it 
        must have fewer parameters. Any boundary terms are removed using 
-       \code{\link{rmboundary.asreml}}, which may mean that the models are not 
+       \code{\link{rmboundary.asrtests}}, which may mean that the models are not 
        nested. The test is a REML likelihood ratio test that is performed using 
        \code{\link{reml.lrt.asreml}}, which is only valid if the models are nested. 
        It compares the newly fitted model with the fit of the model in 
        \code{asrtest.obj}. A row is added to the \code{test.summary} 
        \code{data.frame} using the supplied \code{label}.}
-\usage{testrcov.asreml(terms=NULL, asrtests.obj, label = "R model", 
-                simpler = FALSE, alpha = 0.05, 
-                positive.zero = FALSE, denDF="default", 
-                update = TRUE, trace = FALSE,
-                set.terms = NULL, ignore.suffices = TRUE, 
-                constraints = "P", initial.values = NA, ...)}
+\usage{testrcov.asrtests(terms=NULL, asrtests.obj, label = "R model", 
+                  simpler = FALSE, alpha = 0.05, 
+                  positive.zero = FALSE, denDF="default", 
+                  update = TRUE, trace = FALSE,
+                  set.terms = NULL, ignore.suffices = TRUE, 
+                  constraints = "P", initial.values = NA, ...)}
 \arguments{
  \item{terms}{a model for the \code{rcov} argument in \code{asreml}, stored 
              as a \code{character}.}
@@ -115,11 +115,11 @@
 
 \seealso{\code{\link{asremlPlus-package}}, \code{\link{asrtests}}, 
 
-         \code{\link{choose.model.asreml}}, 
-         \code{\link{reml.lrt.asreml}}, \code{\link{rmboundary.asreml}}, \cr
-         \code{\link{newfit.asreml}}, \code{\link{testswapran.asreml}}, 
-         \code{\link{addrm.terms.asreml}}, 
-         \code{\link{sig.devn.reparam.asreml}}}
+         \code{\link{choose.model.asrtests}}, 
+         \code{\link{reml.lrt.asreml}}, \code{\link{rmboundary.asrtests}}, \cr
+         \code{\link{newfit.asreml}}, \code{\link{testswapran.asrtests}}, 
+         \code{\link{addrm.terms.asrtests}}, 
+         \code{\link{sig.devn.reparam.asrtests}}}
 \examples{\dontrun{
 data(Wheat.dat)
 current.asr <- asreml(yield ~ Rep + WithinColPairs + Variety, 
@@ -127,10 +127,10 @@ current.asr <- asreml(yield ~ Rep + WithinColPairs + Variety,
                       rcov = ~ ar1(Row):ar1(Column), 
                       data=Wheat.dat)
 current.asrt <- asrtests(current.asr, NULL, NULL)
-current.asrt <- rmboundary.asreml(current.asrt)
+current.asrt <- rmboundary.asrtests(current.asrt)
 # Test Row autocorrelation
-current.asrt <- testrcov.asreml("~ Row:ar1(Column)", current.asrt, 
-                                label="Row autocorrelation", simpler=TRUE)
+current.asrt <- testrcov.asrtests("~ Row:ar1(Column)", current.asrt, 
+                                  label="Row autocorrelation", simpler=TRUE)
 print(current.asrt)
 }}
 \keyword{asreml}

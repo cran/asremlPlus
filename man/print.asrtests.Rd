@@ -23,10 +23,10 @@ current.asr <- asreml(yield ~ Rep + WithinColPairs + Variety,
                       rcov = ~ ar1(Row):ar1(Column), 
                       data=Wheat.dat)
 current.asrt <- asrtests(current.asr, NULL, NULL)
-current.asrt <- rmboundary.asreml(current.asrt)
+current.asrt <- rmboundary.asrtests(current.asrt)
 # Test Row autocorrelation
-current.asrt <- testrcov.asreml("~ Row:ar1(Column)", current.asrt, 
-                                label="Row autocorrelation", simpler=TRUE)
+current.asrt <- testrcov.asrtests("~ Row:ar1(Column)", current.asrt, 
+                                  label="Row autocorrelation", simpler=TRUE)
 print(current.asrt)
 }}
 \keyword{asreml}

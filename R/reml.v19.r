@@ -140,7 +140,7 @@
    invisible()
 }
 
-"recalc.wald.tab.asreml" <- function(asrtests.obj, recalc.wald = FALSE, 
+"recalc.wald.tab.asrtests" <- function(asrtests.obj, recalc.wald = FALSE, 
                                      denDF="default", dDF.na = "none", 
                                      dDF.values = NULL, trace = FALSE, ...)
 { if (is.null(asrtests.obj) | class(asrtests.obj) != "asrtests")
@@ -675,9 +675,9 @@
   }
 }
 
-"rmboundary.asreml" <- function(asrtests.obj, trace = FALSE, update = TRUE, 
-                                set.terms = NULL, ignore.suffices = TRUE, 
-                                constraints = "P", initial.values = NA, ...)
+"rmboundary.asrtests" <- function(asrtests.obj, trace = FALSE, update = TRUE, 
+                                  set.terms = NULL, ignore.suffices = TRUE, 
+                                  constraints = "P", initial.values = NA, ...)
 #Removes any boundary or singular terms from the fit stored in asreml.obj, 
 #one by one from largest to smallest
 { #check input arguments
@@ -810,10 +810,10 @@
   invisible(results)
 }
 
-"addrm.terms.asreml" <- function(terms = NULL, asrtests.obj, add = FALSE, random = FALSE,  
-                             denDF = "default", trace = FALSE, update = TRUE, 
-                             set.terms = NULL, ignore.suffices = TRUE, 
-                             constraints = "P", initial.values = NA, ...)
+"addrm.terms.asrtests" <- function(terms = NULL, asrtests.obj, add = FALSE, random = FALSE,  
+                                   denDF = "default", trace = FALSE, update = TRUE, 
+                                   set.terms = NULL, ignore.suffices = TRUE, 
+                                   constraints = "P", initial.values = NA, ...)
 #Adds or removes a set of terms from either the fixed or random asreml model
 { #check input arguments
   if (is.null(terms))
@@ -891,16 +891,15 @@
   results <- asrtests(asreml.obj = asreml.obj, 
                       wald.tab = wald.tab, 
                       test.summary = test.summary)
-#  results <- rmboundary.asreml(results)
   invisible(results)
 }
 
-"testranfix.asreml" <- function(term=NULL, asrtests.obj, alpha = 0.05, 
-                              drop.ran.ns = TRUE, positive.zero = FALSE, 
-                              drop.fix.ns = FALSE, denDF="default", dDF.na = "none", 
-                              dDF.values = NULL, trace = FALSE, update = TRUE, 
-                              set.terms = NULL, ignore.suffices = TRUE, 
-                              constraints = "P", initial.values = NA, ...)
+"testranfix.asrtests" <- function(term=NULL, asrtests.obj, alpha = 0.05, 
+                                  drop.ran.ns = TRUE, positive.zero = FALSE, 
+                                  drop.fix.ns = FALSE, denDF="default", dDF.na = "none", 
+                                  dDF.values = NULL, trace = FALSE, update = TRUE, 
+                                  set.terms = NULL, ignore.suffices = TRUE, 
+                                  constraints = "P", initial.values = NA, ...)
 #function to test for a single term, using a REMLRT for a random term or based 
 #on Wald statistics for a fixed term. Note that fixed terms are never dropped.
 { #check input arguments
@@ -915,7 +914,7 @@
   term.obj <- as.terms.object(term, asreml.obj)
   if (length(labels(term.obj)) != 1)
    stop("In analysing ",asrtests.obj$asreml.obj$fixed.formula[[2]],
-        ", multiple terms not allowed in testranfix.asreml")
+        ", multiple terms not allowed in testranfix.asrtests")
   #Test whether term is in random model
   ranterms.obj <- as.terms.object(languageEl(asreml.obj$call, which="random"), asreml.obj)
   termno <- findterm(term, labels(ranterms.obj))
@@ -1011,12 +1010,12 @@
           if (!is.data.frame(wald.tab))
             wald.tab <- wald.tab$Wald
           #Check for boundary terms
-          temp.asrt <- rmboundary.asreml(asrtests(asreml.obj, wald.tab, test.summary), 
-                                         trace = trace, update = update, 
-                                         set.terms = set.terms, 
-                                         ignore.suffices = ignore.suffices, 
-                                         constraints = constraints, 
-                                         initial.values = initial.values, ...)
+          temp.asrt <- rmboundary.asrtests(asrtests(asreml.obj, wald.tab, test.summary), 
+                                           trace = trace, update = update, 
+                                           set.terms = set.terms, 
+                                           ignore.suffices = ignore.suffices, 
+                                           constraints = constraints, 
+                                           initial.values = initial.values, ...)
           if (nrow(temp.asrt$test.summary) > nrow(test.summary))
             warning("In analysing ",asreml.obj$fixed.formula[[2]],
                     ", Boundary terms removed")
@@ -1070,12 +1069,12 @@
         if (!is.data.frame(wald.tab))
            wald.tab <- wald.tab$Wald
         #Check for boundary terms
-        temp.asrt <- rmboundary.asreml(asrtests(asreml.obj, wald.tab, test.summary), 
-                                       trace = trace, update = update, 
-                                       set.terms = set.terms, 
-                                       ignore.suffices = ignore.suffices, 
-                                       constraints = constraints, 
-                                       initial.values = initial.values, ...)
+        temp.asrt <- rmboundary.asrtests(asrtests(asreml.obj, wald.tab, test.summary), 
+                                         trace = trace, update = update, 
+                                         set.terms = set.terms, 
+                                         ignore.suffices = ignore.suffices, 
+                                         constraints = constraints, 
+                                         initial.values = initial.values, ...)
         if (nrow(temp.asrt$test.summary) > nrow(test.summary))
           warning("In analysing ",asreml.obj$fixed.formula[[2]],
                   ", Boundary terms removed")
@@ -1096,11 +1095,11 @@
   invisible(results)
 }
 
-"testswapran.asreml" <- function(oldterms = NULL, newterms = NULL, asrtests.obj, 
-                                 label = "Swap in random model", simpler = FALSE, alpha = 0.05, 
-                                 positive.zero = FALSE, denDF="default", trace = FALSE, 
-                                 update = TRUE, set.terms = NULL, ignore.suffices = TRUE, 
-                                 constraints = "P", initial.values = NA, ...)
+"testswapran.asrtests" <- function(oldterms = NULL, newterms = NULL, asrtests.obj,
+                                   label = "Swap in random model", simpler = FALSE, alpha = 0.05, 
+                                   positive.zero = FALSE, denDF="default", trace = FALSE, 
+                                   update = TRUE, set.terms = NULL, ignore.suffices = TRUE, 
+                                   constraints = "P", initial.values = NA, ...)
   #function to test difference between current random model and one in which oldterms are dropped 
   #and newterms are added, using a REMLRT.
 { #check input arguments
@@ -1179,12 +1178,12 @@
       test.summary$action[last.act] <- paste(test.summary$action[last.act], " - Unconverged", sep="")
     }
     #Check for boundary terms
-    temp.asrt <- rmboundary.asreml(asrtests(asreml.obj, wald.tab, test.summary), 
-                                   trace = trace, update = update, 
-                                   set.terms = set.terms, 
-                                   ignore.suffices = ignore.suffices, 
-                                   constraints = constraints, 
-                                   initial.values = initial.values, ...)
+    temp.asrt <- rmboundary.asrtests(asrtests(asreml.obj, wald.tab, test.summary), 
+                                     trace = trace, update = update, 
+                                     set.terms = set.terms, 
+                                     ignore.suffices = ignore.suffices, 
+                                     constraints = constraints, 
+                                     initial.values = initial.values, ...)
     if (nrow(temp.asrt$test.summary) > nrow(test.summary))
       warning("In swapping random terms for ",asreml.obj$fixed.formula[[2]],
               ", Boundary terms removed")
@@ -1202,12 +1201,12 @@
 }
 
 
-"testrcov.asreml" <- function(terms = NULL, asrtests.obj, label = "R model", 
-                              simpler = FALSE, alpha = 0.05, 
-                              positive.zero = FALSE, denDF="default", 
-                              update = TRUE, trace = FALSE, 
-                              set.terms = NULL, ignore.suffices = TRUE, 
-                              constraints = "P", initial.values = NA, ...)
+"testrcov.asrtests" <- function(terms = NULL, asrtests.obj, label = "R model", 
+                                simpler = FALSE, alpha = 0.05, 
+                                positive.zero = FALSE, denDF="default", 
+                                update = TRUE, trace = FALSE, 
+                                set.terms = NULL, ignore.suffices = TRUE, 
+                                constraints = "P", initial.values = NA, ...)
 #Fits new rcov formula and tests whether the change is significant
 { #check input arguments
   if (is.null(terms))
@@ -1282,12 +1281,12 @@
       test.summary$action[last.act] <- paste(test.summary$action[last.act], " - Unconverged", sep="")
     }
     #Check for boundary terms
-    temp.asrt <- rmboundary.asreml(asrtests(asreml.obj, wald.tab, test.summary), 
-                                   trace = trace, update = update, 
-                                   set.terms = set.terms, 
-                                   ignore.suffices = ignore.suffices, 
-                                   constraints = constraints, 
-                                   initial.values = initial.values, ...)
+    temp.asrt <- rmboundary.asrtests(asrtests(asreml.obj, wald.tab, test.summary), 
+                                     trace = trace, update = update, 
+                                     set.terms = set.terms, 
+                                     ignore.suffices = ignore.suffices, 
+                                     constraints = constraints, 
+                                     initial.values = initial.values, ...)
     if (nrow(temp.asrt$test.summary) > nrow(test.summary))
       warning("In analysing ",asreml.obj$fixed.formula[[2]],
               ", boundary terms removed")
@@ -1350,12 +1349,12 @@
   return(x)
 }
 
-"choose.model.asreml" <- function(terms.marginality=NULL, asrtests.obj, alpha = 0.05, 
-                                  drop.ran.ns=TRUE, positive.zero = FALSE, 
-                                  drop.fix.ns=FALSE, denDF = "default",  dDF.na = "none", 
-                                  dDF.values = NULL, trace = FALSE, update = TRUE, 
-                                  set.terms = NULL, ignore.suffices = TRUE, 
-                                  constraints = "P", initial.values = NA, ...)
+"choose.model.asrtests" <- function(terms.marginality=NULL, asrtests.obj, alpha = 0.05, 
+                                    drop.ran.ns=TRUE, positive.zero = FALSE, 
+                                    drop.fix.ns=FALSE, denDF = "default",  dDF.na = "none", 
+                                    dDF.values = NULL, trace = FALSE, update = TRUE, 
+                                    set.terms = NULL, ignore.suffices = TRUE, 
+                                    constraints = "P", initial.values = NA, ...)
 #function to determine the set of significant terms taking into account marginality relations
 #terms.marginality should be a square matrix of ones and zeroes with row and column names 
 #   being the names of the terms. The diagonal elements should be one, indicating 
@@ -1389,16 +1388,16 @@
   while (j > 0)
   { #get p-value for term for column j and, if random, drop if ns and drop.ran.ns=TRUE
     term <- (rownames(terms.marginality))[j]
-    current.asrt <- testranfix.asreml(term, asrtests.obj = current.asrt, 
-                                      alpha=alpha, drop.ran.ns = drop.ran.ns, 
-                                      positive.zero = positive.zero, 
-                                      drop.fix.ns = drop.fix.ns, 
-                                      denDF = denDF, dDF.na = dDF.na, 
-                                      dDF.values = dDF.values, trace = trace, 
-                                      update = update, set.terms = set.terms, 
-                                      ignore.suffices = ignore.suffices, 
-                                      constraints = constraints, 
-                                      initial.values = initial.values, ...)
+    current.asrt <- testranfix.asrtests(term, asrtests.obj = current.asrt, 
+                                        alpha=alpha, drop.ran.ns = drop.ran.ns, 
+                                        positive.zero = positive.zero, 
+                                        drop.fix.ns = drop.fix.ns, 
+                                        denDF = denDF, dDF.na = dDF.na, 
+                                        dDF.values = dDF.values, trace = trace, 
+                                        update = update, set.terms = set.terms, 
+                                        ignore.suffices = ignore.suffices, 
+                                        constraints = constraints, 
+                                        initial.values = initial.values, ...)
     test.summary <- current.asrt$test.summary
     p <- (test.summary[tail(findterm(term, as.character(test.summary$terms)),1), ])$p
     #if significant, add to sig term list and work out which can be tested next
@@ -1432,11 +1431,11 @@
   invisible(list(asrtests.obj = current.asrt, sig.terms = sig.terms))  
 }
 
-"sig.devn.reparam.asreml" <- function(terms = NULL, asrtests.obj, 
-                               trend.num = NULL, devn.fac = NULL, 
-                               denDF = "default", trace = FALSE, update = TRUE, 
-                               set.terms = NULL, ignore.suffices = TRUE, 
-                               constraints = "P", initial.values = NA, ...)
+"sig.devn.reparam.asrtests" <- function(terms = NULL, asrtests.obj, 
+                                        trend.num = NULL, devn.fac = NULL, 
+                                        denDF = "default", trace = FALSE, update = TRUE, 
+                                        set.terms = NULL, ignore.suffices = TRUE, 
+                                        constraints = "P", initial.values = NA, ...)
 #reparamterizes a deviations term to a fixed term
 #It assumes that the deviations term are deviations from trend in trend.num and 
 #  that there is a random deviations term that involves devn.fac
@@ -1457,30 +1456,30 @@
         if (term.types$has.devn.fac && term.types$has.trend.num)
         { #Add time.num term to be sure - will do nothing if already there
           lin.term <- sub(devn.fac,trend.num,term)
-          asrtests.obj <- addrm.terms.asreml(lin.term, asrtests.obj, add = TRUE, 
-                                             random=FALSE, trace = trace, 
-                                             update = update, set.terms = set.terms, 
-                                             ignore.suffices = ignore.suffices, 
-                                             constraints = constraints, 
-                                             initial.values = initial.values, ...)
+          asrtests.obj <- addrm.terms.asrtests(lin.term, asrtests.obj, add = TRUE, 
+                                               random=FALSE, trace = trace, 
+                                               update = update, set.terms = set.terms, 
+                                               ignore.suffices = ignore.suffices, 
+                                               constraints = constraints, 
+                                               initial.values = initial.values, ...)
         }
         #remove spl(time.num) and random deviation
         spl.term <- sub(devn.fac,paste("spl(",trend.num,")", sep=""),term)
         ran.term <- paste(spl.term, term, sep = " + " )
-        asrtests.obj <- addrm.terms.asreml(ran.term, asrtests.obj, add=FALSE, 
-                                           random=TRUE, trace = trace, 
-                                           update = update, set.terms = set.terms, 
-                                           ignore.suffices = ignore.suffices, 
-                                           constraints = constraints, 
-                                           initial.values = initial.values, ...)
+        asrtests.obj <- addrm.terms.asrtests(ran.term, asrtests.obj, add=FALSE, 
+                                             random=TRUE, trace = trace, 
+                                             update = update, set.terms = set.terms, 
+                                             ignore.suffices = ignore.suffices, 
+                                             constraints = constraints, 
+                                             initial.values = initial.values, ...)
         #add devn term to fixed model
-        asrtests.obj <- addrm.terms.asreml(term, asrtests.obj, add=TRUE, 
-                                           random=FALSE, denDF = denDF, 
-                                           trace = trace, update = update, 
-                                           set.terms = set.terms, 
-                                           ignore.suffices = ignore.suffices, 
-                                           constraints = constraints, 
-                                           initial.values = initial.values, ...)
+        asrtests.obj <- addrm.terms.asrtests(term, asrtests.obj, add=TRUE, 
+                                             random=FALSE, denDF = denDF, 
+                                             trace = trace, update = update, 
+                                             set.terms = set.terms, 
+                                             ignore.suffices = ignore.suffices, 
+                                             constraints = constraints, 
+                                             initial.values = initial.values, ...)
       }
     }
   }
@@ -2382,6 +2381,40 @@
     }
   }
   invisible(diff.list)
+}
+
+
+addrm.terms.asreml <- function(...)
+{ .Deprecated(new = "addrm.terms.asrtests", package = "asremlPlus")
+  invisible()
+}
+choose.model.asreml <- function(...)
+{ .Deprecated(new = "addrm.terms.asrtests", package = "asremlPlus")
+  invisible()
+}
+recalc.wald.tab.asreml <- function(...)
+{ .Deprecated(new = "choose.model.asrtests", package = "asremlPlus")
+  invisible()
+}
+rmboundary.asreml <- function( ...)
+{ .Deprecated(new = "rmboundary.asrtests", package = "asremlPlus")
+  invisible()
+}
+sig.devn.reparam.asreml <- function(...)
+{ .Deprecated(new = "sig.devn.reparam..asrtests", package = "asremlPlus")
+  invisible()
+}
+testranfix.asreml <- function(...)
+{ .Deprecated(new = "testranfix.asrtests", package = "asremlPlus")
+  invisible()
+}
+testrcov.asreml <- function(...)
+{ .Deprecated(new = "testrcov.asrtests", package = "asremlPlus")
+  invisible()
+}
+testswapran.asreml <- function(...)
+{ .Deprecated(new = "testswapran.asrtests", package = "asremlPlus")
+  invisible()
 }
 
 #Calls for prediction routines:

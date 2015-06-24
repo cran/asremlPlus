@@ -1,29 +1,33 @@
-\name{addrm.terms.asreml}
-\alias{addrm.terms.asreml}
-\title{Adds or removes the specified set terms from either the fixed or random 
-       model and records the change in a data.frame.}
-\description{The specified terms are simply added or removed from either the 
-       fixed or random model. No hypothesis testing is performed and no check 
-       is made for boundary or singular terms. A row is added to the 
-       \code{test.summary} \code{data.frame} stating whether fixed or random terms 
-       have been added or removed. Convergence in fitting the model is checked 
-       and a note included in the action if there was not. All components of the 
-       \code{\link{asrtests}} object are updated, although \code{wald.tab} is only updated 
-       if it is present in the supplied \code{\link{asrtests}} object.}
-\usage{addrm.terms.asreml(terms = NULL, asrtests.obj, add = FALSE, 
-                   random = FALSE, denDF = "default", trace = FALSE, 
-                   update = TRUE, set.terms = NULL, ignore.suffices = TRUE, 
-                   constraints = "P", initial.values = NA, ...)}
+\name{sig.devn.reparam.asrtests}
+\alias{sig.devn.reparam.asrtests}
+\title{This function reparamterizes each random (deviations) term involving 
+       \code{devn.fac} to a fixed term and ensures that the same term, with 
+       \code{trend.num} replacing \code{devn.fac}, is included if any 
+       other term with \code{trend.num} is included in \code{terms}.}
+\description{This function reparamterizes each random (deviations) term involving
+       \code{devn.fac} to a fixed term and ensures that the same term with 
+       \code{trend.num} replacing \code{devn.fac} is included if any 
+       other term with \code{trend.num} is included in \code{terms}. It also 
+       ansures that any term with \code{spl{trend.num}} replacing 
+       \code{devn.fac} in a term being reparameterized is removed from the model.}
+\usage{sig.devn.reparam.asrtests(terms = NULL, asrtests.obj,
+                          trend.num = NULL, devn.fac = NULL, 
+                          denDF = "default", trace = FALSE, update = TRUE, 
+                          set.terms = NULL, ignore.suffices = TRUE,
+                          constraints = "P", initial.values = NA,...)
+}
 \arguments{
- \item{terms}{a single character string in the form of a formula which, after expansion, 
-               specifies the sum of a set of terms to be added or dropped.}
+ \item{terms}{a character string vector giving the terms that are to be reparameterized.}
  \item{asrtests.obj}{an \code{\link{asrtests}} object for a fitted model that is a list 
                 containing an \code{asreml} object, a \code{wald.tab} 
                 \code{data.frame} with 4 columns, and a \code{data.frame} with 
                 5 columns that records any previous changes and tests in the 
                 fitted model.}
- \item{add}{whether to add or remove terms from the model.}
- \item{random}{whether terms are to added or removed from the fixed or random model.}
+ \item{trend.num}{A character string giving the name of the numeric covariate that 
+              corresponds to \code{devn.fac} and is potentially included in terms 
+              in the fitted model.}
+ \item{devn.fac}{A character string giving the name of the factor that corresponds to 
+              \code{trend.num} and is included in terms in the fitted model.}
  \item{denDF}{Specifies the enthod to use in computing approximate denominator 
               degrees of freedom when \code{wald.asreml} is called. Can be \code{none} 
               to suppress the computations, \code{numeric} for numerical methods,
@@ -32,7 +36,7 @@
               on problem size. The denominator degrees of freedom are calculated 
               according to Kenward and Roger (1997) for fixed terms in the dense 
               part of the model.}
-\item{trace}{if TRUE then partial iteration details are displayed when ASReml-R 
+ \item{trace}{if TRUE then partial iteration details are displayed when ASReml-R 
               functions are invoked; if FALSE then no output is displayed.}
 \item{update}{if \code{TRUE }then \code{update.asreml} is called in removing and 
               adding terms to the model. In doing this the arguments \code{R.param} 
@@ -40,7 +44,7 @@
               in the supplied \code{asrtests.obj} so that the values from the previous 
               model are used as starting values. If \code{FALSE} then calls are made to 
               \code{asreml} in which the only changes from the previous call are 
-              (i) that the \code{random} model is updated and (ii) modifications 
+              (i) that the models are updated and (ii) modifications 
               specified via \code{...} are made.}
  \item{set.terms}{a character vector specifying the terms that are to have 
                   constraints and/or initial values set prior to fitting.}
@@ -70,7 +74,8 @@
                     applied to all the terms in \code{terms}. 
                     If any of the initial.values are equal to NA then they are 
                     left unchanged for those terms.}
-\item{...}{further arguments passed to \code{asreml} and to \code{wald.asreml}.}
+ \item{...}{further arguments passed to \code{asreml} via 
+            \code{\link{addrm.terms.asrtests}}.}
 }
 \value{An \code{\link{asrtests}} object, which is a list containing:
        \enumerate{
@@ -79,27 +84,17 @@
          \item \code{wald.tab}: a 4-column \code{data.frame} containing a 
                pseudo-anova table for the fixed terms produced by \code{wald.asreml};
          \item \code{test.summary}: a \code{data.frame} with columns \code{term}, 
-                \code{DF}, \code{denDF}, \code{p} and \code{action}. A row is added to 
-                it for each term 
+                \code{DF}, \code{denDF}, \code{p} and \code{action}. It contains a row for each term
                 that is dropped, added or tested or a note that several terms have been
-                added or removed. A row contains the name of the term, the 
-                DF, the p-value and the action taken. Possible codes are: 
-                \code{Dropped}, \code{Retained}, \code{Swapped}, \code{Unswapped},   
-                \code{Significant}, \code{Nonsignificant}, \code{Absent}, \code{Added}, 
-                \code{Removed} and \code{Boundary}. If the changed model did not
-                 converge, \code{Unconverged} will be added to the code. 
-                 Note that the logical \code{asreml.obj$converge} also
-                reflects whether there is convergence.}
+                added or removed.}
 }
 
-\seealso{\code{\link{asrtests}}, \code{\link{rmboundary.asreml}}, 
-         \code{\link{testranfix.asreml}}, \code{\link{testrcov.asreml}}, \cr
-         \code{\link{newfit.asreml}}, \code{\link{sig.devn.reparam.asreml}}, 
-         \code{\link{choose.model.asreml}}}
+\seealso{\code{\link{asrtests}}, \code{\link{addrm.terms.asrtests}}, 
+         \code{\link{testranfix.asrtests}}, \code{\link{testrcov.asrtests}},  \cr
+         \code{\link{newfit.asreml}}, \code{\link{choose.model.asrtests}}}
 \examples{\dontrun{
-  terms <- "(Date/(Sources * (Type + Species)))"
-  current.asrt <- addrm.terms.asreml(terms, current.asrt, add = TRUE)
-
-  current.asrt <- addrm.terms.asreml("A + B", current.asrt, denDF = "algebraic")
+  current.asrt <- sig.devn.reparam.asrtests(choose$sig.terms, current.asrt, 
+                                            trend.num = "xDay", devn.fac = "Date", 
+                                            denDF = "algebraic")
 }}
 \keyword{asreml}

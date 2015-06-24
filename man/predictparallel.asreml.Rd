@@ -183,8 +183,8 @@
          \code{\link{predictionplot.asreml}}, \code{\link{pred.present.asreml}}, \code{predict.asreml}}
 \examples{\dontrun{
 current.asr <- asreml(fixed = pH ~ Benches + (Sources * (Type + Species)), 
-                     random = ~ Benches:MainPlots,
-                     keep.order=TRUE, data= Runoff.longi.dat)
+                      random = ~ Benches:MainPlots,
+                      keep.order=TRUE, data= Runoff.longi.dat)
 diffs <- predictparallel.asreml(classify = "Sources:Type", 
                                 asreml.obj = current.asr, 
                                 x.num = "xDay", x.fac = "Date", 

@@ -181,11 +181,11 @@
          \code{as.Date}, \code{Devices}}
 \examples{\dontrun{
   pred.present.asreml(choose$sig.terms, current.asrt$asreml.obj, current.asrt$wald.tab, 
-               x.fac = "Date", x.num = "xDay", 
-               x.pred.values=sort(unique(Runoff.longi.dat$xDay)),
-               x.plot.values=c(0,28,56,84),
-               x.title = "Days since first observation",
-               y.title = "Predicted log(Turbidity)",
-               present = c("Type","Species","Sources"))
+                      x.fac = "Date", x.num = "xDay", 
+                      x.pred.values=sort(unique(Runoff.longi.dat$xDay)),
+                      x.plot.values=c(0,28,56,84),
+                      x.title = "Days since first observation",
+                      y.title = "Predicted log(Turbidity)",
+                      present = c("Type","Species","Sources"))
 }}
 \keyword{asreml}

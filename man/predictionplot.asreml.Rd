@@ -106,10 +106,10 @@ predictions <- predict(current.asr, class="Species:Date:xDay",
                        levels=list(xDay=unique(Runoff.longi.dat$xDay)))$predictions$pvals
 predictions <- predictions[predictions$est.status == "Estimable",]
 predictionplot.asreml(classify="Species:Date:xDay", diffs$predictions, current.asrt$wald.tab, 
-               x.num = "xDay", x.fac = "Date", 
-               x.title = "Days since first observation",
-               y.title = "Predicted log(Turbidity)",
-               present = c("Type","Species","Sources"))
+                      x.num = "xDay", x.fac = "Date", 
+                      x.title = "Days since first observation",
+                      y.title = "Predicted log(Turbidity)",
+                      present = c("Type","Species","Sources"))
 
 
 diffs <- predictparallel.asreml(classify="Species:Date:xDay", 

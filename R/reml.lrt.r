@@ -109,15 +109,26 @@ info.crit.asreml <- function(asreml.obj)
 	data.frame(DF, AIC, BIC, logREML)
 }
 
-reml.lrt <- function(full.asreml.obj, reduced.asreml.obj, 
-                     positive.zero=FALSE)
-{ test <- reml.lrt.asreml(full.asreml.obj = full.asreml.obj, 
-                          reduced.asreml.obj = reduced.asreml.obj, 
-                          positive.zero=positive.zero)
-  return(test)
+#reml.lrt <- function(full.asreml.obj, reduced.asreml.obj, 
+#                     positive.zero=FALSE)
+#{ 
+#  test <- reml.lrt.asreml(full.asreml.obj = full.asreml.obj, 
+#                          reduced.asreml.obj = reduced.asreml.obj, 
+#                          positive.zero=positive.zero)
+#  return(test)
+#}
+
+#info.crit <- function(asreml.obj)
+#{ info <- info.crit.asreml(asreml.obj = asreml.obj)
+#  return(info)
+#}
+
+reml.lrt <- function(...)
+{ .Deprecated(new = "reml.lrt.asreml", package = "asremlPlus")
+  invisible()
 }
 
-info.crit <- function(asreml.obj)
-{ info <- info.crit.asreml(asreml.obj = asreml.obj)
-  return(info)
+info.crit <- function(...)
+{ .Deprecated(new = "info.crit.asreml", package = "asremlPlus")
+  invisible()
 }

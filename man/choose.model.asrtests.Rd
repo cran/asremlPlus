@@ -1,11 +1,11 @@
-\name{choose.model.asreml}
-\alias{choose.model.asreml}
+\name{choose.model.asrtests}
+\alias{choose.model.asrtests}
 \title{Determines the set of significant terms taking into account the hierarchy or marginality relations.}
 \description{Performs a series of hypothesis tests taking into account the 
   marginality of terms. In particular, a term will not be tested if it is 
   marginal to (or nested in) one that is significant. For example, if A:B is significant, then 
   neither A nor B will be tested. For a random term, the term is removed from 
-  the model fit, any boundary terms are removed using \code{\link{rmboundary.asreml}} 
+  the model fit, any boundary terms are removed using \code{\link{rmboundary.asrtests}} 
   and a REML likelihood ratio test is performed using \code{\link{reml.lrt.asreml}}.  
   If it is not significant and \code{drop.ran.ns} is TRUE, the term is permanently removed 
   from the model. Note that if boundary terms are removed, the reduced model may not 
@@ -14,12 +14,12 @@
   significant and \code{drop.fix.ns} is TRUE, the term is permanently removed 
   from the model. A row is added to 
   \code{test.summary} for each term that is tested. }
-\usage{choose.model.asreml(terms.marginality=NULL, asrtests.obj, 
-                    alpha = 0.05, drop.ran.ns=TRUE, positive.zero = FALSE, 
-                    drop.fix.ns=FALSE, denDF = "default",  dDF.na = "none", 
-                    dDF.values = NULL, trace = FALSE, update = TRUE, 
-                    set.terms = NULL, ignore.suffices = TRUE, 
-                    constraints = "P", initial.values = NA, ...)
+\usage{choose.model.asrtests(terms.marginality=NULL, asrtests.obj, 
+                      alpha = 0.05, drop.ran.ns=TRUE, positive.zero = FALSE, 
+                      drop.fix.ns=FALSE, denDF = "default",  dDF.na = "none", 
+                      dDF.values = NULL, trace = FALSE, update = TRUE, 
+                      set.terms = NULL, ignore.suffices = TRUE, 
+                      constraints = "P", initial.values = NA, ...)
 }
 \arguments{
  \item{terms.marginality}{a square matrix of ones and zeros with row and column names 
@@ -106,7 +106,7 @@
                     If any of the initial.values are equal to NA then they are 
                     left unchanged for those terms.}
  \item{...}{further arguments passed to \code{asreml} and \code{wald.asreml} via 
-               \code{\link{testranfix.asreml}}.}
+               \code{\link{testranfix.asrtests}}.}
 }
 \value{A list containing:
        \enumerate{
@@ -119,11 +119,11 @@
                 the significant terms amongst those tested.}
 }
 
-\seealso{\code{\link{asrtests}}, \code{\link{testranfix.asreml}}, 
-         \code{\link{testrcov.asreml}}, \code{\link{reml.lrt.asreml}}, 
-         \code{\link{rmboundary.asreml}}, \cr 
-         \code{\link{newfit.asreml}}, \code{\link{addrm.terms.asreml}}, 
-         \code{\link{sig.devn.reparam.asreml}}}
+\seealso{\code{\link{asrtests}}, \code{\link{testranfix.asrtests}}, 
+         \code{\link{testrcov.asrtests}}, \code{\link{reml.lrt.asreml}}, 
+         \code{\link{rmboundary.asrtests}}, \cr 
+         \code{\link{newfit.asreml}}, \code{\link{addrm.terms.asrtests}}, 
+         \code{\link{sig.devn.reparam.asrtests}}}
 \examples{
 terms.treat <- c("Sources", "Type", "Species", 
                  "Sources:Type", "Sources:Species")
@@ -135,7 +135,7 @@ marginality <-  matrix(c(1,0,0,0,0,0, 1,1,0,0,0,0,  1,0,1,0,0,0,
                          1,0,1,1,0,0, 1,1,1,1,1,0, 1,1,1,1,1,1), nrow=6)
 rownames(marginality) <-terms
 colnames(marginality) <-terms
-\dontrun{choose <- choose.model.asreml(marginality, current.asrt, 
+\dontrun{choose <- choose.model.asrtests(marginality, current.asrt, 
                                        pos=TRUE)
          current.asrt <- choose$asrtests.obj
 }}

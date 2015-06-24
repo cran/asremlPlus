@@ -1,6 +1,5 @@
 \name{reml.lrt.asreml}
 \alias{reml.lrt.asreml}
-\alias{reml.lrt}
 \title{Performs REML likelihood ratio test.}
 \description{Extracts the REML log likelhood and number of variance 
   parameters from two \code{asreml} objects. It assumes that the second 
@@ -16,9 +15,7 @@
   or sparse models.
   
   The function \code{reml.lrt} is provided for backwards compatibility.}
-\usage{reml.lrt.asreml(full.asreml.obj, reduced.asreml.obj, positive.zero=FALSE)
-
-reml.lrt(full.asreml.obj, reduced.asreml.obj, positive.zero=FALSE)}
+\usage{reml.lrt.asreml(full.asreml.obj, reduced.asreml.obj, positive.zero=FALSE)}
 \arguments{
  \item{full.asreml.obj}{\code{asreml} object for the full model.}
  \item{reduced.asreml.obj}{\code{asreml} object for the reduced model.}
@@ -46,7 +43,7 @@ reml.lrt(full.asreml.obj, reduced.asreml.obj, positive.zero=FALSE)}
             Nonstandard Conditions. \emph{Journal of the American 
             Statistical Association}, \bold{82}, 605-10.}
 
-\seealso{\code{\link{info.crit.asreml}}, \code{\link{testranfix.asreml}}}
+\seealso{\code{\link{info.crit.asreml}}, \code{\link{testranfix.asrtests}}}
 \examples{\dontrun{
     reml.lrt.asreml(ICV.max, ICV.red, positive.zero=TRUE)
 }}

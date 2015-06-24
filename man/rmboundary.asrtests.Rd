@@ -1,5 +1,5 @@
-\name{rmboundary.asreml}
-\alias{rmboundary.asreml}
+\name{rmboundary.asrtests}
+\alias{rmboundary.asrtests}
 \title{Removes any boundary or singular variance components from the fit stored in 
        \code{asreml.obj} and records their removal in a data.frame.}
 \description{Any terms specified in the random model that are 
@@ -24,9 +24,9 @@
   This process continues until there are no further boundary or singular 
   variance components that are removable. Other types of boundary or singular terms, 
   which cannot be removed, are reported in warning messages.}
-\usage{rmboundary.asreml(asrtests.obj, trace = FALSE, update = TRUE,
-                           set.terms = NULL, ignore.suffices = TRUE, 
-                           constraints = "P", initial.values = NA, ...)}
+\usage{rmboundary.asrtests(asrtests.obj, trace = FALSE, update = TRUE,
+                    set.terms = NULL, ignore.suffices = TRUE, 
+                    constraints = "P", initial.values = NA, ...)}
 \arguments{
  \item{asrtests.obj}{an \code{\link{asrtests}} object for a fitted model that is a list 
                 containing an \code{asreml} object, a \code{wald.tab} 
@@ -86,12 +86,12 @@
                 the action.}
 }
 
-\seealso{\code{\link{asrtests}}, \code{\link{addrm.terms.asreml}}, 
-         \code{\link{testranfix.asreml}}, \code{\link{testrcov.asreml}},  \cr
-         \code{\link{newfit.asreml}}, \code{\link{sig.devn.reparam.asreml}}, 
-         \code{\link{choose.model.asreml}}}
+\seealso{\code{\link{asrtests}}, \code{\link{addrm.terms.asrtests}}, 
+         \code{\link{testranfix.asrtests}}, \code{\link{testrcov.asrtests}},  \cr
+         \code{\link{newfit.asreml}}, \code{\link{sig.devn.reparam.asrtests}}, 
+         \code{\link{choose.model.asrtests}}}
 \examples{\dontrun{
-current.asrt <- rmboundary.asreml(current.asrt)
+current.asrt <- rmboundary.asrtests(current.asrt)
 }}
 \keyword{asreml}
 \keyword{htest}
