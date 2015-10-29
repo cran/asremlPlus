@@ -15,8 +15,10 @@ Stefanova, Smith & Cullis (2009)}
              term involving the \code{at} function that defines sections of the data, 
              such as experiments in different environments. In this case, the two 
              variogram faces are produced for each section.}
-\usage{variofaces.asreml(object, V, nsim=100, seed = NULL, tolerance=1E-10, 
-                  units = "ignore", update = TRUE, trace = FALSE, ...)}
+\usage{
+variofaces.asreml(object, V, nsim=100, seed = NULL, tolerance=1E-10, 
+                  units = "ignore", update = TRUE, trace = FALSE, 
+                  graphics.device=NULL, ...)}
 \arguments{
  \item{object}{An \code{asreml} object from a call to \code{asreml} in which the 
                 \code{data} argument has been set.}
@@ -43,6 +45,11 @@ Stefanova, Smith & Cullis (2009)}
               any of the models.}
  \item{trace}{if TRUE then partial iteration details are displayed when ASReml-R 
               functions are invoked; if FALSE then no output is displayed.}
+ \item{graphics.device}{A \code{character} specifying a graphics device for plotting. 
+              The default is \code{graphics.device = NULL}, which will result 
+              in plots being produced on the current graphics device. Setting it to 
+              \code{"windows"}, for example,  will result in a windows graphics 
+              device being  opened.}
  \item{\dots}{Other arguments that are passed down to the function \code{asreml}. Changes 
               to the models are not allowed. Other changes are dangerous and generally 
               should be avoided.}

@@ -33,7 +33,8 @@
 
 
 "variofaces.asreml" <- function(object, V, nsim=100, seed = NULL, tolerance = 1E-10, 
-                                units = "ignore", update = TRUE, trace = FALSE, ...)
+                                units = "ignore", update = TRUE, trace = FALSE, 
+                                graphics.device=NULL, ...)
 #function to do the face variogram plots, including envelopes, described by 
 #Stefanova et al (2010)
 #object is an asreml object from a call to asreml in which the data argument 
@@ -242,6 +243,9 @@
   }
 
   #Do plots
+  if (!is.null(graphics.device) )
+    do.call(graphics.device, list(record = FALSE))
+ 
   p <- ggplot(data=face.1) +
        theme_bw() +
        geom_line(aes_string(x= fac1, y = "observed"), size=1) +

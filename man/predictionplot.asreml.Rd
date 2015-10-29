@@ -13,7 +13,7 @@
 \usage{predictionplot.asreml(classify, y, data, 
                       x.num = NULL, x.fac = NULL, nonx.fac.order = NULL,  
                       colour.scheme = "colour", panels = "multiple", 
-                      graphics.device = "windows",
+                      graphics.device = "NULL",
                       error.intervals = "Confidence",  titles = NULL, 
                       y.title = NULL, filestem = NULL, ...)
 }
@@ -70,10 +70,11 @@
               panel or multiple panels in a single window are produced. The 
               \code{panels} argument is ignored for bar charts.}
  \item{graphics.device}{A \code{character} specifying a graphics device for plotting. 
-              The default is \code{"windows"}, which will result in a windows graphics 
-              device being  opened. Setting \code{graphics.device = NULL} will result 
-              in plots being produced on the current graphics device.}
-\item{error.intervals}{A character string indicating the type of error interval, if any, 
+              The default is \code{graphics.device = NULL}, which will result 
+              in plots being produced on the current graphics device. Setting it to 
+              \code{"windows"}, for example,  will result in a windows graphics 
+              device being  opened.}
+ \item{error.intervals}{A character string indicating the type of error interval, if any, 
              to calculate and plot in order to indicate uncertainty in the results. 
              Possible values are \code{"none"}, \code{"StandardError"}, \code{"Confidence"} 
              and \code{"halfLeastSignificant"}. Here, any option other than \code{"none"} 

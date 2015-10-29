@@ -9,6 +9,7 @@ export(addrm.terms.asreml,
        info.crit.asreml,
        info.crit,
        newfit.asreml,
+       newrcov.asrtests,
        num.recode,
        permute.square,
        permute.to.zero.lowertri,
@@ -38,7 +39,12 @@ export(addrm.terms.asreml,
        testswapran.asrtests,
        variofaces.asreml)
 import(dae, ggplot2)
-importFrom(stats, simulate)
+importFrom("stats", "as.formula", "fitted.values", "formula", "pchisq",
+                    "pf", "predict", "pt", "qt", "quantile", "resid", "rnorm",
+                    "simulate", "terms", "terms.formula", "update.formula")
+importFrom("grDevices", "savePlot")
+importFrom("methods", "languageEl", "languageEl<-")
+importFrom("utils", "data", "tail")
 S3method(print, asrtests)
 S3method(print, alldiffs)
 S3method(simulate, asreml)

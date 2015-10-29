@@ -10,8 +10,10 @@
        and a note included in the action if there was not. All components of the 
        \code{\link{asrtests}} object are updated, although \code{wald.tab} is only updated 
        if it is present in the supplied \code{\link{asrtests}} object.}
-\usage{addrm.terms.asrtests(terms = NULL, asrtests.obj, add = FALSE, 
-                     random = FALSE, denDF = "default", trace = FALSE, 
+\usage{
+addrm.terms.asrtests(terms = NULL, asrtests.obj, add = FALSE, 
+                     random = FALSE, label = NULL,
+                     denDF = "default", trace = FALSE, 
                      update = TRUE, set.terms = NULL, ignore.suffices = TRUE, 
                      constraints = "P", initial.values = NA, ...)}
 \arguments{
@@ -24,6 +26,10 @@
                 fitted model.}
  \item{add}{whether to add or remove terms from the model.}
  \item{random}{whether terms are to added or removed from the fixed or random model.}
+ \item{label}{a character string to use as the label in \code{test.summary} and 
+              which indicates what is being tested. If \code{label} is \code{NULL}, 
+              either \code{Fixed terms} or \code{Random terms} is used, depending on 
+              whether \code{random} is \code{TRUE} or \code{FALSE}.}
  \item{denDF}{Specifies the enthod to use in computing approximate denominator 
               degrees of freedom when \code{wald.asreml} is called. Can be \code{none} 
               to suppress the computations, \code{numeric} for numerical methods,

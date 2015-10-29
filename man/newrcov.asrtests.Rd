@@ -1,27 +1,16 @@
-\name{testrcov.asrtests}
-\alias{testrcov.asrtests}
-\title{Fits a new rcov formula using \code{asreml} and tests whether the change 
-       is significant.}
-\description{Fits a new rcov formula using \code{asreml} and tests whether the 
-       change is significant. If \code{simpler = FALSE} the model to be fitted 
-       must be more complex than the one whose fit has been stored in 
-       \code{asrtests.obj}. That is, the new model must have more parameters. 
-       However, if \code{simpler = TRUE} the model to be fitted must be simpler 
-       than the one whose fit has been stored in \code{asrtests.obj} in that it 
-       must have fewer parameters. Any boundary terms are removed using 
-       \code{\link{rmboundary.asrtests}}, which may mean that the models are not 
-       nested. The test is a REML likelihood ratio test that is performed using 
-       \code{\link{reml.lrt.asreml}}, which is only valid if the models are nested. 
-       It compares the newly fitted model with the fit of the model in 
-       \code{asrtest.obj}. A row is added to the \code{test.summary} 
-       \code{data.frame} using the supplied \code{label}.}
+\name{newrcov.asrtests}
+\alias{newrcov.asrtests}
+\title{Fits a new rcov formula using \code{asreml}.}
+\description{Fits a new rcov formula using \code{asreml}. Any boundary terms resulting 
+       after fitting the new \code{rcov} model are removed using  
+       \code{\link{rmboundary.asrtests}}. A row is added to the \code{test.summary} 
+       \code{data.frame} using the supplied \code{label} and the \code{action} 
+       \code{Set}.}
 \usage{
-testrcov.asrtests(terms=NULL, asrtests.obj, label = "R model", 
-                  simpler = FALSE, alpha = 0.05, 
-                  positive.zero = FALSE, denDF="default", 
-                  update = TRUE, trace = FALSE,
-                  set.terms = NULL, ignore.suffices = TRUE, 
-                  constraints = "P", initial.values = NA, ...)}
+newrcov.asrtests(terms=NULL, asrtests.obj, label = "R model", 
+                 update = TRUE, trace = FALSE, denDF="default", 
+                 set.terms = NULL, ignore.suffices = TRUE, 
+                 constraints = "P", initial.values = NA, ...)}
 \arguments{
  \item{terms}{a model for the \code{rcov} argument in \code{asreml}, stored 
              as a \code{character}.}
@@ -32,23 +21,6 @@ testrcov.asrtests(terms=NULL, asrtests.obj, label = "R model",
                 fitted model.}
  \item{label}{a character string to use as the label in \code{test.summary} and 
               which indicates what is being tested.}
- \item{simpler}{a logical indicating whether the new model to be fitted is 
-                simpler than the already fitted model whose fit is stored in 
-                \code{asrtests.obj}.}
- \item{alpha}{the significance level for the test.}
- \item{positive.zero}{a logical indicating whether the hypothesized values for the 
-                      varaince components being tested are on the boundary 
-                      of the parameter space. For example, this is be true 
-                      for positively-constrained variance components that, 
-                      under the reduced model, are zero.}
- \item{denDF}{Specifies the method to use in computing approximate denominator 
-              degrees of freedom when \code{wald.asreml} is called. Can be \code{none} 
-              to suppress the computations, \code{numeric} for numerical methods,
-              \code{algebraic} for algebraic methods or \code{default}, the default, 
-              to autommatically choose numeric or algebraic computations depending 
-              on problem size. The denominator degrees of freedom are calculated 
-              according to Kenward and Roger (1997) for fixed terms in the dense 
-              part of the model.}
  \item{update}{if \code{TRUE }then \code{update.asreml} is called to fit the model with 
               the \code{rcov} model supplied in \code{terms}. In doing this the arguments 
               \code{R.param} and \code{G.param} are set to those in the \code{asreml} 
@@ -59,6 +31,14 @@ testrcov.asrtests(terms=NULL, asrtests.obj, label = "R model",
               (ii) modifications specified via \code{...} are made.}
  \item{trace}{if TRUE then partial iteration details are displayed when ASReml-R 
               functions are invoked; if FALSE then no output is displayed.}
+ \item{denDF}{Specifies the method to use in computing approximate denominator 
+              degrees of freedom when \code{wald.asreml} is called. Can be \code{none} 
+              to suppress the computations, \code{numeric} for numerical methods,
+              \code{algebraic} for algebraic methods or \code{default}, the default, 
+              to autommatically choose numeric or algebraic computations depending 
+              on problem size. The denominator degrees of freedom are calculated 
+              according to Kenward and Roger (1997) for fixed terms in the dense 
+              part of the model.}
  \item{set.terms}{a character vector specifying the terms that are to have 
                   constraints and/or initial values set prior to fitting.}
  \item{ignore.suffices}{a logical vector specifying whether the suffices of the 
@@ -114,7 +94,7 @@ testrcov.asrtests(terms=NULL, asrtests.obj, label = "R model",
        its name, a p-value set to \code{NA}, and action set to Absent.
 }
 
-\seealso{\code{\link{asremlPlus-package}}, \code{\link{asrtests}}, \code{\link{newrcov.asrtests}}, 
+\seealso{\code{\link{asremlPlus-package}}, \code{\link{asrtests}}, \code{\link{testrcov.asrtests}}, 
 
          \code{\link{choose.model.asrtests}}, 
          \code{\link{reml.lrt.asreml}}, \code{\link{rmboundary.asrtests}}, \cr
@@ -129,9 +109,9 @@ current.asr <- asreml(yield ~ Rep + WithinColPairs + Variety,
                       data=Wheat.dat)
 current.asrt <- asrtests(current.asr, NULL, NULL)
 current.asrt <- rmboundary.asrtests(current.asrt)
-# Test Row autocorrelation
-current.asrt <- testrcov.asrtests("~ Row:ar1(Column)", current.asrt, 
-                                  label="Row autocorrelation", simpler=TRUE)
+# Fit Row autocorrelation
+current.asrt <- newrcov.asrtests("~ Row:ar1(Column)", current.asrt, 
+                                 label="Row autocorrelation")
 print(current.asrt)
 }}
 \keyword{asreml}

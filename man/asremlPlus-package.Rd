@@ -16,16 +16,11 @@
   local installation/updating.
 }
 \details{
-\tabular{ll}{
-Package: \tab asremlPlus\cr
-Version: \tab 2.0-0\cr
-Date: \tab 2015-06-24\cr
-Depends: \tab R (>= 2.10.0), dae, ggplot2\cr
-Enhances: \tab asreml\cr
-License: \tab GPL (>=2)\cr
-Lazyload: \tab yes\cr
-URL: \tab http://chris.brien.name\cr
-}
+
+The DESCRIPTION file:
+
+\packageDESCRIPTION{asremlPlus}
+
 
 Index:
 \preformatted{
@@ -55,6 +50,7 @@ addrm.terms.asrtests      Adds or removes the specified set terms from either
 newfit.asreml             Refits an asreml model with modified model formula 
                           using either a call to 'update.asreml' or a direct 
                           call to 'asreml'.
+newrcov.asrtests          Fits a new rcov formula using asreml.
 rmboundary.asrtests       Removes any boundary or singular variance components 
                           from the fit stored in 'asreml.obj' and records their 
                           removal in a data.frame.
@@ -129,7 +125,11 @@ The functions whose names end in 'asrtests', which are most of the model functio
   (ii) the table of test statistics for the fixed effects in \code{wald.tab}, and 
   (iii) a data frame that contains a history of the changes made to the model in \code{test.summary}. 
 }
-\author{Chris Brien <Chris.Brien@unisa.edu.au>.}
+\author{
+\packageAuthor{asremlPlus}
+
+Maintainer: \packageMaintainer{asremlPlus}
+}
 \references{Butler, D. G., et al. (2010). \emph{Analysis of Mixed Models 
             for {S} language environments: {ASReml-R} reference manual.}  
             Brisbane, DPI Publications.

@@ -811,7 +811,7 @@
 }
 
 "addrm.terms.asrtests" <- function(terms = NULL, asrtests.obj, add = FALSE, random = FALSE,  
-                                   denDF = "default", trace = FALSE, update = TRUE, 
+                                   label = NULL, denDF = "default", trace = FALSE, update = TRUE, 
                                    set.terms = NULL, ignore.suffices = TRUE, 
                                    constraints = "P", initial.values = NA, ...)
 #Adds or removes a set of terms from either the fixed or random asreml model
@@ -848,10 +848,12 @@
                                 ignore.suffices = ignore.suffices, 
                                 constraints = constraints, 
                                 initial.values = initial.values, ...)
-    term.text <- "Fixed terms"
+    if (is.null(label))
+      label <- "Fixed terms"
   }
   else
-  { term.text <- "Random terms"
+  { if (is.null(label))
+    label <- "Random terms"
     if (is.null(asreml.obj$G.param))
     { if (add)
       { term.form <- as.formula(paste("~ ", terms, sep=""))
@@ -885,7 +887,7 @@
   if (!asreml.obj$converge)
     action <- paste(action, " - Unconverged", sep="")
   test.summary <- rbind(test.summary, 
-                        data.frame(terms = term.text, DF = NA, denDF = NA, 
+                        data.frame(terms = label, DF = NA, denDF = NA, 
                                    p = NA, action = action, 
                                    stringsAsFactors = FALSE))
   results <- asrtests(asreml.obj = asreml.obj, 
@@ -1200,6 +1202,68 @@
   invisible(results)
 }
 
+
+"newrcov.asrtests" <- function(terms = NULL, asrtests.obj, label = "R model", 
+                               update = TRUE, trace = FALSE, denDF="default", 
+                               set.terms = NULL, ignore.suffices = TRUE, 
+                               constraints = "P", initial.values = NA, ...)
+  #Fits new rcov formula and tests whether the change is significant
+{ #check input arguments
+  if (is.null(terms))
+    stop("In analysing ",asrtests.obj$asreml.obj$fixed.formula[[2]],
+         ", must supply terms to be tested")
+  else
+    if (!is.character(terms))
+      stop("In analysing ",asrtests.obj$asreml.obj$fixed.formula[[2]],
+           ", must supply terms as character")
+  if (class(asrtests.obj) != "asrtests")
+    stop("In analysing ",asrtests.obj$asreml.obj$fixed.formula[[2]],
+         ", must supply an asrtests object")
+  #initialize
+  asreml.obj <- asrtests.obj$asreml.obj
+  wald.tab <- asrtests.obj$wald.tab
+  test.summary <- asrtests.obj$test.summary
+  term.form <- as.formula(paste("~ ", terms, sep=""))
+  #Update the R model
+  asreml.obj <- newfit.asreml(asreml.obj, rcov. = term.form, 
+                              trace = trace, update = update, 
+                              set.terms = set.terms, 
+                              ignore.suffices = ignore.suffices, 
+                              constraints = constraints, 
+                              initial.values = initial.values, ...)
+  test.summary <- rbind(test.summary, 
+                        data.frame(terms = label, DF=NA, denDF = NA, 
+                                   p = NA, action = "Set", 
+                                   stringsAsFactors = FALSE))
+  #Update results
+  #check convergence
+  if (!asreml.obj$converge)
+  { last.act <- length(test.summary$action)
+    test.summary$action[last.act] <- paste(test.summary$action[last.act], " - Unconverged", sep="")
+  }
+  #Check for boundary terms
+  temp.asrt <- rmboundary.asrtests(asrtests(asreml.obj, wald.tab, test.summary), 
+                                   trace = trace, update = update, 
+                                   set.terms = set.terms, 
+                                   ignore.suffices = ignore.suffices, 
+                                   constraints = constraints, 
+                                   initial.values = initial.values, ...)
+  if (nrow(temp.asrt$test.summary) > nrow(test.summary))
+    warning("In analysing ",asreml.obj$fixed.formula[[2]],
+            ", boundary terms removed")
+  asreml.obj <- temp.asrt$asreml.obj
+  test.summary <- temp.asrt$test.summary
+  #Update wald.tab
+  wald.tab <- asreml::wald.asreml(asreml.obj, denDF = denDF, trace = trace, ...)
+  if (!is.data.frame(wald.tab))
+    wald.tab <- wald.tab$Wald
+  
+    
+  results <- asrtests(asreml.obj = asreml.obj, 
+                      wald.tab = wald.tab, 
+                      test.summary = test.summary)
+  invisible(results)
+}
 
 "testrcov.asrtests" <- function(terms = NULL, asrtests.obj, label = "R model", 
                                 simpler = FALSE, alpha = 0.05, 
@@ -1721,7 +1785,7 @@
 
 "predictionplot.asreml" <- function(classify, y, data, x.num = NULL, x.fac = NULL, 
                                     nonx.fac.order = NULL, colour.scheme = "colour", 
-                                    panels = "multiple", graphics.device = "windows",
+                                    panels = "multiple", graphics.device = "NULL",
                                     error.intervals = "Confidence", 
                                     titles = NULL, y.title = NULL, 
                                     filestem = NULL, ...)
@@ -2248,7 +2312,7 @@
                                   x.num = NULL, x.fac = NULL, nonx.fac.order = NULL, 
                                   x.pred.values = NULL, x.plot.values = NULL, 
                                   plots = "predictions", panels = "multiple", 
-                                  graphics.device = "windows", 
+                                  graphics.device = "NULL", 
                                   error.intervals = "Confidence", 
                                   avsed.tolerance = 0.25, titles = NULL, 
                                   colour.scheme = "colour", save.plots = FALSE, 
