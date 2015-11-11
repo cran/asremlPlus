@@ -21,7 +21,7 @@
                     x.num = NULL, x.fac = NULL, nonx.fac.order = NULL,  
                     x.pred.values = NULL, x.plot.values = NULL, 
                     plots = "predictions", panels = "multiple", 
-                    graphics.device = "NULL", 
+                    graphics.device = NULL, 
                     error.intervals = "Confidence", avsed.tolerance = 0.25, 
                     titles = NULL, colour.scheme = "colour", save.plots = FALSE, 
                     transform.power = 1, offset = 0, scale = 1, 

@@ -13,7 +13,7 @@
 \usage{predictionplot.asreml(classify, y, data, 
                       x.num = NULL, x.fac = NULL, nonx.fac.order = NULL,  
                       colour.scheme = "colour", panels = "multiple", 
-                      graphics.device = "NULL",
+                      graphics.device = NULL,
                       error.intervals = "Confidence",  titles = NULL, 
                       y.title = NULL, filestem = NULL, ...)
 }

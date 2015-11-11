@@ -1,5 +1,10 @@
 \name{news}
 \title{News for Package asremlPlus}
+\section{Changes in asremlPlus Version 2.0-3 (2015-11-11)}{
+  \itemize{
+    \item{Modifications to predictionplot.asreml and pred.present.asreml as a result of changes made to ggplot2 version 1.0.1.}
+ }
+}
 \section{Changes in asremlPlus Version 2.0-2 (2015-09-22)}{
   \itemize{
     \item{Added label argument to addrm.terms.asrtests.}
