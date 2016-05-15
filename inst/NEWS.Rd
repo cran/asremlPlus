@@ -1,5 +1,36 @@
 \name{news}
 \title{News for Package asremlPlus}
+\section{Changes in asremlPlus Version 2.0-9 (2016-05-15)}{
+  \itemize{
+    \item{Revised some documentation.}
+ }
+}
+\section{Changes in asremlPlus Version 2.0-8 (2016-04-18)}{
+  \itemize{
+    \item{Fixed a minor bug in rmboundary.asrtests.}
+ }
+}
+\section{Changes in asremlPlus Version 2.0-7 (2016-04-06)}{
+  \itemize{
+    \item{Fixed some minor bugs in testswapran.asrtests.}
+ }
+}
+\section{Changes in asremlPlus Version 2.0-6 (2016-02-16)}{
+  \itemize{
+    \item{Fixed some minor bugs.}
+ }
+}
+\section{Changes in asremlPlus Version 2.0-5 (2016-01-24)}{
+  \itemize{
+    \item{Added WaterRunoff.dat data set and modified examples based on this data set so that the examples would run.}
+    \item{Fixed some minor bugs.}
+ }
+}
+\section{Changes in asremlPlus Version 2.0-4 (2015-11-12)}{
+  \itemize{
+    \item{Added means argument to variofaces.asreml.}
+ }
+}
 \section{Changes in asremlPlus Version 2.0-3 (2015-11-11)}{
   \itemize{
     \item{Modifications to predictionplot.asreml and pred.present.asreml as a result of changes made to ggplot2 version 1.0.1.}
@@ -13,7 +44,7 @@
 }
 \section{Changes in asremlPlus Version 2.0-1 (2015-09-14)}{
   \itemize{
-    \item{Added graphics device argument to variofaces.asreml and changed default for this argument 
+    \item{Added graphics.device argument to variofaces.asreml and changed default for this argument 
           to \code{NULL} in pred.present.asreml and predictionplot.asreml.}
  }
 }

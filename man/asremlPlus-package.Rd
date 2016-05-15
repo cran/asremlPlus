@@ -1,124 +1,148 @@
+\newcommand{\packageVer}{\Sexpr[results=rd,stage=build]{utils::packageDescription("#1", fields="Version")}}
+\newcommand{\packageDate}{\Sexpr[results=rd,stage=build]{utils::packageDescription("#1", fields="Date")}}
 \name{asremlPlus-package}
 \alias{asremlPlus-package}
 \alias{asremlPlus}
 \docType{package}
-\title{Augments the use of asreml-R in fitting mixed models}
-\description{Assists in automating the testing of terms in mixed models when 'asreml' is used 
-  to fit the models. The content falls into the following natural groupings: (i) Data, (ii) Object 
-  manipulation functions, (iii) Model modification functions, (iv) Model testing functions, 
-  (v) Model diagnostics functions, (vi) Prediction production and presentation functions, 
-  (vii) Response transformation functions, and (viii) Miscellaneous functions. A history of the 
-  fitting of a sequence of models is kept in a data frame. Procedures are available for choosing 
-  models that conform to the hierarchy or marginality principle and for displaying predictions 
-  for significant terms in tables and graphs. The package 'asreml' provides a computationally 
-  efficient algorithm for fitting mixed models using Residual Maximum Likelihood. It can be 
-  purchased from 'VSNi' (http://www.vsni.co.uk/) as 'asreml-R', who will supply a zip file for 
-  local installation/updating.
+\title{
+\packageTitle{asremlPlus}
 }
-\details{
+\description{\packageDescription{asremlPlus}
 
-The DESCRIPTION file:
+\bold{Version:} {\packageVer{asremlPlus}}
 
-\packageDESCRIPTION{asremlPlus}
+\bold{Date:} \packageDate{asremlPlus}
+}
 
+\section{Index}{
+\tabular{ll}{
+(i) Data \cr\cr
 
-Index:
-\preformatted{
-(i) Data
+\code{\link{Wheat.dat}} 
+      \tab  Data for an experiment to investigate 25 varieties of \cr
+      \tab  wheat. \cr
+\code{\link{WaterRunoff.dat}}
+      \tab Data for an experiment to investigate the quality of \cr
+      \tab water runoff over time\cr
+\cr
+(ii) Object manipulation \cr\cr
 
-Wheat.dat                 Data for an experiment to investigate 25 varieties of 
-                          wheat.
+\code{\link{alldiffs}}
+      \tab Forms an object of S3-class 'alldiffs' that stores the \cr
+      \tab predictions for a model fitted using asreml, along \cr
+      \tab with statistics for all pairwise differences.\cr
+\code{\link{asrtests}} 
+      \tab Forms an object of S3-class 'asrtests' that stores a \cr
+      \tab fitted asreml object, a pseudo-anova table for the \cr
+      \tab fixed and a history of changes and hypthesis testing \cr
+      \tab used in obtaining the model. \cr
+\code{\link{print.alldiffs}}
+      \tab Prints the values in an 'alldiffs' object in a nice format. \cr
+                          
+\code{\link{print.asrtests}}
+      \tab Prints the values in an 'asrtests' object. \cr
+\cr
+(iii) Model modification \cr\cr
 
-(ii) Object manipulation
+\code{\link{addrm.terms.asrtests}}
+      \tab  Adds or removes the specified set terms from either \cr
+      \tab  the fixed or random model and records the change in a \cr
+      \tab  data.frame.\cr
+\code{\link{newfit.asreml}} 
+      \tab  Refits an asreml model with modified model formula \cr
+      \tab  using either a call to 'update.asreml' or a direct \cr
+      \tab  call to 'asreml'. \cr
+\code{\link{newrcov.asrtests}}  
+      \tab  Fits a new rcov formula using asreml. \cr
+\code{\link{rmboundary.asrtests}} 
+       \tab Removes any boundary or singular variance components \cr
+       \tab from the fit stored in 'asreml.obj' and records their \cr
+       \tab removal in a data.frame. \cr
+\code{\link{setvarianceterms.asreml}} 
+       \tab Allows the seting of constraints and initial values \cr
+       \tab for terms in the 'random' and 'rcov' arguments of an \cr
+       \tab 'asreml' call. \cr
+\code{\link{sig.devn.reparam.asrtests}}
+       \tab This function reparamterizes each random (deviations) \cr
+       \tab term involving 'devn.fac' to a fixed term and ensures \cr
+       \tab that the same term, with 'trend.num' replacing \cr
+       \tab 'devn.fac', is included if any other term with \cr
+       \tab 'trend.num' is included in 'terms'. \cr
+\cr
+(iv) Model testing \cr\cr
 
-alldiffs                  Forms an object of S3-class 'alldiffs' that stores the 
-                          predictions for a model fitted using asreml, along 
-                          with statistics for all pairwise differences.
-asrtests                  Forms an object of S3-class 'asrtests' that stores a 
-                          fitted asreml object, a pseudo-anova table for the 
-                          fixed and a history of changes and hypthesis testing 
-                          used in obtaining the model.
-print.alldiffs            Prints the values in an 'alldiffs' object in a nice 
-                          format.
-print.asrtests            Prints the values in an 'asrtests' object 
+\code{\link{choose.model.asrtests}}
+       \tab Determines the set of significant terms taking into \cr
+       \tab account hierarchy or marginality relations. \cr
+\code{\link{info.crit.asreml}}
+       \tab        Computes AIC and BIC for a model. \cr
+\code{\link{recalc.wald.tab.asrtests}}
+       \tab Recalculates the denDF, F.inc and P values for a table \cr
+       \tab of Wald test statistics obtained using 'wald.asreml'. \cr
+\code{\link{reml.lrt.asreml}} 
+       \tab Performs REML likelihood ratio test. \cr
+\code{\link{testranfix.asrtests}}
+       \tab Tests for a single fixed or random term in model \cr
+       \tab fitted using 'asreml'. \cr
+\code{\link{testrcov.asrtests}}
+       \tab Fits a new rcov formula using 'asreml' and tests \cr
+       \tab whether the change is significant. \cr
+\code{\link{testswapran.asrtests}}
+       \tab Tests, using a REMLRT, whether the difference between \cr
+       \tab current random model and one in which oldterms are \cr
+       \tab dropped and newterms are added is significant. \cr
+\cr
+(v) Model diagnostics \cr\cr
 
-(iii) Model modification
+\code{\link{variofaces.asreml}}
+       \tab Plot empirical variogram faces, including envelopes, \cr
+       \tab as described by Stefanova, Smith & Cullis (2009). \cr
+\cr
+(vi) Prediction production and presentation \cr\cr
 
-addrm.terms.asrtests      Adds or removes the specified set terms from either 
-                          the fixed or random model and records the change in a 
-                          data.frame.
-newfit.asreml             Refits an asreml model with modified model formula 
-                          using either a call to 'update.asreml' or a direct 
-                          call to 'asreml'.
-newrcov.asrtests          Fits a new rcov formula using asreml.
-rmboundary.asrtests       Removes any boundary or singular variance components 
-                          from the fit stored in 'asreml.obj' and records their 
-                          removal in a data.frame.
-setvarianceterms.asreml   Allows the seting of constraints and initial values 
-                          for terms in the 'random' and 'rcov' arguments of an 
-                          'asreml' call.
-sig.devn.reparam.asrtests This function reparamterizes each random (deviations) 
-                          term involving 'devn.fac' to a fixed term and ensures 
-                          that the same term, with 'trend.num' replacing 
-                          'devn.fac', is included if any other term with 
-                          'trend.num' is included in 'terms'.
+\code{\link{pred.present.asreml}}
+       \tab This function forms the predictions for each \cr
+       \tab significant term and presents them in tables and/or \cr
+       \tab graphs. \cr
+\code{\link{predictiondiffs.asreml}}
+       \tab Forms all pairwise differences between a set of \cr
+       \tab predictions, their standard errors and p-values for a \cr
+       \tab test of whether the differences are significantly \cr
+       \tab different from zero. \cr
+\code{\link{predictionplot.asreml}}
+       \tab This function plots the predictions for a term, \cr
+       \tab possibly with error bars. \cr
+\code{\link{predictparallel.asreml}}
+       \tab This function forms the predictions and associated \cr
+       \tab statistics for a term, taking into account that a \cr
+       \tab numeric vector and a factor having parallel values may \cr
+       \tab occur in the model. It stores the results in an object \cr
+       \tab of class 'alldifffs' and prints the results. It can be \cr
+       \tab used when there are not parallel values. \cr
+\cr
+(vii) Response transformation \cr\cr
 
-(iv) Model testing
+\code{\link{angular}}
+       \tab Applies the angular transformation to proportions. \cr
+\code{\link{angular.mod}}
+       \tab Applies the modified angular transformation to a \cr
+       \tab vector of counts. \cr
+\code{\link{power.transform}}
+       \tab Perform linear and power transformations on a variable \cr
+       \tab whose name is given as a character string in \cr
+       \tab 'var.name'. The transformed variable is stored in the \cr
+       \tab 'data.frame data'. \cr
+\cr
+(viii) Miscellaneous \cr\cr
 
-choose.model.asrtests     Determines the set of significant terms taking into 
-                          account hierarchy or marginality relations.
-info.crit.asreml          Computes AIC and BIC for a model.
-recalc.wald.tab.asrtests  Recalculates the denDF, F.inc and P values for a table 
-                          of Wald test statistics obtained using 'wald.asreml'.
-reml.lrt.asreml           Performs REML likelihood ratio test.
-testranfix.asrtests       Tests for a single fixed or random term in model 
-                          fitted using 'asreml'.
-testrcov.asrtests         Fits a new rcov formula using 'asreml' and tests 
-                          whether the change is significant.
-testswapran.asrtests      Tests, using a REMLRT, whether the difference between 
-                          current random model and one in which oldterms are 
-                          dropped and newterms are added is significant.
-
-(v) Model diagnostics
-
-variofaces.asreml         Plot empirical variogram faces, including envelopes, 
-                          as described by Stefanova, Smith & Cullis (2009)
-
-(vi) Prediction production and presentation
-
-pred.present.asreml       This function forms the predictions for each 
-                          significant term and presents them in tables and/or 
-                          graphs.
-predictiondiffs.asreml    Forms all pairwise differences between a set of 
-                          predictions, their standard errors and p-values for a 
-                          test of whether the differences are significantly 
-                          different from zero.
-predictionplot.asreml     This function plots the predictions for a term, 
-                          possibly with error bars.
-predictparallel.asreml    This function forms the predictions and associated 
-                          statistics for a term, taking into account that a 
-                          numeric vector and a factor having parallel values may 
-                          occur in the model. It stores the results in an object 
-                          of class 'alldifffs' and prints the results. It can be 
-                          used when there are not parallel values.
-
-(vii) Response transformation
-
-angular                   Applies the angular transformation to proportions.
-angular.mod               Applies the modified angular transformation to a 
-                          vector of counts.
-power.transform           Perform linear and power transformations on a variable 
-                          whose name is given as a character string in 
-                          'var.name'. The transformed variable is stored in the 
-                          'data.frame data'.
-
-(viii) Miscellaneous
-
-num.recode                Recodes the unique values of a vector using the values 
-                          in a new vector.
-permute.square            Permutes the rows and columns of a square matrix.
-permute.to.zero.lowertri  Permutes a square matrix until all the lower 
-                          triangular elements are zero.
+\code{\link{num.recode}}
+       \tab Recodes the unique values of a vector using the values  \cr
+       \tab in a new vector. \cr
+\code{\link{permute.square}}  
+       \tab          Permutes the rows and columns of a square matrix. \cr
+\code{\link{permute.to.zero.lowertri}}
+       \tab Permutes a square matrix until all the lower \cr
+       \tab triangular elements are zero. \cr
 }
 The functions whose names end in 'asrtests', which are most of the model functions, utilize an \code{asrtests} object that stores:  
   (i) the currently fitted model in \code{asreml.obj}, 

@@ -791,7 +791,7 @@
   if (no.unremoveable > 0)
     warning("\nIn analysing ",asreml.obj$fixed.formula[[2]],
             ", cannot remove the following boundary/singular term(s): ", 
-            terms.unremoveable, "\n\n")
+            paste(terms.unremoveable, collapse = "; "), "\n\n")
   #Check for variance terms that have been fixed and issue warning
   vcomp <- summary(asreml.obj)$varcomp
   if (length(vcomp$constraint[vcomp$constraint == "Fixed"]) != 0)
@@ -801,7 +801,7 @@
   }
   #check for change in log likelihood and if changed issue warning
   change <- abs(reml -asreml.obj$loglik)/reml*100
-  if (change > 1)
+  if (!is.na(change) & change > 1)
     warning(paste("Removing boundary terms has changed the log likelihood by "),
             change,"%")
   results <- asrtests(asreml.obj = asreml.obj, 
@@ -1137,7 +1137,7 @@
       p <- NA
     else
       p <- test$p
-    if (!is.na(p) & p <= alpha)
+    if (is.na(p) | p <= alpha)
       test.summary <- rbind(test.summary, 
                             data.frame(terms = label, DF=test$DF, denDF = NA, 
                                        p = p, action = "Unswapped", 
@@ -1644,7 +1644,7 @@
      term <- classify
 #  if (int.opt != "none" & int.opt != "StandardError")
   { if (is.null(wald.tab))
-      stop("wald tab needs to be set so that denDF values are available")
+      stop("wald.tab needs to be set so that denDF values are available")
     i <- findterm(term, rownames(wald.tab))
     if (i == 0)
     { warning("For ",asreml.obj$fixed.formula[[2]],
@@ -1797,35 +1797,37 @@
   panel.opt <- panel.options[check.arg.values(panels, panel.options)]
   int.options <- c("none", "Confidence", "StandardError", "halfLeastSignificant")
   int.opt <- int.options[check.arg.values(error.intervals, int.options)]
-  intervals <- FALSE
+  intervals <- !(int.opt == "none")
   #work out columns for intervals and their names along with labels for them
-  intervals <- TRUE
-  klow <- pmatch("lower", names(data))
-  kupp <- pmatch("upper", names(data))
-  if (klow == 0 || kupp == 0)
-    stop("Cannot find a column starting with lower and another with upper to plot intervals")
-  ylow <- names(data)[klow]
-  yupp <- names(data)[kupp]
-  low.parts <- (strsplit(ylow, ".", fixed=TRUE))[[1]]
-  upp.parts <- (strsplit(yupp, ".", fixed=TRUE))[[1]]
-  if (!setequal(low.parts[-1], upp.parts[-1]))
-    stop("Names of columns for lower and upper limits are not consistent")
-  if (low.parts[2] == "StandardError")
-  { labend <- "+/- standard errors"
-    abbrev <- "SE"
+  if (intervals)
+  { klow <- pmatch("lower", names(data))
+    kupp <- pmatch("upper", names(data))
+    if (klow == 0 || kupp == 0)
+      stop(paste("Cannot find a column in data starting with lower ",
+                 "and another with upper to plot intervals"))
+    ylow <- names(data)[klow]
+    yupp <- names(data)[kupp]
+    low.parts <- (strsplit(ylow, ".", fixed=TRUE))[[1]]
+    upp.parts <- (strsplit(yupp, ".", fixed=TRUE))[[1]]
+    if (!setequal(low.parts[-1], upp.parts[-1]))
+      stop("Names of columns for lower and upper limits are not consistent")
+    if (low.parts[2] == "StandardError")
+    { labend <- "+/- standard errors"
+      abbrev <- "SE"
+    }
+    else 
+      if (low.parts[2] == "Confidence")
+      { labend <- "confidence intervals"    
+        abbrev <- "CI"
+      }
+    else
+      if (low.parts[2] == "halfLeastSignificant") 
+      { labend <- "+/- half mean LSD"
+        abbrev <- "LSI"
+      }
+    else
+      stop("Names for interval limit are not consistent with the types of interval allowed")
   }
-  else 
-  if (low.parts[2] == "Confidence")
-  { labend <- "confidence intervals"    
-    abbrev <- "CI"
-  }
-  else
-  if (low.parts[2] == "halfLeastSignificant") 
-  { labend <- "+/- half mean LSD"
-    abbrev <- "LSI"
-  }
-  else
-    stop("Names for interval limit are not consistent with the types of interval allowed")
   #Do plots
   #Make sure no functions in classify
   vars <- fac.getinTerm(classify, rmfunction = TRUE)
@@ -2453,11 +2455,11 @@ addrm.terms.asreml <- function(...)
   invisible()
 }
 choose.model.asreml <- function(...)
-{ .Deprecated(new = "addrm.terms.asrtests", package = "asremlPlus")
+{ .Deprecated(new = "choose.model.asrtests", package = "asremlPlus")
   invisible()
 }
 recalc.wald.tab.asreml <- function(...)
-{ .Deprecated(new = "choose.model.asrtests", package = "asremlPlus")
+{ .Deprecated(new = "recalc.wald.tab.asrtests", package = "asremlPlus")
   invisible()
 }
 rmboundary.asreml <- function( ...)

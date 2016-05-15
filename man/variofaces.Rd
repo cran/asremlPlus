@@ -16,12 +16,15 @@ Stefanova, Smith & Cullis (2009)}
              such as experiments in different environments. In this case, the two 
              variogram faces are produced for each section.}
 \usage{
-variofaces.asreml(object, V, nsim=100, seed = NULL, tolerance=1E-10, 
+variofaces.asreml(object, means=NULL, V, nsim=100, seed = NULL, tolerance=1E-10, 
                   units = "ignore", update = TRUE, trace = FALSE, 
                   graphics.device=NULL, ...)}
 \arguments{
  \item{object}{An \code{asreml} object from a call to \code{asreml} in which the 
                 \code{data} argument has been set.}
+ \item{means}{The \code{vector} of means to be used in generating simulated data sets. If
+             it is \code{NULL}, the fitted values based on \code{object} are used. 
+             It must be the same length as the response variable for \code{object}.}
  \item{V}{The fitted variance \code{matrix}, i.e. having the appropriate pattern and values 
           given the model fitted to the observed data and the estimates of the 
           parameters obtained.}
@@ -46,7 +49,7 @@ variofaces.asreml(object, V, nsim=100, seed = NULL, tolerance=1E-10,
  \item{trace}{if TRUE then partial iteration details are displayed when ASReml-R 
               functions are invoked; if FALSE then no output is displayed.}
  \item{graphics.device}{A \code{character} specifying a graphics device for plotting. 
-              The default is \code{graphics.device = NULL}, which will result 
+              The default is \cr\code{graphics.device = NULL}, which will result 
               in plots being produced on the current graphics device. Setting it to 
               \code{"windows"}, for example,  will result in a windows graphics 
               device being  opened.}

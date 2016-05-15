@@ -3,7 +3,7 @@
 \title{Recalculates the denDF, F.inc and P values for a table of Wald test statistics obtained 
        using \code{wald.asreml}}
 \description{If some or all denDF are not available, either because they are NA or because 
-  F.inc values were not calculated, this function allows the user to specify how a
+  F.inc values were not calculated, this function allows the user to specify how 
   approximate denDF values are to be obtained. This is done through the \code{dDF.na} and 
   \code{dDF.values} arguments. Note that if denDF values are available in the Wald table then 
   only those that are \code{NA} will be replaced.}
@@ -19,7 +19,7 @@
  \item{recalc.wald}{a \code{logical} indicating whether to call \code{wald.asreml} to recalculate 
                the pseudoanova table for the model fit stored in the \code{asreml} object 
                contained in \code{\link{asrtests}}.}
- \item{denDF}{Specifies the enthod to use in computing approximate denominator 
+ \item{denDF}{Specifies the method to use in computing approximate denominator 
               degrees of freedom when \code{wald.asreml} is called. Can be \code{none} 
               to suppress the computations, \code{numeric} for numerical methods,
               \code{algebraic} for algebraic methods or \code{default}, the default, 
@@ -27,7 +27,7 @@
               on problem size. The denominator degrees of freedom are calculated 
               according to Kenward and Roger (1997) for fixed terms in the dense 
               part of the model.}
- \item{dDF.na}{the method to use to obtain substitute denominator degrees of freedom. 
+ \item{dDF.na}{The method to use to obtain substitute denominator degrees of freedom. 
               when the numeric or algebraic methods produce an \code{NA}. If 
               \code{dDF.na = "none"}, no subtitute denominator degrees of freedom 
               are employed; if \code{dDF.na = "residual"}, 

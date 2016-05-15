@@ -12,7 +12,8 @@ quantites related to the simulated data}
  \item{object}{An \code{asreml} object from a call to \code{asreml} in which the 
                 \code{data} argument has been set.}
  \item{means}{The \code{vector} of means to be used in generating simulated data sets. If
-             it is \code{NULL}, the fitted values based on \code{object} are used.}
+             it is \code{NULL}, the fitted values based on \code{object} are used. 
+             It must be the same length as the response variable for \code{object}.}
  \item{V}{The fitted variance \code{matrix}, i.e. having the pattern and values that 
           conform to the model fit stored in the supplied \code{object}.}
  \item{nsim}{The number of data sets to be simulated.}
@@ -44,7 +45,7 @@ quantites related to the simulated data}
             models are not allowed. Other changes are dangerous and generally should be 
             avoided.}
 }
- \value{An \code{list} with the following components whose presence depends on the setting of 
+ \value{A \code{list} with the following components whose presence depends on the setting of 
        \code{which}:
 \enumerate{
 \item{\bold{observed:} present if \code{which} includes \code{residuals} or \code{fitted}, 
@@ -54,7 +55,7 @@ quantites related to the simulated data}
                   containing the simulated data sets.}
 \item{\bold{fitted:} present if \code{which} includes \code{fitted}, a \code{data.frame} 
                   containing the fitted values from the analyses of the simulated data sets.}
-\item{\bold{resduals:} present if \code{which} includes \code{residuals}, a \code{data.frame} 
+\item{\bold{residuals:} present if \code{which} includes \code{residuals}, a \code{data.frame} 
                   containing the residuals from the analyses of the simulated data sets.}}
 }
 \details{Generate \code{nsim} set of data and analyse them using \code{asreml} 

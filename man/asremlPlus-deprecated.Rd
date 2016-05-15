@@ -11,7 +11,7 @@
 \alias{info.crit}
 \alias{reml.lrt}
 \title{Deprecated Functions in Package asremlPlus}
-\description{These functions have been renamed and deprecated in \code{asremlPlus}: addrm.terms.asreml replaced by \code{\link{addrm.terms.asrtests}}, choose.model.asreml by \code{\link{addrm.terms.asrtests}}, recalc.wald.tab.asreml by \code{\link{recalc.wald.tab.asrtests}}, rmboundary.asreml by \code{\link{rmboundary.asrtests}}, sig.devn.reparam.asreml by \code{\link{sig.devn.reparam.asrtests}}, testranfix.asreml by \code{\link{testranfix.asrtests}}, testrcov.asreml by \code{\link{testrcov.asrtests}}, testswapran.asreml by \code{\link{testswapran.asrtests}}, info.crit by \code{\link{info.crit.asreml}}, reml.lrt by \code{\link{reml.lrt.asreml}}}
+\description{These functions have been renamed and deprecated in \code{asremlPlus}: addrm.terms.asreml replaced by \code{\link{addrm.terms.asrtests}}, choose.model.asreml by \code{\link{choose.model.asrtests}}, recalc.wald.tab.asreml by \code{\link{recalc.wald.tab.asrtests}}, rmboundary.asreml by \code{\link{rmboundary.asrtests}}, sig.devn.reparam.asreml by \code{\link{sig.devn.reparam.asrtests}}, testranfix.asreml by \code{\link{testranfix.asrtests}}, testrcov.asreml by \code{\link{testrcov.asrtests}}, testswapran.asreml by \code{\link{testswapran.asrtests}}, info.crit by \code{\link{info.crit.asreml}}, reml.lrt by \code{\link{reml.lrt.asreml}}}
 \usage{addrm.terms.asreml(...)
 choose.model.asreml(...)
 recalc.wald.tab.asreml(...)

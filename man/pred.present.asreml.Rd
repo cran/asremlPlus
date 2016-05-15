@@ -93,10 +93,10 @@
               panel or multiple panels in a single window are produced. The 
               \code{panels} argument is ignored for for bar charts.}
  \item{graphics.device}{A \code{character} specifying a graphics device for plotting. 
-              The default is \code{graphics.device = NULL}, which will result 
+              The default is \cr\code{graphics.device = NULL}, which will result 
               in plots being produced on the current graphics device. Setting it to 
               \code{"windows"}, for example,  will result in a windows graphics 
-              device being  opened.}
+              device being opened.}
  \item{error.intervals}{A character string indicating the type of error interval, if any, 
              to calculate and plot in order to indicate uncertainty in the results. 
              Possible values are \code{"none"}, \code{"StandardError"}, \code{"Confidence"} 
@@ -181,12 +181,26 @@
          \code{\link{print.alldiffs}}, \cr
          \code{as.Date}, \code{Devices}}
 \examples{\dontrun{
-  pred.present.asreml(choose$sig.terms, current.asrt$asreml.obj, current.asrt$wald.tab, 
-                      x.fac = "Date", x.num = "xDay", 
-                      x.pred.values=sort(unique(Runoff.longi.dat$xDay)),
-                      x.plot.values=c(0,28,56,84),
-                      x.title = "Days since first observation",
-                      y.title = "Predicted log(Turbidity)",
-                      present = c("Type","Species","Sources"))
+data(WaterRunoff.dat)
+titles <- list("Days since first observation", "Days since first observation", 
+               "pH", "Turbidity (NTU)")
+names(titles) <- names(WaterRunoff.dat)[c(5,7,11:12)]
+current.asr <- asreml(fixed = log.Turbidity ~ Benches + Sources + Type + Species + 
+                                 Sources:Type + Sources:Species + Sources:Species:xDay + 
+                                 Sources:Species:Date, 
+                      data = WaterRunoff.dat, keep.order = TRUE)
+current.asrt <- asrtests(current.asr, NULL, NULL)
+diff.list <- pred.present.asreml("Date:Sources:Species", 
+                                 asreml.obj = current.asrt$asreml.obj, 
+                                 wald.tab = current.asrt$wald.tab, 
+                                 x.num = "xDay", x.fac = "Date", 
+                                 x.pred.values=sort(unique(WaterRunoff.dat$xDay)),
+                                 x.plot.values=sort(unique(WaterRunoff.dat$Day)),
+                                 plots = "predictions", 
+                                 error.intervals = "StandardError", 
+                                 titles = titles, 
+                                 transform.power = 0, 
+                                 present = c("Type","Species","Sources"), 
+                                 tables = "differences", levels.length = 6)
 }}
 \keyword{asreml}

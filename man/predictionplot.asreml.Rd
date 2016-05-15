@@ -70,7 +70,7 @@
               panel or multiple panels in a single window are produced. The 
               \code{panels} argument is ignored for bar charts.}
  \item{graphics.device}{A \code{character} specifying a graphics device for plotting. 
-              The default is \code{graphics.device = NULL}, which will result 
+              The default is \cr\code{graphics.device = NULL}, which will result 
               in plots being produced on the current graphics device. Setting it to 
               \code{"windows"}, for example,  will result in a windows graphics 
               device being  opened.}
@@ -98,30 +98,35 @@
 \seealso{\code{\link{predictiondiffs.asreml}}, \code{\link{pred.present.asreml}}, 
          \code{ggplot}, \code{Devices}}
 \examples{\dontrun{
+data(WaterRunoff.dat)
 current.asr <- asreml(fixed = log.Turbidity ~ Benches + Sources + Type + Species +
-                       Sources:Type + Sources:Species + 
-                       Sources:xDay + Species:xDay + Species:Date,
-                       data = Runoff.longi.dat, keep.order = TRUE)
+                                Sources:Type + Sources:Species + 
+                                Sources:xDay + Species:xDay + Species:Date,
+                      data = WaterRunoff.dat, keep.order = TRUE)
+current.asrt <- asrtests(current.asr, NULL, NULL)
 predictions <- predict(current.asr, class="Species:Date:xDay", 
-                       present=c("Type","Species","Sources"),
-                       levels=list(xDay=unique(Runoff.longi.dat$xDay)))$predictions$pvals
+                       present = c("Type","Species","Sources"),
+                       levels=list(xDay=unique(WaterRunoff.dat$xDay)))$predictions$pvals
 predictions <- predictions[predictions$est.status == "Estimable",]
-predictionplot.asreml(classify="Species:Date:xDay", diffs$predictions, current.asrt$wald.tab, 
+predictionplot.asreml(classify="Species:Date:xDay", y = "predicted.value", 
+                      data = predictions, wald.tab = current.asrt$wald.tab, 
                       x.num = "xDay", x.fac = "Date", 
                       x.title = "Days since first observation",
                       y.title = "Predicted log(Turbidity)",
-                      present = c("Type","Species","Sources"))
-
-
+                      present = c("Type","Species","Sources"),
+                      error.intervals = "none")
+  
 diffs <- predictparallel.asreml(classify="Species:Date:xDay", 
                                 present=c("Type","Species","Sources"), 
                                 asreml.obj = current.asr, 
                                 x.num = "xDay", x.fac = "Date", 
-                                x.pred.values=sort(unique(Runoff.longi.dat$xDay)),
-                                x.plot.values=c(0,28,56,84))
-predictionplot.asreml(diffs$predictions, current.asrt$wald.tab, 
-                                x.num = "xDay", x.fac = "Date", 
-                                x.title = "Days since first observation",
-                                y.title = "Predicted log(Turbidity)"))
+                                x.pred.values=sort(unique(WaterRunoff.dat$xDay)),
+                                x.plot.values=c(0,28,56,84),
+                                wald.tab = current.asrt$wald.tab)
+predictionplot.asreml(classify="Species:Date:xDay", y = "predicted.value", 
+                      data = diffs$predictions, wald.tab = current.asrt$wald.tab, 
+                      x.num = "xDay", x.fac = "Date", 
+                      x.title = "Days since first observation",
+                      y.title = "Predicted log(Turbidity)")
 }}
 \keyword{asreml}

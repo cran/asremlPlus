@@ -32,13 +32,15 @@
 }
 
 
-"variofaces.asreml" <- function(object, V, nsim=100, seed = NULL, tolerance = 1E-10, 
+"variofaces.asreml" <- function(object, means=NULL, V, nsim=100, seed = NULL, tolerance = 1E-10, 
                                 units = "ignore", update = TRUE, trace = FALSE, 
                                 graphics.device=NULL, ...)
 #function to do the face variogram plots, including envelopes, described by 
 #Stefanova et al (2010)
 #object is an asreml object from a call to asreml in which the data argument 
 #   must have been set.
+#means is a vector of predictions for fixed terms - should include spline terms
+#   if null, fitted values from fitted model are used.
 #V is the fitted variance matrix i.e. having the appropriate pattern and values 
 #   given the model fitted and the estimates of the parameters obtained
 #nsim is the number of data sets to be simulated in obtaining the envelopes
@@ -54,6 +56,8 @@
   if (!isSymmetric(V))
     stop("Variance matrix must be symmetric")
   n <- length(object$residuals)
+  if (!is.null(means) & length(means) != n)
+    stop("The lengths of means  and the response variable are not the same")
   if (!all(dim(V) == c(n, n))) 
       stop("V is not a square matrix whose order equals the length of the response variable")
   #use eigenvalue decomposition to establish transformation matrix
@@ -168,11 +172,15 @@
   res.dat <- data.frame(env.dat[[fac1]],env.dat[[fac2]])
   names(res.dat)[1:2] <- grid.facs
   res.dat[grid.facs] <- lapply(res.dat[grid.facs], as.numfac)
-   if (!is.null(fac.sec))
-   { res.dat <- data.frame(env.dat[[fac.sec]], res.dat)
-     names(res.dat)[1] <- fac.sec
-   } 
-   mu <- fitted.values(object)
+  if (!is.null(fac.sec))
+  { res.dat <- data.frame(env.dat[[fac.sec]], res.dat)
+    names(res.dat)[1] <- fac.sec
+  } 
+  #Set up expectation
+  if (is.null(means))
+    mu <- fitted.values(object)
+  else
+    mu <- means
   for (i in 1:nsim)
   { while (!conv)
     { env.dat$y.sim <- as.vector(mu + R %*% rnorm(n))

@@ -124,20 +124,26 @@
          \code{\link{rmboundary.asrtests}}, \cr 
          \code{\link{newfit.asreml}}, \code{\link{addrm.terms.asrtests}}, 
          \code{\link{sig.devn.reparam.asrtests}}}
-\examples{
+\examples{\dontrun{
+data(WaterRunoff.dat)
+current.asr <- asreml(log.Turbidity ~ Benches + (Sources * (Type + Species)) * Date, 
+                      random = ~Benches:MainPlots:SubPlots:spl(xDay), 
+                      data = WaterRunoff.dat, keep.order = TRUE)
+current.asrt <- asrtests(current.asr, NULL, NULL)
 terms.treat <- c("Sources", "Type", "Species", 
                  "Sources:Type", "Sources:Species")
 terms <- sapply(terms.treat, 
-                FUN=function(term){paste("spl(xDay):",term,sep="")}, 
+                FUN=function(term){paste("Date:",term,sep="")}, 
                 simplify=TRUE)
-terms <- c("spl(xDay)",terms)
+terms <- c("Date", terms)
+terms <- unname(terms)
 marginality <-  matrix(c(1,0,0,0,0,0, 1,1,0,0,0,0,  1,0,1,0,0,0, 
-                         1,0,1,1,0,0, 1,1,1,1,1,0, 1,1,1,1,1,1), nrow=6)
-rownames(marginality) <-terms
-colnames(marginality) <-terms
-\dontrun{choose <- choose.model.asrtests(marginality, current.asrt, 
-                                       pos=TRUE)
+                         1,0,1,1,0,0, 1,1,1,0,1,0, 1,1,1,1,1,1), nrow=6)
+rownames(marginality) <- terms
+colnames(marginality) <- terms
+choose <- choose.model.asrtests(marginality, current.asrt) 
          current.asrt <- choose$asrtests.obj
+         sig.terms <- choose$sig.terms
 }}
 \keyword{asreml}
 \keyword{htest}
