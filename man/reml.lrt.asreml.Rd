@@ -15,14 +15,27 @@
   or sparse models.
   
   The function \code{reml.lrt} is provided for backwards compatibility.}
-\usage{reml.lrt.asreml(full.asreml.obj, reduced.asreml.obj, positive.zero=FALSE)}
+\usage{
+reml.lrt.asreml(full.asreml.obj, reduced.asreml.obj, 
+                positive.zero = FALSE, bound.test.parameters = "none")}
 \arguments{
  \item{full.asreml.obj}{\code{asreml} object for the full model.}
  \item{reduced.asreml.obj}{\code{asreml} object for the reduced model.}
  \item{positive.zero}{Indicates whether the hypothesized values for the 
-                      varaince components being tested are on the boundary 
-                      of the parameter space. For example, this is be true 
+                      variance components being tested are on the boundary 
+                      of the parameter space. For example, this is true 
                       for positively-constrained variance components that, 
+                      under the reduced model, are zero. This argument does 
+                      not need to be set if \code{bound.test.parameters} is set.}
+ \item{bound.test.parameters}{Indicates whether for the variance components 
+                      being tested, at least some of the hypothesized values
+                      are on the boundary of the parameter space. The default 
+                      is \code{"none"}. Other possibilities are 
+                      \code{"onlybound"} and \code{"one-and-one"}. The latter 
+                      signifies that there are two parameters being tested, 
+                      one of which is bound and the other is not. For example, 
+                      the latter is true for testing a covariance and 
+                      a positively-constrained variance component that, 
                       under the reduced model, are zero.}
 }
 \value{A data frame containing the log of the likelihood ratio, its degrees of 
@@ -45,7 +58,7 @@
 
 \seealso{\code{\link{info.crit.asreml}}, \code{\link{testranfix.asrtests}}}
 \examples{\dontrun{
-    reml.lrt.asreml(ICV.max, ICV.red, positive.zero=TRUE)
+    reml.lrt.asreml(ICV.max, ICV.red, bound.test.parameters = "onlybound")
 }}
 \keyword{htest}
 \keyword{asreml}

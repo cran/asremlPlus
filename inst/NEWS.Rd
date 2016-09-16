@@ -1,5 +1,21 @@
 \name{news}
 \title{News for Package asremlPlus}
+\section{Changes in asremlPlus Version 2.0-12 (2016-09-16)}{
+  \itemize{
+    \item{Rebuild under R 3.4.0.}
+ }
+}
+\section{Changes in asremlPlus Version 2.0-11 (2016-08-13)}{
+  \itemize{
+    \item{Added check that \code{wald.tab} is a four-column data.frame to predictionplot.asreml and pred.present.asreml.}
+ }
+}
+\section{Changes in asremlPlus Version 2.0-10 (2016-06-08)}{
+  \itemize{
+    \item{Added \code{ggplotFuncs} argument to predictionplot.asreml and pred.present.asreml.}
+    \item{Added \code{bound.test.parameters} to reml.lrt.asreml, choose.model.asartests, testranfix.asrtests, testrcov.asrtests. testwapran.asrtests.}
+ }
+}
 \section{Changes in asremlPlus Version 2.0-9 (2016-05-15)}{
   \itemize{
     \item{Revised some documentation.}

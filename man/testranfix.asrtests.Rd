@@ -15,8 +15,10 @@
   object. Whether nonsignificant terms are dropped is controlled by \code{drop.ran.ns}  
   for random terms and \code{drop.fix.ns} for fixed terms. A row is 
   added to the \code{test.summary} \code{data.frame} for the term that is tested.}
-\usage{testranfix.asrtests(term=NULL, asrtests.obj, alpha = 0.05, 
-                    drop.ran.ns = TRUE, positive.zero = FALSE, 
+\usage{
+testranfix.asrtests(term=NULL, asrtests.obj, alpha = 0.05, 
+                    drop.ran.ns = TRUE, 
+                    positive.zero = FALSE, bound.test.parameters = "none", 
                     drop.fix.ns = FALSE, denDF="default", dDF.na = "none", 
                     dDF.values = NULL, trace = FALSE, update = TRUE,
                     set.terms = NULL, ignore.suffices = TRUE, 
@@ -32,10 +34,21 @@
  \item{alpha}{the significance level for the test.}
  \item{drop.ran.ns}{a logical indicating whether to drop a random 
                    term from the model when it is nonsignificant .}
- \item{positive.zero}{a logical indicating whether the hypothesized values for the 
-                      varaince components being tested are on the boundary 
-                      of the parameter space. For example, this is be true 
+ \item{positive.zero}{Indicates whether the hypothesized values for the 
+                      variance components being tested are on the boundary 
+                      of the parameter space. For example, this is true 
                       for positively-constrained variance components that, 
+                      under the reduced model, are zero. This argument does 
+                      not need to be set if \code{bound.test.parameters} is set.}
+ \item{bound.test.parameters}{Indicates whether for the variance components 
+                      being tested, at least some of the hypothesized values
+                      are on the boundary of the parameter space. The default 
+                      is \code{"none"}. Other possibilities are 
+                      \code{"onlybound"} and \code{"one-and-one"}. The latter 
+                      signifies that there are two parameters being tested, 
+                      one of which is bound and the other is not. For example, 
+                      the latter is true for testing a covariance and 
+                      a positively-constrained variance component that, 
                       under the reduced model, are zero.}
  \item{drop.fix.ns}{a logical indicating whether to drop a fixed  
                    term from the model when it is nonsignificant }

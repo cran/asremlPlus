@@ -1,6 +1,7 @@
 reml.lrt.asreml <- function(full.asreml.obj, 
                             reduced.asreml.obj, 
-                            positive.zero=FALSE)
+                            positive.zero = FALSE, 
+                            bound.test.parameters = "none")
 {
 #asreml codes:
 #  B - fixed at a boundary (!GP)
@@ -43,6 +44,12 @@ reml.lrt.asreml <- function(full.asreml.obj,
     }
   }
   
+  #Check bound.test.parameters argument
+  par.options <- c("none", "onlybound", "one-and-one")
+  par.opt <- par.options[check.arg.values(bound.test.parameters, par.options)]
+  if (positive.zero & par.opt == "none")
+    par.opt <- "onlybound"
+
   #Perform the test
   summ.full <- summary(full.asreml.obj)
 	summ.reduce <- summary(reduced.asreml.obj)
@@ -68,21 +75,33 @@ reml.lrt.asreml <- function(full.asreml.obj,
    else
      if (DF <= 0)
        warning("Negative degrees of freedom indicating the second model is more complex")
-   if (positive.zero)
+   if (par.opt != "none")
    { if (REMLLRT < 1e-10)
 	 	 p <- 1
-	  else if (DF == 1)
+	  else
+	    if (par.opt == "onlybound")
+	    {
+	      if (DF == 1)
 #this option is used when testing a positively-contrained variance component is zero
 #it adjusts for testing on the boundary of the contraint by computing 0.5(ch1_0 + chi_2)
 #comes from Self & Liang (1987) Case 5
-        p <- 0.5*(1-pchisq(REMLLRT, DF))
-  	 else
+          p <- 0.5*(1-pchisq(REMLLRT, DF))
+  	    else
 #following is for DF positively-contrained components equal to zero 
 #computes sum_i=0 to DF mix_i * chi_i where mix_i = choose(DF,  i)*2^(_DF)
 #comes from Self & Liang (1987) Case 9 with s = 0
-     {  df <- seq(DF)
-        p <- 1-2^(-DF)-sum(choose(DF, df)*2^(-DF)*pchisq(REMLLRT, df))
-	  }
+       {  df <- seq(DF)
+          p <- 1-2^(-DF)-sum(choose(DF, df)*2^(-DF)*pchisq(REMLLRT, df))
+	     
+       }
+	    } else #one-and-one Case 6
+	    {
+	      if (DF == 2)
+	        p <- 1 - 0.5*(pchisq(REMLLRT, 1) + pchisq(REMLLRT, 2))
+	      else
+	        stop(paste("For one-and-one, DF must equal two",
+                     "because there must be just two parameters tested"), sep = " ")
+	    }
    }
    else
 	     p <- 1-pchisq(REMLLRT, DF)

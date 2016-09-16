@@ -15,7 +15,7 @@
                       colour.scheme = "colour", panels = "multiple", 
                       graphics.device = NULL,
                       error.intervals = "Confidence",  titles = NULL, 
-                      y.title = NULL, filestem = NULL, ...)
+                      y.title = NULL, filestem = NULL, ggplotFuncs = NULL, ...)
 }
 \arguments{
  \item{classify}{a character string giving the combinations of the independent 
@@ -82,7 +82,8 @@
  \item{titles}{A \code{list}, each component of which is named for an object name and 
                contains a \code{character string} giving a title to use in output 
               (e.g. tables and graphs) for the object. Here they will be used for 
-              axis labels.}
+              axis labels for nonresponse variables. For response variable labels 
+              see \code{y.title}.}
  \item{filestem}{A character sting giving the beginning of the name of the file in which to 
               save the plot. If \code{filestem = NULL}, the plot is not saved. The remainder 
               of the file name will be generated automatically and consists of the 
@@ -91,6 +92,10 @@
               is not \code{"none"}, one of \code{SE}, \code{CI} or \code{LSI}. The
               file will be saved as a `png' file in the current work directory.}
  \item{y.title}{The title to be displayed on the y axis of any plot.} 
+ \item{ggplotFuncs}{A \code{\link{list}}, each element of which contains the 
+                results of evaluating a \code{\link{ggplot}} function. 
+                It is created by calling the \code{\link{list}} function with 
+                a \code{\link{ggplot}} function call for each element.}
  \item{...}{further arguments passed to \code{ggplot}.}
 }
 \value{no values are returned.}
@@ -114,19 +119,22 @@ predictionplot.asreml(classify="Species:Date:xDay", y = "predicted.value",
                       x.title = "Days since first observation",
                       y.title = "Predicted log(Turbidity)",
                       present = c("Type","Species","Sources"),
-                      error.intervals = "none")
+                      error.intervals = "none",
+                      ggplotFuncs = list(ggtitle("Transformed turbidity over time")))
   
 diffs <- predictparallel.asreml(classify="Species:Date:xDay", 
                                 present=c("Type","Species","Sources"), 
-                                asreml.obj = current.asr, 
+                                asreml.obj = current.asr, tables = "none", 
                                 x.num = "xDay", x.fac = "Date", 
                                 x.pred.values=sort(unique(WaterRunoff.dat$xDay)),
                                 x.plot.values=c(0,28,56,84),
                                 wald.tab = current.asrt$wald.tab)
+x.title <- "Days since first observation"
+names(x.title) <- "xDay"
 predictionplot.asreml(classify="Species:Date:xDay", y = "predicted.value", 
                       data = diffs$predictions, wald.tab = current.asrt$wald.tab, 
                       x.num = "xDay", x.fac = "Date", 
-                      x.title = "Days since first observation",
+                      titles = x.title,
                       y.title = "Predicted log(Turbidity)")
 }}
 \keyword{asreml}

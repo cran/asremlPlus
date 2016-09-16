@@ -13,7 +13,7 @@ test_that("predictparallel.asreml", {
                         keep.order=TRUE, data= WaterRunoff.dat)
   current.asrt <- asrtests(current.asr, NULL, NULL)
   diffs <- predictparallel.asreml(classify = "Sources:Type", 
-                                  asreml.obj = current.asr, 
+                                  asreml.obj = current.asr, tables = "none", 
                                   x.num = "xDay", x.fac = "Date", 
                                   x.pred.values=sort(unique(WaterRunoff.dat$xDay)),
                                   x.plot.values=c(0,28,56,84),
@@ -38,14 +38,18 @@ test_that("predictionplot.asreml", {
                          present = c("Type","Species","Sources"),
                          levels=list(xDay=unique(WaterRunoff.dat$xDay)))$predictions$pvals
   predictions <- predictions[predictions$est.status == "Estimable",]
+  
+  x.title <- "Days since first observation"
+  names(x.title) <- "xDay"
   predictionplot.asreml(classify="Species:Date:xDay", y = "predicted.value", 
                         data = predictions, wald.tab = current.asrt$wald.tab, 
                         x.num = "xDay", x.fac = "Date", 
-                        x.title = "Days since first observation",
+                        titles = x.title,
                         y.title = "Predicted log(Turbidity)",
                         present = c("Type","Species","Sources"),
-                        error.intervals = "none")
-  
+                        error.intervals = "none", 
+                        ggplotFuncs = list(ggtitle("Transformed turbidity over time")))
+
   
   testthat::expect_warning(diffs <- predictparallel.asreml(classify="Species:Date:xDay", 
                                                            present=c("Type","Species","Sources"), 
@@ -57,7 +61,7 @@ test_that("predictionplot.asreml", {
   predictionplot.asreml(classify="Species:Date:xDay", y = "predicted.value", 
                         data = diffs$predictions, wald.tab = current.asrt$wald.tab, 
                         x.num = "xDay", x.fac = "Date", 
-                        x.title = "Days since first observation",
+                        titles = x.title,
                         y.title = "Predicted log(Turbidity)")
   testthat::expect_silent("dummy")
 })

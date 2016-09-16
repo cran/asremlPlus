@@ -26,7 +26,8 @@
                     titles = NULL, colour.scheme = "colour", save.plots = FALSE, 
                     transform.power = 1, offset = 0, scale = 1, 
                     pairwise = TRUE, tables = "all", levels.length = NA, 
-                    alpha = 0.05, inestimable.rm = TRUE, trace = FALSE, ...)
+                    alpha = 0.05, inestimable.rm = TRUE, 
+                    trace = FALSE, ggplotFuncs = NULL, ...)
 }
 \arguments{
  \item{terms}{a \code{character vector} giving the terms for which predictions 
@@ -168,6 +169,11 @@
                        \code{\link{alldiffs}} object.}
  \item{trace}{if TRUE then partial iteration details are displayed when ASReml-R 
               functions are invoked; if FALSE then no output is displayed.}
+ \item{ggplotFuncs}{A \code{\link{list}}, each element of which contains the 
+                results of evaluating a \code{\link{ggplot}} function. 
+                It is created by calling the \code{\link{list}} function with 
+                a \code{\link{ggplot}} function call for each element. 
+                It is passed to \code{\link{predictionplot.asreml}}.}
  \item{...}{further arguments passed to \code{predict.asreml} via 
             \code{\link{predictparallel.asreml}} and to \code{ggplot} 
             via \code{\link{predictionplot.asreml}}.}

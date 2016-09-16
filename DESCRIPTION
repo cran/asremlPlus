@@ -1,7 +1,7 @@
 Package: asremlPlus
-Version: 2.0-9
-Date: 2016-05-15
-Title: Augments the Use of 'Asreml' in Fitting Mixed Models
+Version: 2.0-12
+Date: 2016-09-16
+Title: Augments the Use of 'ASReml-R' in Fitting Mixed Models
 Author: Chris Brien <Chris.Brien@unisa.edu.au>.
 Maintainer: Chris Brien <Chris.Brien@unisa.edu.au>
 Depends: R (>= 2.10.0)
@@ -23,6 +23,6 @@ Description: Assists in automating the testing of terms in mixed models when 'as
 License: GPL (>= 2)
 URL: http://chris.brien.name
 NeedsCompilation: no
-Packaged: 2016-05-15 02:41:08 UTC; briencj
+Packaged: 2016-09-16 02:10:41 UTC; briencj
 Repository: CRAN
-Date/Publication: 2016-05-15 09:46:28
+Date/Publication: 2016-09-16 12:50:20

@@ -896,8 +896,8 @@
   invisible(results)
 }
 
-"testranfix.asrtests" <- function(term=NULL, asrtests.obj, alpha = 0.05, 
-                                  drop.ran.ns = TRUE, positive.zero = FALSE, 
+"testranfix.asrtests" <- function(term=NULL, asrtests.obj, alpha = 0.05, drop.ran.ns = TRUE, 
+                                  positive.zero = FALSE, bound.test.parameters = "none", 
                                   drop.fix.ns = FALSE, denDF="default", dDF.na = "none", 
                                   dDF.values = NULL, trace = FALSE, update = TRUE, 
                                   set.terms = NULL, ignore.suffices = TRUE, 
@@ -1041,7 +1041,8 @@
                                     constraints = constraints, 
                                     initial.values = initial.values, ...)
     test <- reml.lrt.asreml(asreml.obj, asreml.new.obj, 
-                            positive.zero = positive.zero)
+                            positive.zero = positive.zero,
+                            bound.test.parameters = bound.test.parameters)
     if (test$DF <= 0)
       p <- NA
     else
@@ -1099,7 +1100,8 @@
 
 "testswapran.asrtests" <- function(oldterms = NULL, newterms = NULL, asrtests.obj,
                                    label = "Swap in random model", simpler = FALSE, alpha = 0.05, 
-                                   positive.zero = FALSE, denDF="default", trace = FALSE, 
+                                   positive.zero = FALSE, bound.test.parameters = "none", 
+                                   denDF="default", trace = FALSE, 
                                    update = TRUE, set.terms = NULL, ignore.suffices = TRUE, 
                                    constraints = "P", initial.values = NA, ...)
   #function to test difference between current random model and one in which oldterms are dropped 
@@ -1132,7 +1134,8 @@
   change <- FALSE
   if (simpler)
   { test <- reml.lrt.asreml(asreml.obj, asreml.new.obj, 
-                            positive.zero = positive.zero)
+                            positive.zero = positive.zero,
+                            bound.test.parameters = bound.test.parameters)
     if (test$DF <= 0)
       p <- NA
     else
@@ -1152,7 +1155,8 @@
   }
   else
   { test <- reml.lrt.asreml(asreml.new.obj, asreml.obj, 
-                            positive.zero = positive.zero)
+                            positive.zero = positive.zero,
+                            bound.test.parameters = bound.test.parameters)
     if (test$DF <= 0)
       p <- NA
     else
@@ -1267,8 +1271,8 @@
 
 "testrcov.asrtests" <- function(terms = NULL, asrtests.obj, label = "R model", 
                                 simpler = FALSE, alpha = 0.05, 
-                                positive.zero = FALSE, denDF="default", 
-                                update = TRUE, trace = FALSE, 
+                                positive.zero = FALSE, bound.test.parameters = "none", 
+                                denDF="default", update = TRUE, trace = FALSE, 
                                 set.terms = NULL, ignore.suffices = TRUE, 
                                 constraints = "P", initial.values = NA, ...)
 #Fits new rcov formula and tests whether the change is significant
@@ -1298,7 +1302,8 @@
   change <- FALSE
   if (simpler)
   { test <- reml.lrt.asreml(asreml.obj, asreml.new.obj, 
-                            positive.zero = positive.zero)
+                            positive.zero = positive.zero, 
+                            bound.test.parameters = bound.test.parameters)
     if (test$DF <= 0)
       p <- NA
     else
@@ -1318,7 +1323,8 @@
   }
   else
   { test <- reml.lrt.asreml(asreml.new.obj, asreml.obj, 
-                            positive.zero = positive.zero)
+                            positive.zero = positive.zero, 
+                            bound.test.parameters = bound.test.parameters)
     if (test$DF <= 0)
       p <- NA
     else
@@ -1414,7 +1420,8 @@
 }
 
 "choose.model.asrtests" <- function(terms.marginality=NULL, asrtests.obj, alpha = 0.05, 
-                                    drop.ran.ns=TRUE, positive.zero = FALSE, 
+                                    drop.ran.ns=TRUE, 
+                                    positive.zero = FALSE, bound.test.parameters = "none", 
                                     drop.fix.ns=FALSE, denDF = "default",  dDF.na = "none", 
                                     dDF.values = NULL, trace = FALSE, update = TRUE, 
                                     set.terms = NULL, ignore.suffices = TRUE, 
@@ -1455,6 +1462,7 @@
     current.asrt <- testranfix.asrtests(term, asrtests.obj = current.asrt, 
                                         alpha=alpha, drop.ran.ns = drop.ran.ns, 
                                         positive.zero = positive.zero, 
+                                        bound.test.parameters = bound.test.parameters, 
                                         drop.fix.ns = drop.fix.ns, 
                                         denDF = denDF, dDF.na = dDF.na, 
                                         dDF.values = dDF.values, trace = trace, 
@@ -1559,7 +1567,10 @@
                            inestimable.rm = TRUE, wald.tab = NULL, alpha = 0.05, 
                            dDF.na = "residual", dDF.values = NULL, trace = FALSE, ...)
 #a function to get asreml predictions when there a parallel vector and factor are involved
-{ if (!is.null(x.pred.values) && !is.null(x.plot.values))
+{ 
+  if (!is.null(wald.tab) & (!is.data.frame(wald.tab) || ncol(wald.tab) != 4))
+    stop("wald.tab should be a 4-column data.frame -- perhaps extract Wald component from list")
+  if (!is.null(x.pred.values) && !is.null(x.plot.values))
     if (length(x.pred.values) != length(x.plot.values))
        stop("In analysing ",asreml.obj$fixed.formula[[2]],
             ", length of x.pred.values and x.plot.values should be equal")
@@ -1788,7 +1799,7 @@
                                     panels = "multiple", graphics.device = NULL,
                                     error.intervals = "Confidence", 
                                     titles = NULL, y.title = NULL, 
-                                    filestem = NULL, ...)
+                                    filestem = NULL, ggplotFuncs = NULL, ...)
 #a function to plot asreml predictions and associated statistics
 { #Check options
   scheme.options <- c("black", "colour")
@@ -2154,6 +2165,9 @@
       }
     }
   }
+  if (!is.null(ggplotFuncs))
+    for (f in ggplotFuncs)
+      pred.plot <- pred.plot + f
   print(pred.plot)
   #Automate saving of plots in files
   if (!is.null(filestem))
@@ -2322,7 +2336,7 @@
                                   pairwise = TRUE, 
                                   tables = "all", levels.length = NA, 
                                   alpha = 0.05, inestimable.rm = TRUE,
-                                  trace = FALSE, ...)
+                                  trace = FALSE, ggplotFuncs = NULL, ...)
 #This function forms the predictions for each significant term.
 #It then presents either a table or a graph based on the predicted values 
 # - the decision is based on whether x.fac or x.num is in the term. 
@@ -2331,7 +2345,10 @@
 #Must have levels of x.fac in the order in which they are to be plotted
 # - with dates, they should be in the form yyyymmdd
 #Probably need to supply x.plot.values if x.fac is to be plotted
-{ if (!is.null(x.pred.values) && !is.null(x.plot.values))
+{ 
+  if (!is.null(wald.tab) & (!is.data.frame(wald.tab) || ncol(wald.tab) != 4))
+    stop("wald.tab should be a 4-column data.frame -- perhaps extract Wald component from list")
+  if (!is.null(x.pred.values) && !is.null(x.plot.values))
     if (length(x.pred.values) != length(x.plot.values))
        stop("In analysing ",asreml.obj$fixed.formula[[2]],
             ", length of x.pred.values and x.plot.values should be equal")
@@ -2423,11 +2440,12 @@
     { predictionplot.asreml(classify = classify.term, y = "predicted.value", 
                             data = diffs$predictions, 
                             x.num = x.num, x.fac = x.fac, 
-                            nonx.fac.order = nonx.fac.order, colour.scheme = colour.scheme, 
+                            nonx.fac.order = nonx.fac.order, 
+                            colour.scheme = colour.scheme, 
                             panels = panel.opt, graphics.device = graphics.device,
                             error.intervals = error.intervals,  
                             titles = titles, y.title = y.title, 
-                            filestem = filestem, ...)
+                            filestem = filestem, ggplotFuncs = ggplotFuncs, ...)
     }
     if (transformed & (plot.opt == "backtransforms"  | plot.opt == "both"))
     #Plot backtransforms
@@ -2439,11 +2457,12 @@
       predictionplot.asreml(classify = classify.term, y = "backtransformed.predictions", 
                             data = diffs$backtransforms, 
                             x.num = x.num, x.fac = x.fac,   
-                            nonx.fac.order = nonx.fac.order, colour.scheme = colour.scheme,  
+                            nonx.fac.order = nonx.fac.order, 
+                            colour.scheme = colour.scheme,  
                             panels = panel.opt, graphics.device = graphics.device,
                             error.intervals = error.intervals,
                             titles = titles, y.title = bty.title, 
-                            filestem = filestem, ...)
+                            filestem = filestem, ggplotFuncs = ggplotFuncs, ...)
     }
   }
   invisible(diff.list)
