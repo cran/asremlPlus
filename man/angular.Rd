@@ -9,7 +9,8 @@
  \item{n}{The divisor(s) for each proportion}
 }
 \value{A numeric.}
-\seealso{\code{\link{angular.mod}}, \code{\link{power.transform}}.}
+\author{Chris Brien}
+\seealso{\code{\link{angular.mod}}, \code{\link{powerTransform}}.}
 \examples{
 n <-25
 y <- rbinom(10, n, 0.5)

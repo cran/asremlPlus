@@ -12,7 +12,8 @@
  \item{n}{The number(s) of observations from which the count(s) were obtained.}
 }
 \value{A numeric vector.}
-\seealso{\code{\link{angular}}, \code{\link{power.transform}}.}
+\author{Chris Brien}
+\seealso{\code{\link{angular}}, \code{\link{powerTransform}}.}
 \examples{
 n <-25
 y <- rbinom(10, n, 0.5)

@@ -8,6 +8,7 @@
  \item{permutation}{A vector specifying the new order of rows and columns.}
 }
 \value{A square \code{matrix}.}
+\author{Chris Brien}
 \seealso{\code{\link{permute.to.zero.lowertri}}}
 \examples{
   terms.marginality <-  matrix(c(1,0,0,0,0,  0,1,0,0,0, 0,1,1,0,0, 

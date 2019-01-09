@@ -27,98 +27,164 @@
 \cr
 (ii) Object manipulation \cr\cr
 
-\code{\link{alldiffs}}
-      \tab Forms an object of S3-class 'alldiffs' that stores the \cr
-      \tab predictions for a model fitted using asreml, along \cr
-      \tab with statistics for all pairwise differences.\cr
-\code{\link{asrtests}} 
-      \tab Forms an object of S3-class 'asrtests' that stores a \cr
-      \tab fitted asreml object, a pseudo-anova table for the \cr
-      \tab fixed and a history of changes and hypthesis testing \cr
+\code{\link{as.alldiffs}}
+      \tab Forms an \code{\link{alldiffs.object}} from the supplied \cr
+      \tab predictions, along with those statistics, associated with the \cr 
+      \tab predictions and their pairwise differnces, that have been supplied. \cr
+\code{\link{asrtests}}
+      \tab Pseudonym for \code{\link{as.asrtests}}. \cr
+\code{\link{as.asrtests}}
+      \tab Forms an \code{\link{asrtests.object}} that stores (i) a fitted asreml object, \cr
+      \tab (ii) a pseudo-anova table for the fixed terms and \cr
+      \tab (iii) a history of changes and hypthesis testing \cr
       \tab used in obtaining the model. \cr
+\code{\link{as.predictions.frame}}
+      \tab Forms a \code{\link{predictions.frame}} from a data.frame, ensuring that \cr
+      \tab the correct columns are present. \cr
+\code{\link{facCombine.alldiffs}}
+      \tab Combines several factors into one in the components of \cr
+      \tab an \code{\link{alldiffs.object}}.  \cr
+\code{\link{is.alldiffs}}
+      \tab A single-line function that tests whether an object is \cr 
+      \tab of class alldiffs.   \cr
+\code{\link{is.asrtests}}
+      \tab A single-line function that tests whether an object is \cr 
+      \tab of class asrtests.   \cr
+\code{\link{is.predictions.frame}}
+      \tab A single-line function that tests whether an object is \cr 
+      \tab of classes \code{\link{predictions.frame}} and \code{\link{data.frame}}.   \cr
 \code{\link{print.alldiffs}}
-      \tab Prints the values in an 'alldiffs' object in a nice format. \cr
-                          
+      \tab Prints the values in an \code{\link{alldiffs.object}} in a nice format. \cr
 \code{\link{print.asrtests}}
-      \tab Prints the values in an 'asrtests' object. \cr
+      \tab Prints the values in an \code{\link{asrtests.object}}. \cr
+\code{\link{sort.alldiffs}}
+      \tab Sorts the components of an \code{\link{alldiffs.object}} according to \cr
+      \tab the predicted values associated with a factor. \cr
+\code{\link{subset.alldiffs}}
+       \tab Subsets the components in an \code{\link{alldiffs.object}} according \cr 
+       \tab to the supplied condition. \cr
+\code{\link{validAlldiffs}}
+       \tab Checks that an object is a valid \code{\link{alldiffs.object}}. \cr
+\code{\link{validAsrtests}}
+       \tab Checks that an object is a valid \code{\link{asrtests.object}}. \cr
+\code{\link{validPredictionsFrame}}
+       \tab Checks that an object is a valid \code{\link{predictions.frame}}. \cr
 \cr
 (iii) Model modification \cr\cr
 
-\code{\link{addrm.terms.asrtests}}
-      \tab  Adds or removes the specified set terms from either \cr
-      \tab  the fixed or random model and records the change in a \cr
-      \tab  data.frame.\cr
+\code{\link{changeTerms.asrtests}}
+      \tab  Adds and drops the specified sets of terms from one \cr
+      \tab or both of the fixed  or random model and/or replaces the \cr
+      \tab residual (rcov) model with a new model. \cr
 \code{\link{newfit.asreml}} 
       \tab  Refits an asreml model with modified model formula \cr
       \tab  using either a call to 'update.asreml' or a direct \cr
       \tab  call to 'asreml'. \cr
-\code{\link{newrcov.asrtests}}  
-      \tab  Fits a new rcov formula using asreml. \cr
+\code{\link{reparamSigDevn.asrtests}}
+       \tab Reparamterizes each random (deviations) term \cr
+       \tab involving 'devn.fac' to a fixed term and ensures \cr
+       \tab that the same term, with 'trend.num' replacing \cr
+       \tab 'devn.fac', is included if any other term with \cr
+       \tab 'trend.num' is included in 'terms'. \cr
 \code{\link{rmboundary.asrtests}} 
        \tab Removes any boundary or singular variance components \cr
        \tab from the fit stored in 'asreml.obj' and records their \cr
        \tab removal in a data.frame. \cr
-\code{\link{setvarianceterms.asreml}} 
-       \tab Allows the seting of constraints and initial values \cr
-       \tab for terms in the 'random' and 'rcov' arguments of an \cr
+\code{\link{setvarianceterms.call}} 
+       \tab Allows the seting of bounds and initial values \cr
+       \tab for terms in the 'random' and 'residual' arguments of an \cr
        \tab 'asreml' call. \cr
-\code{\link{sig.devn.reparam.asrtests}}
-       \tab This function reparamterizes each random (deviations) \cr
-       \tab term involving 'devn.fac' to a fixed term and ensures \cr
-       \tab that the same term, with 'trend.num' replacing \cr
-       \tab 'devn.fac', is included if any other term with \cr
-       \tab 'trend.num' is included in 'terms'. \cr
 \cr
 (iv) Model testing \cr\cr
 
-\code{\link{choose.model.asrtests}}
+\code{\link{chooseModel.asrtests}}
        \tab Determines the set of significant terms taking into \cr
-       \tab account hierarchy or marginality relations. \cr
-\code{\link{info.crit.asreml}}
+       \tab account hierarchy or marginality relations and records \cr 
+       \tab the tests performed in a data.frame. \cr
+\code{\link{infoCriteria.asreml}}
        \tab        Computes AIC and BIC for a model. \cr
-\code{\link{recalc.wald.tab.asrtests}}
+\code{\link{recalcWaldTab.asrtests}}
        \tab Recalculates the denDF, F.inc and P values for a table \cr
        \tab of Wald test statistics obtained using 'wald.asreml'. \cr
-\code{\link{reml.lrt.asreml}} 
-       \tab Performs REML likelihood ratio test. \cr
+\code{\link{REMLRT.asreml}} 
+       \tab Performs a REML ratio test. \cr
+\code{\link{bootREMLRT.asreml}} 
+       \tab Performs a REML ratio test using the parametric \cr
+       \tab bootstrap. \cr
 \code{\link{testranfix.asrtests}}
        \tab Tests for a single fixed or random term in model \cr
-       \tab fitted using 'asreml'. \cr
-\code{\link{testrcov.asrtests}}
-       \tab Fits a new rcov formula using 'asreml' and tests \cr
-       \tab whether the change is significant. \cr
+       \tab fitted using 'asreml' and records the result in a \cr
+      \tab  data.frame. \cr
+\code{\link{testresidual.asrtests}}
+       \tab Fits a new residual formula using 'asreml', tests \cr
+       \tab whether the change is significant and records the \cr
+       \tab result in a data.frame. \cr
 \code{\link{testswapran.asrtests}}
-       \tab Tests, using a REMLRT, whether the difference between \cr
-       \tab current random model and one in which oldterms are \cr
-       \tab dropped and newterms are added is significant. \cr
+       \tab Tests, using a REMLRT, the significance of the difference \cr
+       \tab between the current random model and one in which oldterms \cr
+       \tab are dropped and newterms are added. The result is recorded \cr
+       \tab in a data.frame.\cr
 \cr
-(v) Model diagnostics \cr\cr
+(v) Model diagnostics and simulation\cr\cr
 
+\code{\link{plotVariofaces}}
+       \tab Plots empirical variogram faces, including envelopes, \cr
+       \tab from supplied residuals as described by Stefanova, Smith \cr
+       \tab & Cullis (2009). \cr
 \code{\link{variofaces.asreml}}
-       \tab Plot empirical variogram faces, including envelopes, \cr
-       \tab as described by Stefanova, Smith & Cullis (2009). \cr
+       \tab Calculates and plots empirical variogram faces, including \cr
+       \tab envelopes, as described by Stefanova, Smith & Cullis (2009). \cr
+\code{\link{estimateV.asreml}}
+       \tab Forms the estimated variance, random or residual matrix for \cr
+       \tab the observations from the variance parameter estimates. \cr
+\code{\link{simulate.asreml}}
+       \tab Produce sets of simulated data from a multivariate normal \cr
+       \tab distribtion and save quantites related to the simulated data. \cr
 \cr
 (vi) Prediction production and presentation \cr\cr
 
-\code{\link{pred.present.asreml}}
-       \tab This function forms the predictions for each \cr
-       \tab significant term and presents them in tables and/or \cr
-       \tab graphs. \cr
-\code{\link{predictiondiffs.asreml}}
-       \tab Forms all pairwise differences between a set of \cr
-       \tab predictions, their standard errors and p-values for a \cr
-       \tab test of whether the differences are significantly \cr
-       \tab different from zero. \cr
-\code{\link{predictionplot.asreml}}
-       \tab This function plots the predictions for a term, \cr
-       \tab possibly with error bars. \cr
-\code{\link{predictparallel.asreml}}
-       \tab This function forms the predictions and associated \cr
-       \tab statistics for a term, taking into account that a \cr
-       \tab numeric vector and a factor having parallel values may \cr
-       \tab occur in the model. It stores the results in an object \cr
-       \tab of class 'alldifffs' and prints the results. It can be \cr
-       \tab used when there are not parallel values. \cr
+\code{\link{allDifferences.data.frame}}
+       \tab Using supplied predictions and standard errors of pairwise \cr
+       \tab differences or the variance matrix of predictions, forms \cr
+       \tab all pairwise differences between the set of predictions, and \cr
+       \tab p-values for the differences. \cr
+\code{\link{linTransform.alldiffs}} 
+       \tab Calculates a linear transformation of the \cr
+       \tab predictions stored in an \code{\link{alldiffs.object}}. \cr
+\code{\link{plotPredictions.data.frame}}
+       \tab Plots the predictions for a term, possibly with \cr
+       \tab error bars. \cr
+\code{\link{plotPvalues.alldiffs}}
+       \tab Plots the p-values in the p.differences components \cr
+       \tab of an \code{\link{alldiffs.object}} as a heat map. \cr
+\code{\link{plotPvalues.data.frame}}
+       \tab Plots the p-values in data.frame as a heat map.\cr
+\code{\link{predictPlus.asreml}}
+       \tab Forms the predictions and associated statistics for \cr
+       \tab a term, using an asreml object and a wald.tab and \cr
+       \tab taking into account that a numeric vector \cr
+       \tab and a factor having parallel values may occur in the \cr
+       \tab model. It stores the results in an object of class \cr
+       \tab 'alldifffs' and may print the results. It can be \cr
+       \tab when there are not parallel values.  \cr
+\code{\link{predictPresent.asreml}}
+       \tab Forms the predictions for each of one or more terms \cr
+       \tab and presents them in tables and/or graphs. \cr
+\code{\link{recalcLSD.alldiffs}} 
+       \tab Adds or recalculates the LSD component of an \cr 
+       \tab \code{\link{alldiffs.object}}.                           \cr
+\code{\link{redoErrorIntervals.alldiffs}} 
+       \tab Adds or replaces the error intervals stored in the \cr
+       \tab prediction component of an \code{\link{alldiffs.object}}. \cr
+\code{\link{reorderClassify.alldiffs}}
+       \tab Reorders the components in an \code{\link{alldiffs.object}} \cr 
+       \tab according to a new classify. \cr
+\code{\link{sort.alldiffs}}
+       \tab Sorts the components in an \code{\link{alldiffs.object}} \cr 
+       \tab according to the predicted values associated with a factor. \cr
+\code{\link{subset.alldiffs}}
+       \tab Subsets the components in an \code{\link{alldiffs.object}} according \cr 
+       \tab to the supplied condition. \cr
 \cr
 (vii) Response transformation \cr\cr
 
@@ -127,14 +193,18 @@
 \code{\link{angular.mod}}
        \tab Applies the modified angular transformation to a \cr
        \tab vector of counts. \cr
-\code{\link{power.transform}}
-       \tab Perform linear and power transformations on a variable \cr
-       \tab whose name is given as a character string in \cr
-       \tab 'var.name'. The transformed variable is stored in the \cr
-       \tab 'data.frame data'. \cr
+\code{\link{powerTransform}}
+       \tab Performs a combination of a linear and a power \cr
+       \tab transformation on a variable. The transformed \cr
+       \tab variable is stored in the 'data.frame data'. \cr
 \cr
 (viii) Miscellaneous \cr\cr
 
+\code{\link{getASRemlVersionLoaded}}
+       \tab Finds the version of asreml that is loaded and \cr
+       \tab returns the initial characters in version. \cr
+\code{\link{loadASRemlVersion}}
+       \tab Ensures that a specific version of asreml is loaded.\cr
 \code{\link{num.recode}}
        \tab Recodes the unique values of a vector using the values  \cr
        \tab in a new vector. \cr
@@ -144,7 +214,15 @@
        \tab Permutes a square matrix until all the lower \cr
        \tab triangular elements are zero. \cr
 }
-The functions whose names end in 'asrtests', which are most of the model functions, utilize an \code{asrtests} object that stores:  
+The functions whose names end in 'alldiffs" utilize an \code{\link{alldiffs.object}} that stores:
+   (i) a \code{\link{predictions.frame}}, being a data frame containing predicted values, variables indexing them and their standard errores and estimability status; 
+       the lower and upper limits of error intervals will be included when these are requested,
+   (ii) optionally, square matrices containing all pairwise differences, the standard errors and p-values of the differences, 
+        and a summary of the LSD values, 
+   (iii) optionally, the variance matrix of the predictions, and 
+   (iv) if the response was trandformed for analysis, a data frame with backtransforms of the predicted values.
+
+The functions whose names end in 'asrtests', which are most of the model functions, utilize an \code{\link{asrtests.object}} that stores:  
   (i) the currently fitted model in \code{asreml.obj}, 
   (ii) the table of test statistics for the fixed effects in \code{wald.tab}, and 
   (iii) a data frame that contains a history of the changes made to the model in \code{test.summary}. 
@@ -154,9 +232,9 @@ The functions whose names end in 'asrtests', which are most of the model functio
 
 Maintainer: \packageMaintainer{asremlPlus}
 }
-\references{Butler, D. G., et al. (2010). \emph{Analysis of Mixed Models 
-            for {S} language environments: {ASReml-R} reference manual.}  
-            Brisbane, DPI Publications.
+\references{Butler, D. G., Cullis, B. R., Gilmour, A. R., Gogel, B. J. and 
+            Thompson, R. (2017). \emph{{ASReml-R} User Guide Version 4.}  
+            VSN International Ltd, \url{http://www.vsni.co.uk/software/asreml/}.
             
             Stefanova, K. T., Smith, A. B. & Cullis, B. R. (2009) Enhanced diagnostics for the 
             spatial analysis of field trials. \emph{Journal of Agricultural, Biological, 
@@ -168,13 +246,14 @@ Maintainer: \packageMaintainer{asremlPlus}
 ## Set up for analysis
 library(dae)
 library(asreml)
+library(asremlPlus)
 ## use ?Wheat.dat for data set details
 data(Wheat.dat)
 
 # Fit initial model
 current.asr <- asreml(yield ~ Rep + WithinColPairs + Variety, 
                       random = ~ Row + Column + units,
-                      rcov = ~ ar1(Row):ar1(Column), 
+                      residual = ~ ar1(Row):ar1(Column), 
                       data=Wheat.dat)
 summary(current.asr)
 
@@ -182,62 +261,53 @@ summary(current.asr)
 current.asrt <- asrtests(current.asr, NULL, NULL)
 
 # Check for and remove any boundary terms
-current.asrt <- rmboundary.asrtests(current.asrt)
+current.asrt <- rmboundary(current.asrt)
 
-#Check term for within Column pairs
-current.asrt <- testranfix.asrtests("WithinColPairs", current.asrt, drop.fix.ns=TRUE)
-
+# Check term for within Column pairs
+current.asrt <- testranfix(current.asrt, "WithinColPairs", drop.fix.ns=TRUE)
+  
 # Test nugget term
-current.asrt <- testranfix.asrtests("units", current.asrt, positive=TRUE)
-
+current.asrt <- testranfix(current.asrt, "units", positive=TRUE)
+  
 # Test Row autocorrelation
-current.asrt <- testrcov.asrtests("~ Row:ar1(Column)", current.asrt, 
-                                  label="Row autocorrelation", simpler=TRUE)
-
+current.asrt <- testresidual(current.asrt, "~ Row:ar1(Column)", 
+                             label="Row autocorrelation", simpler=TRUE)
+  
 # Test Col autocorrelation (depends on whether Row autocorrelation retained)
 k <- match("Row autocorrelation", current.asrt$test.summary$terms)
 p <- current.asrt$test.summary$p
-{if (p[k] <= 0.05)
-  current.asrt <- testrcov.asrtests("~ ar1(Row):Column", current.asrt, 
-                                    label="Col autocorrelation", simpler=TRUE,
-                                    update=FALSE)
- else
-   current.asrt <- testrcov.asrtests("~ Row:Column", current.asrt, 
-                                     label="Col autocorrelation", simpler=TRUE,
-                                     update=FALSE)
+{ if (p[k] <= 0.05)
+    current.asrt <- testresidual(current.asrt, "~ ar1(Row):Column", 
+                                 label="Col autocorrelation", simpler=TRUE,
+                                 update=FALSE)
+    else
+      current.asrt <- testresidual(current.asrt, "~ Row:Column", 
+                                   label="Col autocorrelation", simpler=TRUE,
+                                   update=FALSE)
 }
 print(current.asrt)
+info <- infoCriteria(current.asrt$asreml.obj)
 
 # Get current fitted asreml object
 current.asr <- current.asrt$asreml.obj
 current.asr <- update(current.asr, aom=TRUE)
-
-
+  
+  
 # Do residuals-versus-fitted values plot
-plot(fitted.values(current.asr),residuals(current.asr))
-
-# Form variance matrix based on estimated variance parameters
-s2 <- current.asr$sigma2
-gamma.Row <- current.asr$gammas[1]
-gamma.unit <- current.asr$gammas[2]
-rho.r <- current.asr$gammas[4]
-rho.c <- current.asr$gammas[5]
-row.ar1 <- mat.ar1(order=10, rho=rho.r)
-col.ar1 <- mat.ar1(order=15, rho=rho.c)
-V <- fac.vcmat(Wheat.dat$Row, gamma.Row) + 
-     gamma.unit * diag(1, nrow=150, ncol=150) + 
-     mat.dirprod(row.ar1, col.ar1)
-V <- s2*V
-
+plot(fitted(current.asr),residuals(current.asr))
+  
 #Produce variogram and variogram faces plot (Stefanaova et al, 2009)
-plot.asrVariogram(variogram(current.asr))
-variofaces.asreml(current.asr, V=V)
+plot.varioGram(varioGram(current.asr))
+faces <- variofaces(current.asr, V=V, maxiter=50, units="addtores")
 
-#Get Variety predictionsand all pairwise prediction differences and p-values
-Var.diffs <- predictparallel.asreml(classify = "Variety", 
-                                    asreml.obj=current.asr,
-                                    error.intervals="halfLeast",
-                                    wald.tab=current.asrt$wald.tab,
-                                    tables = "predictions")
+#Get Variety predictions, sorted in increasing order for the predicted values, 
+#and all pairwise prediction differences and p-values. Plot the latter.
+Var.diffs <- predictPlus(classify = "Variety", 
+                         asreml.obj=current.asr, 
+                         error.intervals="halfLeast",
+                         wald.tab=current.asrt$wald.tab,
+                         tables = "predictions", 
+                         sortFactor = "Variety")
 print(Var.diffs, which = c("differences", "p.differences"))
+plotPvalues(Var.diffs)
 }}

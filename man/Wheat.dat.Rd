@@ -24,4 +24,5 @@ Butler, D. G., et al. (2010). \emph{Analysis of Mixed Models
             variance parameter estimation in linear mixed models. \emph{Biometrics}, 
             \bold{51}, 1440-1450.
 }
+\author{Chris Brien}
 \keyword{datasets}

@@ -7,6 +7,7 @@
  \item{x}{A square matrix of order n with at least n*(n-1)/2 zero elements.}
 }
 \value{A square \code{matrix}.}
+\author{Chris Brien}
 \seealso{\code{\link{permute.square}}}
 \examples{
   terms.marginality <-  matrix(c(1,0,0,0,0,  0,1,0,0,0, 0,1,1,0,0, 
