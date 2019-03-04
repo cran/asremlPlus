@@ -1,5 +1,11 @@
-test <- function(object = 5)
-{ deparse(substitute(object)) } 
+"getTestPvalue.asrtests" <- function(asrtests.obj, label, ...)
+{
+  k <- match(label, asrtests.obj$test.summary$terms)
+  if (is.na(k))
+    stop("Label not found in test.summary of supplied asrtests.obj")
+  p <- asrtests.obj$test.summary$p
+  return(p[k])
+}
 
 "validAsreml" <- function(object)
 {
@@ -57,8 +63,7 @@ test <- function(object = 5)
   else #form wald.tab
   { 
     wald.tab <- asreml::wald.asreml(asreml.obj, denDF = denDF, trace = FALSE, ...)
-    if (!is.data.frame(wald.tab))
-      wald.tab <- wald.tab$Wald
+    wald.tab <- chkWald(wald.tab)
   }
   test <- list(asreml.obj = asreml.obj, wald.tab=wald.tab, test.summary = test.summary)
   class(test) <- "asrtests"
@@ -105,22 +110,82 @@ test <- function(object = 5)
 
 setOldClass("asrtests")
 
-"print.asrtests" <- function(x, which = "all", ...)
+"print.wald.tab" <- function(x, which.wald = c("title", "heading", "table"), 
+                             colourise = FALSE, ...)
+{
+  asr4 <- isASRemlVersionLoaded(4, notloaded.fault = FALSE)
+  
+  options <- c("title", "heading", "table", "all")
+  opt <- options[unlist(lapply(which.wald, check.arg.values, options=options))]
+
+  #make change to control printing
+  class(x) <- c("wald", "data.frame")
+  x$Pr <- round(x$Pr, digits=4)
+  
+  if (any(c("title", "all") %in% opt))
+    cat("\n\n####  Pseudo-anova table for fixed terms \n\n")
+  if  (!any(c("table", "all") %in% opt)) #no table to be printed
+  {
+    if ("heading" %in% opt)
+    {
+      hd <- attr(x, which = "heading")
+      for (i in 1:length(hd))
+        cat(hd[i],"\n")
+    }
+  }
+  else #print table, possibly with heading
+  {
+    if (any(c("heading", "all") %in% opt) && !is.null(asr4) && asr4)
+    {
+      asr.col <- asreml::asreml.options()$colourise
+      if (xor(colourise,asr.col))
+        asreml::asreml.options(colourise = colourise)
+      print(x, ...)
+      asreml::asreml.options(colourise = asr.col)
+    } else
+    {
+      if (any(c("heading", "all") %in% opt))
+      {
+        hd <- attr(x, which = "heading")
+        for (i in 1:length(hd))
+          cat(hd[i],"\n")
+      } else
+      {
+        cat("\n")      
+      }
+      print.data.frame(x, ...)
+    }
+  }
+
+  invisible()
+}
+
+"print.asrtests" <- function(x, which = "all", colourise = FALSE, ...)
  { 
+  asr4 <- isASRemlVersionLoaded(4, notloaded.fault = TRUE)
+
   #Check that have a valid object of class asrtests
   validasrt <- validAsrtests(x)  
   if (is.character(validasrt))
     stop(validasrt)
   
-  options <- c("asremlsummary", "pseudoanova", "testsummary", "all")
+  options <- c("asremlsummary", "pseudoanova", "wald.tab", "testsummary", "all")
    opt <- options[unlist(lapply(which, check.arg.values, options=options))]
+   if ("wald.tab" %in% opt)
+   {
+     opt[match("wald.tab", opt)] <- "pseudoanova"
+     opt <- unique(opt)
+   }
+   
+   #print summary of asreml.obj
    if ("asremlsummary" %in% opt | "all" %in% opt)
      print(summary(x$asreml.obj), ...)
+   
+   #print wald.tab
    if ("pseudoanova" %in% opt | "all" %in% opt)
-   {
-     cat("\n\n  Pseudo-anova table for fixed terms \n\n")
-     print(x$wald.tab, ...)
-   }
+     print.wald.tab(x$wald.tab, colourise = colourise, ...)
+
+   #print test.summary
    if ("testsummary" %in% opt | "all" %in% opt)
    {  
      cat("\n\n  Sequence of model terms whose status in the model has been investigated \n\n")
@@ -216,7 +281,7 @@ setOldClass("asrtests")
   }
   attr(wald.tab, which = "heading") <- hd
   if (nrow(wald.tab) == 0)
-    warning("Wald.tab is empty - probably the caclulations have failed")
+    warning("Wald.tab is empty - probably the calculations have failed")
   else
     #Calc Pr
     wald.tab$Pr <- 1 - pf(wald.tab$F.inc, wald.tab$Df, wald.tab$denDF)
@@ -993,8 +1058,7 @@ setOldClass("asrtests")
       asreml.obj <- asreml.new.obj
       #Update wald.tab
       wald.tab <- asreml::wald.asreml(asreml.obj, denDF = denDF, trace = trace, ...)
-      if (!is.data.frame(wald.tab))
-        wald.tab <- wald.tab$Wald
+      wald.tab <- chkWald(wald.tab)
       if (!asreml.obj$converge)
         action <- paste(action, " - old uncoverged", sep="")
       test.summary <- addtoTestSummary(test.summary, terms = label, DF=NA, denDF = NA, 
@@ -1020,8 +1084,7 @@ setOldClass("asrtests")
       test.summary <- temp.asrt$test.summary
       #Update wald.tab
       wald.tab <- asreml::wald.asreml(asreml.obj, denDF = denDF, trace = trace, ...)
-      if (!is.data.frame(wald.tab))
-        wald.tab <- wald.tab$Wald
+      wald.tab <- chkWald(wald.tab)
     } else #unconverged and not allowed
     {
       #Check if get convergence with any boundary terms removed
@@ -1047,8 +1110,7 @@ setOldClass("asrtests")
         test.summary <- temp.asrt$test.summary
         #Update wald.tab
         wald.tab <- asreml::wald.asreml(asreml.obj, denDF = denDF, trace = trace, ...)
-        if (!is.data.frame(wald.tab))
-          wald.tab <- wald.tab$Wald
+        wald.tab <- chkWald(wald.tab)
       } else
       {
         p <- NA
@@ -1125,8 +1187,7 @@ setOldClass("asrtests")
     #Have a fixed term
     { 
       wald.tab <- asreml::wald.asreml(asreml.obj, denDF = denDF, trace = trace, ...)
-      if (!is.data.frame(wald.tab))
-             wald.tab <- wald.tab$Wald
+      wald.tab <- chkWald(wald.tab)
       options <- c("none", "residual", "maximum", "supplied")
       opt <- options[check.arg.values(dDF.na, options)]
       if (opt == "supplied" & is.null(dDF.values))
@@ -1202,8 +1263,7 @@ setOldClass("asrtests")
               #Update wald.tab
               wald.tab <- asreml::wald.asreml(asreml.obj, denDF = denDF, 
                                               trace = trace, ...)
-              if (!is.data.frame(wald.tab))
-                wald.tab <- wald.tab$Wald
+              wald.tab <- chkWald(wald.tab)
               if (!asreml.obj$converge)
                 action <- paste(action, " - unconverged", sep="")
               test.summary <- addtoTestSummary(test.summary, terms = term, 
@@ -1392,8 +1452,7 @@ setOldClass("asrtests")
           asreml.obj <- asreml.new.obj
           #Update wald.tab
           wald.tab <- asreml::wald.asreml(asreml.obj, denDF = denDF, trace = trace, ...)
-          if (!is.data.frame(wald.tab))
-            wald.tab <- wald.tab$Wald
+          wald.tab <- chkWald(wald.tab)
         }
       } else #Evaluate test for drop.ran.ns
       {
@@ -1416,8 +1475,7 @@ setOldClass("asrtests")
             asreml.obj <- asreml.new.obj
             #Update wald.tab
             wald.tab <- asreml::wald.asreml(asreml.obj, denDF = denDF, trace = trace, ...)
-            if (!is.data.frame(wald.tab))
-              wald.tab <- wald.tab$Wald
+            wald.tab <- chkWald(wald.tab)
         }
         if (!asreml.new.obj$converge)
           action <- paste(action, " - new unconverged", sep="")
@@ -1623,8 +1681,7 @@ setOldClass("asrtests")
     test.summary <- temp.asrt$test.summary
     #Update wald.tab
     wald.tab <- asreml::wald.asreml(asreml.obj, denDF = denDF, trace = trace, ...)
-    if (!is.data.frame(wald.tab))
-      wald.tab <- wald.tab$Wald
+    wald.tab <- chkWald(wald.tab)
   }
   results <- asrtests(asreml.obj = asreml.obj, 
                       wald.tab = wald.tab, 
@@ -1803,8 +1860,7 @@ setOldClass("asrtests")
     test.summary <- temp.asrt$test.summary
     #Update wald.tab
     wald.tab <- asreml::wald.asreml(asreml.obj, denDF = denDF, trace = trace, ...)
-    if (!is.data.frame(wald.tab))
-      wald.tab <- wald.tab$Wald
+    wald.tab <- chkWald(wald.tab)
   } 
   results <- asrtests(asreml.obj = asreml.obj, 
                       wald.tab = wald.tab, 
@@ -2062,8 +2118,7 @@ setOldClass("asrtests")
         asreml.obj <- asrtests.obj$asreml.obj
         #Update wald.tab
         wald.tab <- asreml::wald.asreml(asreml.obj, denDF = denDF, trace = trace, ...)
-        if (!is.data.frame(wald.tab))
-          wald.tab <- wald.tab$Wald
+        wald.tab <- chkWald(wald.tab)
         asrtests.obj$wald.tab <- wald.tab
       } else
       {
@@ -2095,6 +2150,18 @@ setOldClass("asrtests")
     pred <- predict(asreml.obj, classify=classify, levels=levels, 
                     sed = sed, vcov = vcov, 
                     trace = trace, ...)
+  class(pred$pvals) <- c("predictions.frame", class(pred$pvals))
+  return(pred)
+}
+
+"predictASR3" <- function(asreml.obj, classify, levels = list(), 
+                          sed = TRUE, vcov = FALSE, 
+                          trace = FALSE, ...)
+{
+  pred <- predict(asreml.obj, classify=classify, levels=levels, 
+                  sed = sed, vcov = vcov, 
+                  trace = trace, ...)$predictions
+  class(pred$pvals) <- c("predictions.frame", "asreml.predict", "data.frame")
   return(pred)
 }
 
@@ -2180,9 +2247,9 @@ setOldClass("asrtests")
                           sed=pairwise, vcov = get.vcov, 
                           trace = trace, ...)
     else
-      pred <- predict(asreml.obj, classify=classify, 
-                      sed=pairwise, vcov = get.vcov,  
-                      trace = trace, ...)$predictions
+      pred <- predictASR3(asreml.obj, classify=classify, 
+                          sed=pairwise, vcov = get.vcov,  
+                          trace = trace, ...)
     if (!is.null(x.fac) && x.fac %in% vars)
     { 
       k <- match(x.fac, names(pred$pvals))
@@ -2227,9 +2294,9 @@ setOldClass("asrtests")
                             sed = pairwise, vcov = get.vcov, 
                             trace = trace, ...)
       else
-        pred <- predict(asreml.obj, classify=classify, 
-                        sed = pairwise,  vcov = get.vcov, 
-                        trace = trace, ...)$predictions
+        pred <- predictASR3(asreml.obj, classify=classify, 
+                            sed = pairwise,  vcov = get.vcov, 
+                            trace = trace, ...)
       
       else
     {
@@ -2251,9 +2318,9 @@ setOldClass("asrtests")
                             sed = pairwise, vcov = get.vcov, 
                             trace = trace, ...)
       else
-        pred <- predict(asreml.obj, classify=classify, levels=x.list, 
-                        sed = pairwise, vcov = get.vcov, 
-                        trace = trace, ...)$predictions
+        pred <- predictASR3(asreml.obj, classify=classify, levels=x.list, 
+                            sed = pairwise, vcov = get.vcov, 
+                            trace = trace, ...)
     }
     k <- match(x.num, names(pred$pvals))
     #Set x values for plotting and table labels in x.num
@@ -2316,7 +2383,10 @@ setOldClass("asrtests")
     opt <- options[check.arg.values(dDF.na, options)]
     if (opt == "supplied" && is.null(dDF.values))
       stop('Need to set dDF.values because have set dDF.na = \"supplied\"')
-    warning("Denominator degrees of freedom obtained using dDF.na method ", opt)
+    warn <- paste("Denominator degrees of freedom obtained using dDF.na method", opt)
+    if (is.null(wald.tab))
+      warn <- paste(warn, "\n- no wald.tab supplied")
+    warning(warn)
     #Compute denom.df
     denom.df <- NA
     if (opt == "supplied")
@@ -2367,15 +2437,13 @@ setOldClass("asrtests")
                           pairwise = pairwise, 
                           inestimable.rm = inestimable.rm, 
                           alpha = alpha)
-  
   if (is.null(linear.transformation))
   {
     #Add lower and upper uncertainty limits
     diffs <- redoErrorIntervals.alldiffs(diffs, error.intervals = error.intervals,
                                          alpha = alpha, avsed.tolerance = avsed.tolerance,
                                          meanLSD.type = meanLSD.type, LSDby = LSDby)
-    
-
+ 
     #Add backtransforms if there has been a transformation
     diffs <- addBacktransforms.alldiffs(alldiffs.obj = diffs, 
                                         transform.power = transform.power, 
@@ -2420,6 +2488,11 @@ setOldClass("asrtests")
 #a function to plot asreml predictions and associated statistics
 { 
   
+  #Get ... argument so can check for linear.transformation argument
+  tempcall <- list(...)
+  if ("linear.transformation" %in% names(tempcall))
+    warning("linear.transformation is not an argument to plotPredictions - perhaps use linTransform")
+
   #Change asreml4 names to asreml3 names
   data <- as.predictions.frame(data, se = "std.error", est.status = "status")
   #Check that a valid object of class predictions.frame
@@ -2864,63 +2937,6 @@ setOldClass("asrtests")
     cat("\n#### Plot saved in ", filename,"\n")
   }
   invisible()
-}
-
-#Function to calculate the LSDs for combinations of the levels of the by factor(s)
-sliceLSDs <- function(alldiffs.obj, by, t.value, alpha = 0.05)
-{
-  sed <- alldiffs.obj$sed
-  denom.df <- attr(alldiffs.obj, which = "tdf")
-  if (is.null(denom.df))
-  {
-    warning(paste("The degrees of freedom of the t-distribtion are not available in alldiffs.obj\n",
-                  "- p-values and LSDs not calculated"))
-    LSDs <- NULL
-  } else
-  {
-    t.value = qt(1-alpha/2, denom.df)
-    #Process the by argument
-    if (is.list(by))
-    {
-      if (any(unlist(lapply(by, function(x) class(x)!="factor"))))
-        stop("Some components of the by list are not factors")
-      fac.list <- by
-    } else
-    {
-      if (class(by) == "factor")
-        fac.list <- list(by)
-      else
-      {
-        if (is.character(by))
-          fac.list <- as.list(alldiffs.obj$predictions[by])
-        else
-          stop("by is not one of the allowed class of inputs")
-      }
-    }
-    #Form levels combination for which a mean LSD is required
-    fac.comb <- fac.combine(fac.list, combine.levels = TRUE)
-    if (length(fac.comb) != nrow(sed))
-      stop("Factor(s) in by argument are not the same length as the order of the sed matrix")
-    levs <- levels(fac.comb)
-    combs <- strsplit(levs, ",", fixed = TRUE)
-    #Get the LSDs
-    LSDs <- lapply(levs, 
-                   function(lev, sed, t.value)
-                   {
-                     krows <- lev == fac.comb
-                     ksed <- sed[krows, krows]
-                     minLSD <- t.value * min(ksed, na.rm = TRUE)
-                     maxLSD <- t.value * max(ksed, na.rm = TRUE)
-                     meanLSD <- t.value * sqrt(mean(ksed * ksed, na.rm = TRUE))
-                     return(cbind(minLSD, meanLSD, maxLSD))
-                   }, sed = sed, t.value = t.value)
-    if (!is.null(LSDs))
-    {
-      LSDs <- as.data.frame(do.call(rbind, LSDs))
-      rownames(LSDs) <- levs
-    }
-  }  
-  return(LSDs)
 }
 
 "predictPresent.asreml" <- function(asreml.obj, terms, 

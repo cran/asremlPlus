@@ -1,5 +1,79 @@
 \name{news}
 \title{News for Package asremlPlus}
+\section{asremlPlus Version 4.1-22 (2019-03-04)}{
+  \itemize{
+    \item{Build in R version 3.5.2.}
+    \item{Update the license to remove blank line and resubmit to CRAN.}
+    }
+}
+\section{asremlPlus Version 4.1-21 (2019-03-01)}{
+  \itemize{
+    \item{Build in R version 3.5.2.}
+    \item{Update the license to include 2019.}
+    }
+}
+\section{asremlPlus Version 4.1-20 (2019-02-23)}{
+  \itemize{
+    \item{Add print.predictions.frame and print.wald.tab as S3 methods to give more control over the printing of objects of class \code{wald.tab} and \code{predictions.frame}.}
+    \item{Made sure that class \code{wald.tab} is associated with a \code{wald.tab} and classes asreml.predict and predictions.frame are associated with a \code{predictions.frame} when these are produced by asreml.}
+    }
+}
+\section{asremlPlus Version 4.1-19 (2019-02-22)}{
+  \itemize{
+    \item{Add \code{colourise} argument to print.alldiffs so that the default is FALSE and it overrides the \code{asreml.options} setting.}
+    }
+}
+\section{asremlPlus Version 4.1-18 (2019-02-21)}{
+  \itemize{
+    \item{Use R.rsp to install vignettes so that hyperlinks are active.}
+    \item{Add \code{colourise} argument to print.asrtests so that the default is FALSE and it overrides the \code{asreml.options} setting.}
+    }
+}
+\section{asremlPlus Version 4.1-17 (2019-02-16)}{
+  \itemize{
+    \item{Fix bug in infoCriteria.asreml when DF supplied. For both infoCriteria.asreml and REMLRT.asreml, calculate the bound terms and if appropriate give arning messages.}
+    }
+}
+\section{asremlPlus Version 4.1-16 (2019-02-07)}{
+  \itemize{
+    \item{More vignettes changes, including adding manual to vignettes.}
+    \item{Fix accidental reordering of \code{alldiffs} object when \code{meanLSD.type} is \code{factor combinatons}.}
+    }
+}
+\section{asremlPlus Version 4.1-15 (2019-02-05)}{
+  \itemize{
+    \item{Make vignettes visible.}
+    \item{Modify estimateV in response to correction of corb naming in latest build.}
+    }
+}
+\section{asremlPlus Version 4.1-14 (2019-02-02)}{
+  \itemize{
+    \item{Revise Wheat vignette and entry in asremlPlus-package documentation.}
+    \item{Add Ladybird predictions vignette.}
+    \item{Modify printing of \code{wald.tab} by print.asrtests to remove colouring because it causes problems with knitr.}
+    }
+}
+\section{asremlPlus Version 4.1-13 (2019-01-30)}{
+  \itemize{
+    \item{Add a check to plotPredictions.data.frame to warn when \code{linear.transformation} is supplied.}
+    \item{Also remove zero LSDs when calculating overall LSD and sed.range.}
+    \item{Add a check to linTransform.alldiffs that factors in LSDby are in the submodel.}
+    \item{Add the Wheat example as a vignette.}
+    }
+}
+\section{asremlPlus Version 4.1-12 (2019-01-26)}{
+  \itemize{
+    \item{Remove LSDs for which sed is effectively zero from the calculation of LSD statistics, provided not all are zero.}
+    }
+}
+\section{asremlPlus Version 4.1-11 (2019-01-21)}{
+  \itemize{
+    \item{Fix bug in test of the range of SEDs against \code{avsed.tolerance} when caclulating LSDs.}
+    \item{Add attributes \code{meanLSD.type} and \code{LSDby} to \code{alldiffs} objects so that redoErrorIntervals.alldiffs can determine these attributes when its \code{meanLSD.type} argument is not set.}
+    \item{Add function getTestPvalue.asrtests.}
+    \item{Minor documentation changes.}
+  }
+}
 \section{asremlPlus Version 4.1-10 (2019-01-08)}{
   \itemize{
     \item{Add entries for \code{predictions.frame}, \code{alldiffs.object} and \code{asrtests.object} and made changes to the documentation to provide links to these pages.}

@@ -57,6 +57,10 @@
       \tab Prints the values in an \code{\link{alldiffs.object}} in a nice format. \cr
 \code{\link{print.asrtests}}
       \tab Prints the values in an \code{\link{asrtests.object}}. \cr
+\code{\link{print.predictions.frame}}
+      \tab Prints the values in a \code{\link{predictions.frame}}, with or without title and heading. \cr
+\code{\link{print.wald.tab}}
+      \tab Prints a Wald or pseudoanova table. \cr
 \code{\link{sort.alldiffs}}
       \tab Sorts the components of an \code{\link{alldiffs.object}} according to \cr
       \tab the predicted values associated with a factor. \cr
@@ -89,9 +93,9 @@
 \code{\link{rmboundary.asrtests}} 
        \tab Removes any boundary or singular variance components \cr
        \tab from the fit stored in 'asreml.obj' and records their \cr
-       \tab removal in a data.frame. \cr
+       \tab removal in an \code{\link{asrtests.object}}. \cr
 \code{\link{setvarianceterms.call}} 
-       \tab Allows the seting of bounds and initial values \cr
+       \tab Allows the setting of bounds and initial values \cr
        \tab for terms in the 'random' and 'residual' arguments of an \cr
        \tab 'asreml' call. \cr
 \cr
@@ -100,7 +104,10 @@
 \code{\link{chooseModel.asrtests}}
        \tab Determines the set of significant terms taking into \cr
        \tab account hierarchy or marginality relations and records \cr 
-       \tab the tests performed in a data.frame. \cr
+       \tab the tests performed in an \code{\link{asrtests.object}}. \cr
+\code{\link{getTestPvalue.asrtests}}
+       \tab Gets the p-value for a test recorded in the test.summary \cr
+       \tab data.frame of an \code{\link{asrtests.object}}.  \cr
 \code{\link{infoCriteria.asreml}}
        \tab        Computes AIC and BIC for a model. \cr
 \code{\link{recalcWaldTab.asrtests}}
@@ -113,17 +120,17 @@
        \tab bootstrap. \cr
 \code{\link{testranfix.asrtests}}
        \tab Tests for a single fixed or random term in model \cr
-       \tab fitted using 'asreml' and records the result in a \cr
-      \tab  data.frame. \cr
+       \tab fitted using 'asreml' and records the result in an \cr
+      \tab  \code{\link{asrtests.object}}. \cr
 \code{\link{testresidual.asrtests}}
        \tab Fits a new residual formula using 'asreml', tests \cr
        \tab whether the change is significant and records the \cr
-       \tab result in a data.frame. \cr
+       \tab result in an \code{\link{asrtests.object}}. \cr
 \code{\link{testswapran.asrtests}}
        \tab Tests, using a REMLRT, the significance of the difference \cr
        \tab between the current random model and one in which oldterms \cr
        \tab are dropped and newterms are added. The result is recorded \cr
-       \tab in a data.frame.\cr
+       \tab in an \code{\link{asrtests.object}}.\cr
 \cr
 (v) Model diagnostics and simulation\cr\cr
 
@@ -233,8 +240,8 @@ The functions whose names end in 'asrtests', which are most of the model functio
 Maintainer: \packageMaintainer{asremlPlus}
 }
 \references{Butler, D. G., Cullis, B. R., Gilmour, A. R., Gogel, B. J. and 
-            Thompson, R. (2017). \emph{{ASReml-R} User Guide Version 4.}  
-            VSN International Ltd, \url{http://www.vsni.co.uk/software/asreml/}.
+            Thompson, R. (2018). \emph{{ASReml-R} Reference Manual Version 4.}  
+            VSN International Ltd, \url{http://asreml.org}.
             
             Stefanova, K. T., Smith, A. B. & Cullis, B. R. (2009) Enhanced diagnostics for the 
             spatial analysis of field trials. \emph{Journal of Agricultural, Biological, 
@@ -242,7 +249,7 @@ Maintainer: \packageMaintainer{asremlPlus}
 \keyword{ package }
 \seealso{\code{asreml}}
 \examples{\dontrun{
-## Analyse wheat dat using asreml and asremlPlus
+## Analyse wheat dat using asreml and asremlPlus (see also the Wheat Vignette)
 ## Set up for analysis
 library(dae)
 library(asreml)
@@ -257,13 +264,23 @@ current.asr <- asreml(yield ~ Rep + WithinColPairs + Variety,
                       data=Wheat.dat)
 summary(current.asr)
 
-# Load current fit into an asrtests object
-current.asrt <- asrtests(current.asr, NULL, NULL)
+# Intialize a testing sequence by loading the current fit into an asrtests object
+current.asrt <- as.asrtests(current.asr, NULL, NULL)
 
 # Check for and remove any boundary terms
 current.asrt <- rmboundary(current.asrt)
 
-# Check term for within Column pairs
+#Unbind Rep, Row and Column components and reload into an asrtests object
+current.asr <- setvarianceterms(current.asr$call, 
+                                terms = c("Rep", "Rep:Row", "Rep:Column"), 
+                                bounds = "U")
+current.asrt <- as.asrtests(current.asr, NULL, NULL)
+current.asrt <- rmboundary(current.asrt)
+summary(current.asrt$asreml.obj)$varcomp
+print(current.asrt, which = "testsummary")
+print(current.asrt, which = "pseudoanova")
+
+# Check term for within Column pairs (a post hoc covariate)
 current.asrt <- testranfix(current.asrt, "WithinColPairs", drop.fix.ns=TRUE)
   
 # Test nugget term
@@ -274,40 +291,50 @@ current.asrt <- testresidual(current.asrt, "~ Row:ar1(Column)",
                              label="Row autocorrelation", simpler=TRUE)
   
 # Test Col autocorrelation (depends on whether Row autocorrelation retained)
-k <- match("Row autocorrelation", current.asrt$test.summary$terms)
-p <- current.asrt$test.summary$p
-{ if (p[k] <= 0.05)
+(p <- getTestPvalue(current.asrt, label = "Row autocorrelation"))
+{ if (p <= 0.05)
     current.asrt <- testresidual(current.asrt, "~ ar1(Row):Column", 
-                                 label="Col autocorrelation", simpler=TRUE,
-                                 update=FALSE)
-    else
-      current.asrt <- testresidual(current.asrt, "~ Row:Column", 
-                                   label="Col autocorrelation", simpler=TRUE,
-                                   update=FALSE)
+                                 label="Col autocorrelation", 
+                                 simpler=TRUE, update=FALSE)
+  else
+    current.asrt <- testresidual(current.asrt, "~ Row:Column", 
+                                 label="Col autocorrelation", 
+                                 simpler=TRUE, update=FALSE)
 }
-print(current.asrt)
-info <- infoCriteria(current.asrt$asreml.obj)
 
-# Get current fitted asreml object
+# Output the results
+print(current.asrt, which = "test")
+info <- infoCriteria(current.asrt$asreml.obj)
+summary(current.asrt$asreml.obj)$varcomp
+
+# Get current fitted asreml object and update to include standardized residuals
 current.asr <- current.asrt$asreml.obj
 current.asr <- update(current.asr, aom=TRUE)
-  
-  
+Wheat.dat$res <- residuals(current.asr, type = "stdCond")
+Wheat.dat$fit <- fitted(current.asr)
+
+#### Do diagnostic checking  
 # Do residuals-versus-fitted values plot
-plot(fitted(current.asr),residuals(current.asr))
+with(Wheat.dat, plot(fit, res))
   
 #Produce variogram and variogram faces plot (Stefanaova et al, 2009)
 plot.varioGram(varioGram(current.asr))
-faces <- variofaces(current.asr, V=V, maxiter=50, units="addtores")
+faces <- variofaces(current.asr, V=NULL, units="addtores", 
+                    maxiter=50, update = FALSE)
 
 #Get Variety predictions, sorted in increasing order for the predicted values, 
-#and all pairwise prediction differences and p-values. Plot the latter.
+#and all pairwise prediction differences and p-values
 Var.diffs <- predictPlus(classify = "Variety", 
                          asreml.obj=current.asr, 
                          error.intervals="halfLeast",
-                         wald.tab=current.asrt$wald.tab,
-                         tables = "predictions", 
-                         sortFactor = "Variety")
+                         wald.tab=current.asrt$wald.tab, 
+                         sortFactor = "Variety",
+                         tables = "predictions")
 print(Var.diffs, which = c("differences", "p.differences"))
+
+# Plot the Variety predictions, with halfLSD intervals, and the p-values
+plotPredictions(Var.diffs$predictions, 
+                classify = "Variety", y = "predicted.value", 
+                error.intervals = "half")
 plotPvalues(Var.diffs)
 }}

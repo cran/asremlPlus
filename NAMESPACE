@@ -22,6 +22,8 @@ export(addrm.terms.asreml,
        facCombine,
        facCombine.alldiffs,
        getASRemlVersionLoaded,
+       getTestPvalue,
+       getTestPvalue.asrtests,
        infoCriteria,
        infoCriteria.asreml,
        info.crit.asreml,
@@ -56,6 +58,8 @@ export(addrm.terms.asreml,
        pred.present.asreml,
        print.alldiffs,
        print.asrtests, 
+       print.predictions.frame, 
+       print.wald.tab, 
        recalcLSD, 
        recalcLSD.alldiffs, 
        recalcWaldTab,
@@ -99,9 +103,9 @@ export(addrm.terms.asreml,
        variofaces.asreml)
 exportClasses(alldiffs, asrtests, predictions.frame)
 import(dae, ggplot2)
-importFrom("stats", "as.formula", "fitted", "fitted.values", "formula", "model.matrix", 
-                    "na.omit", "pchisq", "pf", "predict", "pt", "qt", "quantile", 
-                    "resid", "rnorm","simulate", "terms", "terms.formula", 
+importFrom("stats", "as.formula", "fitted", "fitted.values", "formula", "median", 
+                    "model.matrix", "na.omit", "pchisq", "pf", "predict", "pt", "qt", 
+                    "quantile", "resid", "rnorm","simulate", "terms", "terms.formula", 
                     "update.formula")
 importFrom("RColorBrewer", "brewer.pal")
 importFrom("grDevices", "savePlot")
@@ -118,6 +122,7 @@ S3method(changeTerms, asrtests)
 S3method(chooseModel, asrtests) 
 S3method(estimateV, asreml) 
 S3method(facCombine, alldiffs)
+S3method(getTestPvalue, asrtests)
 S3method(infoCriteria, asreml) 
 S3method(linTransform, alldiffs)
 S3method(newfit, asreml) 
@@ -129,6 +134,8 @@ S3method(predictPresent, asreml)
 S3method(predictPlus, asreml)
 S3method(print, asrtests)
 S3method(print, alldiffs)
+S3method(print, predictions.frame)
+S3method(print, wald.tab)
 S3method(recalcWaldTab, asrtests)
 S3method(REMLRT, asreml) 
 S3method(recalcLSD, alldiffs)

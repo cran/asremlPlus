@@ -275,14 +275,13 @@ test_that("alldiffs_lme4", {
     
     
     ##Recalculate the LSD values for predictions obtained using asreml or lme4  
-    TS.diffs <- recalcLSD.alldiffs(TS.diffs, meanLSD.type = "factor.combinations", 
-                                   LSDby = "Sources")
-    TS.diffs <- redoErrorIntervals.alldiffs(TS.diffs, error.intervals = "halfLeastSignificant")
-    testthat::expect_true("upper.halfLeastSignificant.limit" %in% names(TS.diffs$predictions))
-    TS.diffs <- recalcLSD.alldiffs(TS.diffs, meanLSD.type = "factor.combinations", 
-                                   LSDby = "Sources")
+    TS.diffs <- recalcLSD(TS.diffs, meanLSD.type = "factor.combinations", 
+                          LSDby = "Sources")
     testthat::expect_equal(nrow(TS.diffs$LSD), 6)
     testthat::expect_equal(ncol(TS.diffs$LSD), 3)
+    testthat::expect_warning(TS.diffs <- redoErrorIntervals(TS.diffs, 
+                                                            error.intervals = "halfLeast"))
+    testthat::expect_false("upper.halfLeastSignificant.limit" %in% names(TS.diffs$predictions))
     
     ##Use subset.alldiffs to select a subset of the alldiffs object
     TS.diffs.subs <- subset(TS.diffs, 
@@ -294,7 +293,7 @@ test_that("alldiffs_lme4", {
     testthat::expect_equal(ncol(TS.diffs.subs$predictions),8)
     testthat::expect_false(any(TS.diffs.subs$predictions$Sources == "Tap water"))
     testthat::expect_false(any(TS.diffs.subs$predictions$B %in% c("Landscape","Culinary")))
-    testthat::expect_equal(length(attributes(TS.diffs.subs)),4)
+    testthat::expect_equal(length(attributes(TS.diffs.subs)),6)
   }
 })
 
@@ -346,7 +345,7 @@ test_that("sort.alldiffs_lme4", {
     testthat::expect_equal(nrow(GAB.diffs.sort$predictions),120)
     testthat::expect_equal(ncol(GAB.diffs.sort$predictions),9)
     testthat::expect_equal(as.character(GAB.diffs.sort$predictions$Genotype[1]),"Gladius")
-    testthat::expect_equal(length(attributes(GAB.diffs.sort)),6)
+    testthat::expect_equal(length(attributes(GAB.diffs.sort)),7)
     testthat::expect_equal(length(attr(GAB.diffs.sort, which = "sortOrder")),10)
     
     
@@ -425,7 +424,7 @@ test_that("sort.alldiffsWater_lme4", {
     testthat::expect_equal(nrow(TS.diffs.sort$predictions),20)
     testthat::expect_equal(ncol(TS.diffs.sort$predictions),8)
     testthat::expect_equal(as.character(TS.diffs.sort$predictions$Sources[1]),"Recycled water")
-    testthat::expect_equal(length(attributes(TS.diffs.sort)),6)
+    testthat::expect_equal(length(attributes(TS.diffs.sort)),7)
     testthat::expect_equal(length(attr(TS.diffs.sort, which = "sortOrder")),6)
     
     #Test sort.alldiffs with supplied sortOrder
@@ -508,14 +507,14 @@ test_that("facCombine.alldiffs_lme4", {
   
 })
 
-cat("#### Test for plotPredictions on Ladybird with lme4\n")
-test_that("facCombine.alldiffs_lme4", {
+cat("#### Test for as.predictions.frame on Ladybird with lme4\n")
+test_that("as.predictions.frame_lme4", {
   #  skip_on_cran()
   library(asremlPlus)
   library(dae)
   data("Ladybird.dat")
   
-  ## Use lme4 and emmmeans to get predictions and associated statistics
+  ## Use lmerTest and emmmeans to get the predictions and associated statistics
   if (requireNamespace("lmerTest", quietly = TRUE) & 
       requireNamespace("emmeans", quietly = TRUE))
   {

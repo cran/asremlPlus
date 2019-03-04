@@ -1,15 +1,5 @@
 #alldiffs functions
 
-# "changeAsr4toAsr3names" <- function(predictions)
-# {
-#   #Change asreml4 names to asreml3 names
-#   if ("std.error" %in% colnames(predictions))
-#     names(predictions)[match("std.error", names(predictions))] <- "standard.error"
-#   if ("status" %in% colnames(predictions))
-#     names(predictions)[match("status", names(predictions))] <- "est.status"
-#   return(predictions)
-# }
-
 "is.predictions.frame" <- function(object)
 {
   inherits(object, "predictions.frame") && inherits(object, "data.frame")
@@ -94,7 +84,11 @@
     data$est.status <- "Estimable"
     data$est.status[is.na(data$predicted.value)] <- "Aliased"
   }
-  class(data) <- c("predictions.frame", "data.frame")
+  class(data) <- c("predictions.frame", "asreml.predict", "data.frame")
+  # if ("asreml.predict" %in% class(data))
+  #   class(data) <- c("predictions.frame", "asreml.predict", "data.frame")
+  # else
+  #   class(data) <- c("predictions.frame", "data.frame")
   
   #Check that have valid predictions.frame
   validpframe <- validPredictionsFrame(data)  
@@ -177,8 +171,6 @@ setOldClass("predictions.frame")
                           term = NULL, classify = NULL, 
                           tdf = NULL, sortFactor = NULL, sortOrder = NULL)
 { 
-  asr4 <- isASRemlVersionLoaded(4, notloaded.fault = FALSE)
-  
   #Change asreml4 names to asreml3 names
   predictions <- as.predictions.frame(predictions, se = "std.error", est.status = "status")
 
@@ -203,7 +195,8 @@ setOldClass("predictions.frame")
   #Check have only legal attributes
   if (!all(names(attributes(object)) %in% c("names", "class", "response", "response.title",
                                             "classify", "term", "tdf",
-                                            "sortFactor", "sortOrder", "meanLSD")))
+                                            "sortFactor", "sortOrder", 
+                                            "meanLSD", "meanLSD.type", "LSDby")))
   {
     isalldiff[1] <- FALSE
     isalldiff <- c(isalldiff, 
@@ -321,8 +314,62 @@ setOldClass("predictions.frame")
 
 setOldClass("alldiffs")
 
-"print.alldiffs" <- function(x, which = "all", ...)
+"print.predictions.frame" <- function(x, title = NULL,  
+                                      which.predictions = c("title", "heading", "table"), 
+                                      colourise = FALSE, ...)
+{
+  asr4 <- isASRemlVersionLoaded(4, notloaded.fault = FALSE)
+  
+  options <- c("title", "heading", "table", "all")
+  opt <- options[unlist(lapply(which.predictions, check.arg.values, options=options))]
+  
+  if (any(c("title", "all") %in% opt))
+  {
+    if (!is.null(title))
+      cat(title)
+    else
+      cat("\n\n#### Predictions\n\n")
+  }
+  if (!any(c("table", "all") %in% opt))
+  {
+    if ("heading" %in% opt)
+    {
+      hd <- attr(x, which = "heading")
+      for (i in 1:length(hd))
+        cat(hd[i],"\n")
+    }
+  } else #print out the table, possibly with the heading
+  {
+    if (any(c("heading", "all") %in% opt) && !is.null(asr4) && asr4)
+    {
+      asr.col <- asreml::asreml.options()$colourise
+      if (xor(colourise,asr.col))
+        asreml::asreml.options(colourise = colourise)
+      class(x) <- c("asreml.predict", "data.frame")
+      print(x, ...)
+      asreml::asreml.options(colourise = asr.col)
+    } else
+    {
+      if (!any(c("heading", "all") %in% opt))
+      {
+        class(x) <- class(x)[-match("asreml.predict", class(x))]
+      } else
+      {
+        hd <- attr(x, which = "heading")
+        for (i in 1:length(hd))
+          cat(hd[i],"\n")
+      }
+      if (any(c("table", "all") %in% opt))
+        print.data.frame(x, ...)
+    }
+  }
+  invisible()
+}
+
+"print.alldiffs" <- function(x, which = "all", colourise = FALSE, ...)
 { 
+  asr4 <- isASRemlVersionLoaded(4, notloaded.fault = FALSE)
+
   #Check that a valid object of class alldiffs
   validalldifs <- validAlldiffs(x)  
   if (is.character(validalldifs))
@@ -344,9 +391,9 @@ setOldClass("alldiffs")
       if (!is.null(title))
       {
         tt <- paste("\n\n#### Predictions for ", title, "\n\n",sep="")
-        cat(tt)
-      }
-      print(x$predictions)
+      } else
+        tt <- "\n\n#### Predictions\n\n"
+      print.predictions.frame(x$predictions, title = tt, colourise = colourise, ...)
     } 
     if (!is.null(x$LSD))
     { 
@@ -862,18 +909,90 @@ recalcLSD.alldiffs <- function(alldiffs.obj, meanLSD.type = "overall", LSDby = N
   return(alldiffs.obj)
 }
 
+"LSDstats" <- function(sed, t.value)
+{
+  tolerance <- 1E-012
+  ksed <- as.vector(sed)
+  ksed <- na.omit(ksed *ksed)
+  max.ksed <- max(ksed)
+  #Retain only nonzero variances
+  if (max.ksed > tolerance && sum(ksed/max.ksed > tolerance) > 0)
+    ksed <- ksed[ksed/max.ksed > tolerance]
+  minLSD <- t.value * sqrt(min(ksed))
+  maxLSD <- t.value * sqrt(max(ksed))
+  meanLSD <- t.value * sqrt(mean(ksed))
+  stats <- cbind(minLSD, meanLSD, maxLSD)
+  names(stats) <- c("minLSD", "meanLSD", "maxLSD")
+  return(stats)
+}
+
+#Function to calculate the LSDs for combinations of the levels of the by factor(s)
+sliceLSDs <- function(alldiffs.obj, by, t.value, alpha = 0.05, tolerance = 1E-04)
+{
+  sed <- alldiffs.obj$sed
+  denom.df <- attr(alldiffs.obj, which = "tdf")
+  if (is.null(denom.df))
+  {
+    warning(paste("The degrees of freedom of the t-distribtion are not available in alldiffs.obj\n",
+                  "- p-values and LSDs not calculated"))
+    LSDs <- NULL
+  } else
+  {
+    t.value = qt(1-alpha/2, denom.df)
+    #Process the by argument
+    if (is.list(by))
+    {
+      if (any(unlist(lapply(by, function(x) class(x)!="factor"))))
+        stop("Some components of the by list are not factors")
+      fac.list <- by
+    } else
+    {
+      if (class(by) == "factor")
+        fac.list <- list(by)
+      else
+      {
+        if (is.character(by))
+          fac.list <- as.list(alldiffs.obj$predictions[by])
+        else
+          stop("by is not one of the allowed class of inputs")
+      }
+    }
+    #Form levels combination for which a mean LSD is required
+    fac.comb <- fac.combine(fac.list, combine.levels = TRUE)
+    if (length(fac.comb) != nrow(sed))
+      stop("Factor(s) in by argument are not the same length as the order of the sed matrix")
+    levs <- levels(fac.comb)
+    combs <- strsplit(levs, ",", fixed = TRUE)
+    #Get the LSDs
+    LSDs <- lapply(levs, 
+                   function(lev, sed, t.value)
+                   {
+                     krows <- lev == fac.comb
+                     ksed <- sed[krows, krows]
+                     stats <- LSDstats(ksed, t.value)
+                     return(stats)
+                   }, sed = sed, t.value = t.value)
+    if (!is.null(LSDs))
+    {
+      LSDs <- as.data.frame(do.call(rbind, LSDs))
+      rownames(LSDs) <- levs
+    }
+  }  
+  return(LSDs)
+}
+
 redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confidence", 
                                         alpha = 0.05, avsed.tolerance = 0.25, 
-                                        meanLSD.type = "overall", LSDby = NULL, ...)
+                                        meanLSD.type = NULL, LSDby = NULL, ...)
 {
-  asr4 <- isASRemlVersionLoaded(4, notloaded.fault = FALSE)
-  
   #Check that a valid object of class alldiffs
   validalldifs <- validAlldiffs(alldiffs.obj)  
   if (is.character(validalldifs))
     stop(validalldifs)
   AvLSD.options <- c("overall", "factor.combinations", "per.prediction")
   avLSD <- AvLSD.options[check.arg.values(meanLSD.type, AvLSD.options)]
+  if (length(avLSD) != 1)
+    avLSD <- NULL
   if (!is.null(LSDby) &&  !is.character(LSDby))
     stop("LSDby must be a character")
   
@@ -883,6 +1002,7 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
   int.opt <- int.options[check.arg.values(error.intervals, int.options)]
   
   denom.df <- attr(alldiffs.obj, which = "tdf")
+  preds.hd <- attr(alldiffs.obj$predictions, which = "heading")
   
   #Remove any intervals
   if (any(grepl("lower", names(alldiffs.obj$predictions), fixed = TRUE)
@@ -918,10 +1038,22 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
     }
     if (int.opt == "halfLeastSignificant" && (nrow(alldiffs.obj$predictions) != 1))
     { 
-      overall.meanLSD <- sqrt(mean(alldiffs.obj$sed*alldiffs.obj$sed, na.rm = TRUE))
-      overall.sed.range <- abs((max(alldiffs.obj$sed*alldiffs.obj$sed, na.rm = TRUE) - 
-                                  min(alldiffs.obj$sed*alldiffs.obj$sed, na.rm = TRUE))) /overall.meanLSD
-      overall.meanLSD <- t.value * overall.meanLSD
+      #Make sure that the correct type of LSDs are available
+      if (is.null(avLSD))
+      {
+        avLSD <- attr(alldiffs.obj, which = "meanLSD.type")
+        if (is.null(avLSD))
+          avLSD <- "overall"
+        LSDby <- attr(alldiffs.obj, which = "LSDby")
+      }
+      if (is.null(alldiffs.obj$LSD) || avLSD != attr(alldiffs.obj, which = "meanLSD.type"))
+        alldiffs.obj <- recalcLSD(alldiffs.obj, meanLSD.type = avLSD, LSDby = LSDby, 
+                                  alpha = alpha, ...)
+      #Calculate overall and individual sed ranges and overall mean LSD
+      overall.LSDs <- LSDstats(alldiffs.obj$sed, t.value = t.value)
+      overall.sed.range <- abs(overall.LSDs["maxLSD"] - overall.LSDs["minLSD"]) / 
+                                        overall.LSDs["meanLSD"]
+      overall.meanLSD <- overall.LSDs["meanLSD"]
       nLSD <- length(alldiffs.obj$LSD$meanLSD)
       sed.range <- abs(alldiffs.obj$LSD$minLSD - alldiffs.obj$LSD$maxLSD) /  alldiffs.obj$LSD$meanLSD
       if (!is.na(avsed.tolerance) & overall.sed.range <= avsed.tolerance) #always plot overall LSD
@@ -974,7 +1106,7 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
                          sep = " "))
             if (any(na.omit(sed.range) > avsed.tolerance))
             {
-              warning("The avsed.tolerance is exceeded for factor combinations - reverting to confidence intervals")
+              warning("The avsed.tolerance is exceeded for the factor combinations - reverting to confidence intervals")
               revert <- TRUE
             } else #plot factor.combination LSD
             {
@@ -989,19 +1121,26 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
                                                             })))
               LSD.dat <- cbind(LSD.dat, alldiffs.obj$LSD$meanLSD)
               names(LSD.dat) <- c(LSDby, "meanLSD")
-              alldiffs.obj$predictions <- merge(alldiffs.obj$predictions, LSD.dat, 
-                                                all.x = TRUE, sort = FALSE)
-              alldiffs.obj$predictions <- within(alldiffs.obj$predictions, 
-                                                 { 
-                                                   lower.halfLeastSignificant.limit <- 
-                                                     alldiffs.obj$predictions[["predicted.value"]] - 
-                                                     0.5 * alldiffs.obj$predictions$meanLSD
-                                                   upper.halfLeastSignificant.limit <- 
-                                                     alldiffs.obj$predictions[["predicted.value"]] + 
-                                                     0.5 * alldiffs.obj$predictions$meanLSD
-                                                 })
-              alldiffs.obj$predictions <- alldiffs.obj$predictions[, -match("meanLSD",
-                                                                            names(alldiffs.obj$predictions))]
+              #save currrent order of predictions and use to restore after the merge
+              preds <- alldiffs.obj$predictions
+              preds.attr <- attributes(alldiffs.obj$predictions)
+              preds$rows <- 1:nrow(preds)
+              preds.nam <- names(preds)
+              preds <- merge(preds, LSD.dat, all.x = TRUE, sort = FALSE)
+              preds <- preds[c(preds.nam, setdiff(names(preds), preds.nam))]
+              if (any(diff(preds$rows != 1)))
+                preds[preds$rows, ] <- preds
+              preds <- preds[, -match("rows", names(preds))]
+              preds <- within(preds,                                                  
+                              { 
+                                lower.halfLeastSignificant.limit <- 
+                                  preds[["predicted.value"]] - 0.5 * preds$meanLSD
+                                upper.halfLeastSignificant.limit <- 
+                                  preds[["predicted.value"]] + 0.5 * preds$meanLSD
+                              })
+              alldiffs.obj$predictions <- preds[, -match("meanLSD", names(preds))]
+              attr(alldiffs.obj$predictions, which = "heading") <- preds.attr$heading
+              class(alldiffs.obj$predictions) <- preds.attr$class
             }
           } else
           {
@@ -1049,11 +1188,14 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
   }
   #Set meanLSD attribute of predictions component
   predictions <- alldiffs.obj$predictions
+  attributes(predictions) <- attributes(alldiffs.obj$predictions)
   if (is.null(alldiffs.obj$LSD))
     attr(predictions, which = "meanLSD") <- NA
   else
     attr(predictions, which = "meanLSD") <- alldiffs.obj$LSD$meanLSD
   alldiffs.obj$predictions <- predictions
+  attributes(alldiffs.obj$predictions) <- attributes(predictions)
+  attr(alldiffs.obj$predictions, which = "heading")  <- preds.hd
   
   return(alldiffs.obj)
 }
@@ -1075,8 +1217,6 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
 #takes a table of asreml predictions and forms associated statistics
 #  for all pairwise differences
 { 
-  asr4 <- isASRemlVersionLoaded(4, notloaded.fault = FALSE)
-  
   AvLSD.options <- c("overall", "factor.combinations", "per.prediction")
   avLSD <- AvLSD.options[check.arg.values(meanLSD.type, AvLSD.options)]
   if (!is.null(LSDby) &&  !is.character(LSDby))
@@ -1105,6 +1245,7 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
     stop(paste("No sed or vcov supplied in alldiffs.obj \n",
                "- can obtain using sed=TRUE or vcov=TRUE in predict.asreml"))
   predictions <- alldiffs.obj$predictions
+  preds.attr <- attributes(alldiffs.obj$predictions)
   rownames(predictions) <- NULL
   #Retain only estimable predictions
   which.estim <- (predictions$est.status == "Estimable")
@@ -1123,6 +1264,8 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
              }, predictions)
     rownames(predictions) <- NULL
     alldiffs.obj$predictions <- predictions
+    attr(alldiffs.obj$predictions, which = "heading") <- preds.attr$heading
+    class(alldiffs.obj$predictions) <- preds.attr$class
     if (!is.null(alldiffs.obj$vcov))
     { 
       if (inestimable.rm)
@@ -1146,8 +1289,10 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
                                  term = term, classify = classify, 
                                  tdf = tdf)
     predictions <- alldiffs.obj$predictions
+    preds.attr <- attributes(alldiffs.obj$predictions)
     attr(predictions, which = "meanLSD") <- NA
     alldiffs.obj$predictions <- predictions
+    attributes(alldiffs.obj$predictions) <- preds.attr
   }
   response <- as.character(attr(alldiffs.obj, which = "response"))
   
@@ -1168,9 +1313,12 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
   if (!all(class == names(alldiffs.obj$predictions)[1:length(class)]))
   {
     rest <- names(alldiffs.obj$predictions)[(length(class)+1):ncol(alldiffs.obj$predictions)]
+    preds.attr <- attributes(alldiffs.obj$predictions)
     alldiffs.obj$predictions <- cbind(alldiffs.obj$predictions[class],
                                       alldiffs.obj$predictions[rest])
     rownames(alldiffs.obj$predictions) <- NULL
+    attr(alldiffs.obj$predictions, which = "heading") <- preds.attr$heading
+    class(alldiffs.obj$predictions) <- preds.attr$class
   }
 
   #Sort if sortFactor set
@@ -1257,6 +1405,7 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
     }
     
     #Set meanLSD attribute of predictions
+    tolerance <- 1E-12
     if (pairwise && (nrow(alldiffs.obj$predictions) != 1))
     { 
       #calculate LSDs, if not present
@@ -1265,17 +1414,18 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
         t.value = qt(1-alpha/2, denom.df)
         if (avLSD == "overall")
         {
-          minLSD <- t.value * min(alldiffs.obj$sed, na.rm = TRUE)
-          maxLSD <- t.value * max(alldiffs.obj$sed, na.rm = TRUE)
-          meanLSD <- t.value * sqrt(mean(alldiffs.obj$sed * alldiffs.obj$sed, 
-                                         na.rm = TRUE))
+          LSDs<- LSDstats(alldiffs.obj$sed, t.value)
+          minLSD <- LSDs["minLSD"]
+          maxLSD <- LSDs["maxLSD"]
+          meanLSD <- LSDs["meanLSD"]
         } else 
         {
           if (avLSD == "factor.combinations") #factor.combinations
           {
             if (is.null(LSDby))
               stop("Need to specify factors using LSDby for meanLSD.typ = factor.combinations")
-            LSDs <- sliceLSDs(alldiffs.obj, by = LSDby, t.value = t.value, alpha = alpha)
+            LSDs <- sliceLSDs(alldiffs.obj, by = LSDby, t.value = t.value, alpha = alpha, 
+                              tolerance = tolerance)
             meanLSD <- LSDs$meanLSD
             names(meanLSD) <- rownames(LSDs)
             minLSD <- LSDs$minLSD
@@ -1284,6 +1434,11 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
             names(maxLSD) <- rownames(LSDs)
           } else #per.prediction
           {
+            tolerance = 1E-04
+            max.var <- max(alldiffs.obj$sed*alldiffs.obj$sed, na.rm = TRUE)
+            if (max.var > tolerance || 
+                sum(alldiffs.obj$sed*alldiffs.obj$sed/max.var < tolerance) > 0)
+              alldiffs.obj$sed[alldiffs.obj$sed*alldiffs.obj$sed/max.var < tolerance] <- NA
             meanLSD <- t.value * sqrt(apply(alldiffs.obj$sed*alldiffs.obj$sed, 
                                             FUN = mean, MARGIN = 1, na.rm = TRUE))
             maxLSD <- t.value * apply(alldiffs.obj$sed, FUN = max, MARGIN = 1, na.rm = TRUE)
@@ -1293,16 +1448,20 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
         alldiffs.obj$LSD <- data.frame(minLSD  = minLSD, 
                                        meanLSD = meanLSD, 
                                        maxLSD = maxLSD)
+        attr(alldiffs.obj, which = "meanLSD.type") <- avLSD
+        attr(alldiffs.obj, which = "LSDby") <- LSDby
       } 
     } 
   }
   #Set meanLSD attribute of predictions component
   predictions <- alldiffs.obj$predictions
+  attributes(predictions) <- attributes(alldiffs.obj$predictions)
   if (is.null(alldiffs.obj$LSD))
     attr(predictions, which = "meanLSD") <- NA
   else
     attr(predictions, which = "meanLSD") <- alldiffs.obj$LSD$meanLSD
   alldiffs.obj$predictions <- predictions
+  attributes(alldiffs.obj$predictions) <- attributes(predictions)
   
   #Check that have a valid alldiffs object
   validalldifs <- validAlldiffs(alldiffs.obj)  
@@ -1464,9 +1623,18 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
       warning(paste("The degrees of freedom of the t-distribtion are not available in alldiffs.obj\n",
                     "- p-values and LSDs not calculated"))
     
+    #get attributes from predictions
+    preds.attr <- attributes(alldiffs.obj$predictions)
+    
     #Project predictions on submodel, if required
     if (lintrans.type == "submodel")
     {
+      #Check that factors in LSDby are in the formula
+      term.obj <- as.terms.object(linear.transformation, alldiffs.obj)
+      lintrans.fac <- rownames(attr(term.obj, which = "factor"))
+      if (!all(LSDby %in% lintrans.fac))
+        warning("Some factors in the LSDby are not in the linear.transformation submodel")
+      
       #Form projector on predictions for submodel
       suppressWarnings(Q <- pstructure(linear.transformation, grandMean = TRUE, 
                                        orthogonalize = "eigen", aliasing.print = FALSE, 
@@ -1507,6 +1675,12 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
       #Form alldiffs object for linear transformation
       if (!Vmatrix)
         lintrans.vcov <- NULL
+      preds.attr$heading <- c(paste("The original predictions, obtained as described below, have",
+                                    "\nbeen linearly transformed to form estimated marginal means.", 
+                                    sep = ""),
+                              preds.attr$heading)
+      attr(lintrans, which = "heading") <- preds.attr$heading
+      class(lintrans) <- preds.attr$class
       diffs <- allDifferences(predictions = lintrans, vcov = lintrans.vcov, 
                               sed = lintrans.sed, meanLSD.type = meanLSD.type, LSDby = LSDby, 
                               response = response, response.title =  response.title, 
@@ -1552,6 +1726,11 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
       #Form alldiffs object for linear transformation
       if (!Vmatrix)
         lintrans.vcov <- NULL
+      preds.attr$heading <- c(paste("The original predictions, obtained as described below, have",
+                                    "\nbeen linearly transformed.", sep = ""),
+                              preds.attr$heading)
+      attr(lintrans, which = "heading") <- preds.attr$heading
+      class(lintrans) <- preds.attr$class
       diffs <- allDifferences(predictions = lintrans, vcov = lintrans.vcov, 
                               sed = lintrans.sed, meanLSD.type = meanLSD.type, LSDby = LSDby, 
                               response = response, response.title =  response.title, 

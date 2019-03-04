@@ -15,11 +15,12 @@ test_that("allDifferences_asreml3", {
                    random=~Blocks/Wplots,
                    data=Oats.dat)
   testthat::expect_equal(length(m1.asr$gammas),3)
-  current.asrt <- asrtests(m1.asr)
+  current.asrt <- as.asrtests(m1.asr)
   
   #Test for as.alldiffs
   Var.pred <- predict(m1.asr, classify="Nitrogen:Variety", 
                               sed=TRUE)$predictions
+  Var.pred$pvals$Nitrogen <- factor(Var.pred$pvals$Nitrogen)
   wald.tab <-  current.asrt$wald.tab
   den.df <- wald.tab[match("Variety", rownames(wald.tab)), "denDF"]
   Var.diffs <- as.alldiffs(predictions = Var.pred$pvals, 
@@ -37,6 +38,8 @@ test_that("allDifferences_asreml3", {
                                    sortFactor = "Variety", decreasing = TRUE)
   testthat::expect_true(is.alldiffs(Var.sort.diffs))
   testthat::expect_true(validAlldiffs(Var.sort.diffs))
+  testthat::expect_equal(length(attr(Var.sort.diffs$predictions, which = "heading")),1)
+  testthat::expect_true("asreml.predict" %in% class(Var.sort.diffs$predictions))
   testthat::expect_equal(length(attr(Var.sort.diffs, which = "sortOrder")),3)
   testthat::expect_true(as.character(Var.sort.diffs$predictions$Variety[1]) == "Marvellous" & 
                           as.character(Var.sort.diffs$predictions$Variety[2]) == "Golden Rain")
@@ -64,6 +67,29 @@ test_that("allDifferences_asreml3", {
                                     sortFactor = "Variety", decreasing = TRUE)
   testthat::expect_true(as.character(Var.both.diffs$predictions$Variety[1]) == "Marvellous" & 
                           as.character(Var.both.diffs$predictions$Variety[2]) == "Marvellous")
+  
+  #Test a single factor prediction
+  diffsN <- predictPlus(m1.asr, classify = "Nitrogen", tables = "none")
+  testthat::expect_true(validAlldiffs(diffsN))
+  
+  #Test single factor linear.transform
+  Var.pred <- predict(m1.asr, classify="Nitrogen:Variety", vcov=TRUE)$predictions
+  Var.pred$pvals$Nitrogen <- factor(Var.pred$pvals$Nitrogen)
+  Var.diffs <- allDifferences(predictions = Var.pred$pvals,
+                              classify = "Nitrogen:Variety", 
+                              vcov = Var.pred$vcov, tdf = den.df)
+  Var.diffs.one <- linTransform(Var.diffs, linear.transformation = ~Nitrogen,
+                                error.intervals = "half", tables = "none")
+  testthat::expect_true(all(abs(Var.diffs.one$LSD - 9.883479) < 1e-06))
+  testthat::expect_true(all(abs(Var.diffs.one$LSD - 
+                                  attr(Var.diffs.one$predictions, which = "meanLSD")) < 1E-06))
+  #Test LSDby not in linear.transformation
+  testthat::expect_warning(Var.diffs.by <- linTransform(Var.diffs, 
+                                                        linear.transformation = ~Nitrogen,
+                                                        error.intervals = "half", 
+                                                        meanLSD.type = "factor", 
+                                                        LSDby = "Variety", 
+                                                        tables = "none"))
 })
 
 
@@ -81,7 +107,7 @@ test_that("sort.alldiffs_asreml3", {
                    random=~Replicate/Mainplot/Subplot,
                    data=Smarthouse.dat)
   testthat::expect_equal(length(m1.asr$gammas),4)
-  current.asrt <- asrtests(m1.asr)
+  current.asrt <- as.asrtests(m1.asr)
   current.asrt <- rmboundary(current.asrt)
   m <- current.asrt$asreml.obj
   testthat::expect_equal(length(m$gammas),3)
@@ -126,7 +152,7 @@ test_that("sort.alldiffs_asreml3", {
   testthat::expect_equal(nrow(diffs.sort$predictions),120)
   testthat::expect_equal(ncol(diffs.sort$predictions),8)
   testthat::expect_equal(as.character(diffs.sort$predictions$Genotype[1]),"Gladius")
-  testthat::expect_equal(length(attributes(diffs.sort)),9)
+  testthat::expect_equal(length(attributes(diffs.sort)),10)
   testthat::expect_equal(length(attr(diffs.sort, which = "sortOrder")),10)
   
   #Test sort.alldiffs with supplied sortOrder
@@ -134,7 +160,7 @@ test_that("sort.alldiffs_asreml3", {
                    random=~Replicate/Mainplot/Subplot,
                    data=Smarthouse.dat)
   testthat::expect_equal(length(m1.asr$gammas),4)
-  current.asrt <- asrtests(m2.asr)
+  current.asrt <- as.asrtests(m2.asr)
   diffs2.sort <- predictPlus(m2.asr, classify = "Genotype:A:B", 
                              wald.tab = current.asrt$wald.tab,
                              error.intervals = "Stand", tables = "none",
@@ -175,11 +201,12 @@ test_that("sort.alldiffs_asreml3", {
                    random=~Blocks/Wplots,
                    data=Oats.dat)
   testthat::expect_equal(length(m1.asr$gammas),3)
-  current.asrt <- asrtests(m1.asr)
+  current.asrt <- as.asrtests(m1.asr)
   
   #Test for as.alldiffs
   Var.pred <- predict(m1.asr, classify="Nitrogen:Variety", 
                       sed=TRUE)$predictions
+  Var.pred$pvals$Nitrogen <- factor(Var.pred$pvals$Nitrogen)
   wald.tab <-  current.asrt$wald.tab
   den.df <- wald.tab[match("Variety", rownames(wald.tab)), "denDF"]
   Var.diffs <- as.alldiffs(predictions = Var.pred$pvals, 
@@ -207,7 +234,7 @@ test_that("sort.alldiffs_asreml3", {
   testthat::expect_equal(nrow(diffs$predictions),12)
   testthat::expect_equal(ncol(diffs$predictions),7)
   testthat::expect_equal(as.character(diffs$predictions$Variety[1]),"Victory")
-  testthat::expect_equal(length(attributes(diffs)),7)
+  testthat::expect_equal(length(attributes(diffs)),8)
   testthat::expect_true(is.null(attr(diffs, which = "sortOrder")))
   
   testthat::expect_silent(plotPredictions(data = diffs$predictions, 
@@ -231,7 +258,7 @@ test_that("sort.alldiffs_asreml3", {
                    data=Oats.dat)
   
   testthat::expect_equal(length(mx.asr$gammas),3)
-  current.asrt <- asrtests(mx.asr)
+  current.asrt <- as.asrtests(mx.asr)
   print(current.asrt)
   
   diffs <- predictPresent(mx.asr, terms = "xNitrogen:Variety", 
@@ -245,7 +272,7 @@ test_that("sort.alldiffs_asreml3", {
   testthat::expect_equal(nrow(diffs$xNitrogen.Variety$predictions),12)
   testthat::expect_equal(ncol(diffs[[1]]$predictions),7)
   testthat::expect_equal(as.character(diffs[[1]]$predictions$Variety[[1]]),"Marvellous")
-  testthat::expect_equal(length(attributes(diffs$xNitrogen.Variety)),9)
+  testthat::expect_equal(length(attributes(diffs$xNitrogen.Variety)),10)
   testthat::expect_equal(length(attr(diffs[[1]], which = "sortOrder")),3)
   
   #Test for predictPlus with sortFactor
@@ -260,7 +287,7 @@ test_that("sort.alldiffs_asreml3", {
   testthat::expect_equal(nrow(diffs$predictions),12)
   testthat::expect_equal(ncol(diffs$predictions),7)
   testthat::expect_equal(as.character(diffs$predictions$Variety[1]),"Marvellous")
-  testthat::expect_equal(length(attributes(diffs)),9)
+  testthat::expect_equal(length(attributes(diffs)),10)
   testthat::expect_true(all(attr(diffs, which = "sortOrder") == 
                               levels(diffs$predictions$Variety)))
   testthat::expect_true(all(attr(diffs, which = "sortOrder") == 
@@ -290,7 +317,7 @@ test_that("subset.alldiffs_asreml3", {
                    random=~Replicate/Mainplot/Subplot,
                    data=Smarthouse.dat)
   testthat::expect_equal(length(m1.asr$gammas),4)
-  current.asrt <- asrtests(m1.asr)
+  current.asrt <- as.asrtests(m1.asr)
   current.asrt <- rmboundary(current.asrt)
   m <- current.asrt$asreml.obj
   testthat::expect_equal(length(m$gammas),3)
@@ -303,7 +330,7 @@ test_that("subset.alldiffs_asreml3", {
   testthat::expect_equal(nrow(diffs$predictions),120)
   testthat::expect_equal(ncol(diffs$predictions),8)
   testthat::expect_equal(as.character(diffs$predictions$Genotype[1]),"Axe")
-  testthat::expect_equal(length(attributes(diffs)),7)
+  testthat::expect_equal(length(attributes(diffs)),8)
   testthat::expect_true(is.null(attr(diffs, which = "sortOrder")))
   
   #Form subset
@@ -316,7 +343,7 @@ test_that("subset.alldiffs_asreml3", {
   testthat::expect_equal(ncol(diffs.subs$predictions),8)
   testthat::expect_false(any(diffs.subs$predictions$Genotype %in% c("Excalibur","Espada")))
   testthat::expect_false(any(diffs.subs$predictions$B %in% c("D3","D4")))
-  testthat::expect_equal(length(attributes(diffs.subs)),7)
+  testthat::expect_equal(length(attributes(diffs.subs)),8)
   
   #Test subset with removal of vars
   diffs.subs <- subset(diffs, subset = A == "N1" & B == "D2", rmClassifyVars = c("A","B"))
@@ -331,7 +358,7 @@ test_that("subset.alldiffs_asreml3", {
   current.asr <- asreml(fixed = pH ~ Benches + (Sources * (Type + Species)), 
                         random = ~ Benches:MainPlots,
                         keep.order=TRUE, data= WaterRunoff.dat)
-  current.asrt <- asrtests(current.asr, NULL, NULL)
+  current.asrt <- as.asrtests(current.asr, NULL, NULL)
   diffs <- predictPlus.asreml(classify = "Sources:Type", 
                               asreml.obj = current.asr, tables = "none", 
                               wald.tab = current.asrt$wald.tab, 
@@ -347,7 +374,7 @@ test_that("subset.alldiffs_asreml3", {
   testthat::expect_equal(ncol(diffs.subs$predictions),7)
   testthat::expect_false(any(diffs.subs$predictions$Sources == "Tap water"))
   testthat::expect_false(any(diffs.subs$predictions$B %in% c("Landscape","Culinary")))
-  testthat::expect_equal(length(attributes(diffs.subs)),7)
+  testthat::expect_equal(length(attributes(diffs.subs)),8)
 })
 
 cat("#### Test for facCombine.alldiffs on Ladybird with asreml4\n")
@@ -365,7 +392,7 @@ test_that("facCombine.alldiffs4", {
                    data = Ladybird.dat)
   
   testthat::expect_equal(length(m1.asr$gammas),2)
-  current.asrt <- asrtests(m1.asr)
+  current.asrt <- as.asrtests(m1.asr)
   testthat::expect_true(validAsrtests(current.asrt))
   
   HCL.pred <- predict(m1.asr, classify="Host:Cadavers:Ladybird", 
@@ -425,8 +452,8 @@ test_that("facCombine.alldiffs4", {
   
 })
 
-cat("#### Test for linear.transformation Oats with asreml3\n")
-test_that("linear.transformation_asreml3", {
+cat("#### Test for linear.transformation on Oats with asreml3\n")
+test_that("linear.transform_Oats_asreml3", {
   skip_if_not_installed("asreml")
   skip_on_cran()
   library(asreml, lib.loc = asr3.lib)
@@ -438,13 +465,15 @@ test_that("linear.transformation_asreml3", {
                    random=~Blocks/Wplots,
                    data=Oats.dat)
   testthat::expect_equal(length(m1.asr$gammas),3)
-  current.asrt <- asrtests(m1.asr)
+  current.asrt <- as.asrtests(m1.asr)
   
   #Test store of vcov by predictPlus
   diffs <- predictPlus(m1.asr, classify = "Nitrogen:Variety", Vmatrix = TRUE, 
                        wald.tab = current.asrt$wald.tab,
                        error.intervals = "Stand", tables = "none")
   testthat::expect_is(diffs, "alldiffs")
+  testthat::expect_equal(length(attr(diffs$predictions, which = "heading")),1)
+  testthat::expect_true("asreml.predict" %in% class(diffs$predictions))
   testthat::expect_equal(nrow(diffs$vcov),12)
   testthat::expect_true(all(colnames(diffs$vcov)[1:2] %in% c("0,Victory", "0,Golden Rain")))
   testthat::expect_true(all(abs((diffs$vcov[1,1:2] - c(82.93704, 35.74618))) < 1e-4))
@@ -459,6 +488,8 @@ test_that("linear.transformation_asreml3", {
                          wald.tab = current.asrt$wald.tab,
                          error.intervals = "Conf", tables = "none")
   testthat::expect_is(diffs.L, "alldiffs")
+  testthat::expect_equal(length(attr(diffs.L$predictions, which = "heading")),2)
+  testthat::expect_true("asreml.predict" %in% class(diffs.L$predictions))
   testthat::expect_true(abs((diffs$vcov[1,1] - diffs$vcov[4,1]) + 
                               (diffs$vcov[4,4] - diffs$vcov[1,4]) - diffs.L$vcov[1,1]) < 1e-04)
   testthat::expect_equal(as.character(diffs.L$predictions$Combination[1]), "0.2,Victory")
@@ -476,6 +507,8 @@ test_that("linear.transformation_asreml3", {
                            LSDby = "Nitrogen",
                            tables = "none")
   testthat::expect_is(diffs.mod, "alldiffs")
+  testthat::expect_equal(length(attr(diffs.mod$predictions, which = "heading")),2)
+  testthat::expect_true("asreml.predict" %in% class(diffs.mod$predictions))
   testthat::expect_true(is.null(diffs.mod$vcov))
 
   m2.asr <- asreml(Yield ~ Nitrogen+Variety, 
@@ -486,14 +519,22 @@ test_that("linear.transformation_asreml3", {
                                   preds$predicted.value) < 1e-04))
   testthat::expect_true(abs(diffs.mod$predictions$standard.error[1] - 
                               preds$standard.error[1]) > 0.01)
-  
+})
+
+cat("#### Test for linear.transformation on WaterRunoff with asreml3\n")
+test_that("linear.transform_WaterRunoff_asreml3", {
+  skip_if_not_installed("asreml")
+  skip_on_cran()
+  library(asreml, lib.loc = asr3.lib)
+  library(asremlPlus)
+  library(dae)
   #Test example in manual
   data(WaterRunoff.dat)
   #Run analysis and produce alldiffs object
   current.asr <- asreml(fixed = pH ~ Benches + (Sources * (Type + Species)), 
                         random = ~ Benches:MainPlots,
                         keep.order=TRUE, data= WaterRunoff.dat)
-  current.asrt <- asrtests(current.asr, NULL, NULL)
+  current.asrt <- as.asrtests(current.asr, NULL, NULL)
   diffs <- predictPlus.asreml(classify = "Sources:Species", Vmatrix = TRUE, 
                               asreml.obj = current.asr, tables = "none", 
                               wald.tab = current.asrt$wald.tab, 
@@ -528,7 +569,7 @@ test_that("linear.transformation_asreml3", {
   current.asr <- asreml(fixed = pH ~ Benches + (Sources * (Type + Species)), 
                         random = ~ Benches:MainPlots,
                         keep.order=TRUE, data= WaterRunoff.dat)
-  current.asrt <- asrtests(current.asr, NULL, NULL)
+  current.asrt <- as.asrtests(current.asr, NULL, NULL)
   #Get additive predictions directly using predictPlus
   diffs.sub <- predictPlus.asreml(classify = "Sources:Species", Vmatrix = TRUE, 
                                   linear.transformation = ~ Sources + Species,
@@ -649,5 +690,5 @@ test_that("linear.transformation_asreml3", {
   testthat::expect_true(all(is.na(save$lRGR_sm_32_42$backtransforms[, "standard.error"])))
   testthat::expect_true(all(abs(exp(save$lRGR_sm_32_42$predictions[1, c(2,4:5)]) - 
                                   save$lRGR_sm_32_42$backtransforms[1, c(2,4:5)]) < 1e-04))
-  })
+})
 
