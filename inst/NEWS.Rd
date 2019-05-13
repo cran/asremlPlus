@@ -1,5 +1,33 @@
 \name{news}
 \title{News for Package asremlPlus}
+\section{asremlPlus Version 4.1-26 (2019-05-12)}{
+  \itemize{
+    \item{Rebuild for R 3.6.0.}
+    }
+}
+\section{asremlPlus Version 4.1-25 (2019-04-18)}{
+  \itemize{
+    \item{Fix a bug in changeTerms.asrtests that reset the \code{residual} model to the default when changing  fixed or random terms.}
+    \item{Check for \code{NULL} \code{wald.tab} when setting its \code{class} prior to storing it in an \code{asrtests.object}.}
+    \item{Add function addBacktransforms.alldiffs.}
+    }
+}
+\section{asremlPlus Version 4.1-24 (2019-04-11)}{
+  \itemize{
+    \item{Allow numerics, in addition to factors, in \code{LSDby} argument of predictPlus.}
+    \item{Rename reorderClassify to renewClassify.}
+    \item{Fix a bug in retention of attributes of the \code{alldiffs.object} in  renewClassify.}
+    \item{Add \code{transform.power}, \code{offset} and \code{scale} as attributes of the \code{backtransforms} component of an \code{alldiffs.object}.}
+    \item{Rework the storage of the \code{backtransforms} component of an \code{alldiffs.object} to ensure that it is retained when manipulating \code{alldiffs.object}.}
+    }
+}
+\section{asremlPlus Version 4.1-23 (2019-04-03)}{
+  \itemize{
+    \item{Build in R version 3.5.3.}
+    \item{Update the Author field of the DESCRIPTION to include an ORCID.}
+    \item{Allow backtransformed halfLSD intervals in the \code{backtransforms} component of an \code{alldiffs.object}.}
+    }
+}
 \section{asremlPlus Version 4.1-22 (2019-03-04)}{
   \itemize{
     \item{Build in R version 3.5.2.}

@@ -1,4 +1,6 @@
-export(addrm.terms.asreml,
+export(addBacktransforms,
+       addBacktransforms.alldiffs,
+       addrm.terms.asreml,
        addrm.terms.asrtests,
        allDifferences,
        allDifferences.data.frame,
@@ -72,8 +74,8 @@ export(addrm.terms.asreml,
        REMLRT.asreml,
        reml.lrt.asreml,
        reml.lrt,
-       reorderClassify,
-       reorderClassify.alldiffs,
+       renewClassify,
+       renewClassify.alldiffs,
        reparamSigDevn,
        reparamSigDevn.asrtests,
        rmboundary,
@@ -116,6 +118,7 @@ importFrom("utils", "data", sessionInfo, "tail")
 importFrom("foreach", "foreach", "%do%", "%dopar%")
 importFrom("parallel", "makeCluster", "stopCluster", "detectCores", "nextRNGStream")
 importFrom("doParallel", "registerDoParallel")
+S3method(addBacktransforms, alldiffs)
 S3method(allDifferences, data.frame)
 S3method(bootREMLRT, asreml) 
 S3method(changeTerms, asrtests) 
@@ -140,7 +143,7 @@ S3method(recalcWaldTab, asrtests)
 S3method(REMLRT, asreml) 
 S3method(recalcLSD, alldiffs)
 S3method(redoErrorIntervals, alldiffs)
-S3method(reorderClassify, alldiffs)
+S3method(renewClassify, alldiffs)
 S3method(reparamSigDevn, asrtests)
 S3method(rmboundary, asreml)
 S3method(rmboundary, asrtests)

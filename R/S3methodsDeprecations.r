@@ -19,10 +19,11 @@ REMLRT <- function(h0.asreml.obj, h1.asreml.obj, ...) UseMethod("REMLRT")
 bootREMLRT <- function(h0.asreml.obj, h1.asreml.obj, ...) UseMethod("bootREMLRT")
 variofaces <- function(asreml.obj, ...) UseMethod("variofaces")
 
+addBacktransforms <- function(alldiffs.obj, ...) UseMethod("addBacktransforms")
 linTransform <- function(alldiffs.obj, ...) UseMethod("linTransform")
 recalcLSD <- function(alldiffs.obj, ...) UseMethod("recalcLSD")
 redoErrorIntervals <- function(alldiffs.obj, ...) UseMethod("redoErrorIntervals")
-reorderClassify <- function(alldiffs.obj, ...) UseMethod("reorderClassify")
+renewClassify <- function(alldiffs.obj, ...) UseMethod("renewClassify")
 
 setvarianceterms <- function(call, ...) UseMethod("setvarianceterms")
 
@@ -123,6 +124,16 @@ reml.lrt <- function(...)
 
 reml.lrt.asreml <- function(...)
 { .Deprecated(new = "REMLRT.asreml", package = "asremlPlus")
+  invisible()
+}
+
+reorderClassify  <- function(...)
+{ .Deprecated(new = "renewClassify.alldiffs", package = "asremlPlus")
+  invisible()
+}
+
+reorderClassify.alldiffs  <- function(...)
+{ .Deprecated(new = "renewClassify.alldiffs", package = "asremlPlus")
   invisible()
 }
 

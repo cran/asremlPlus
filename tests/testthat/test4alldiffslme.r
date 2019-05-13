@@ -89,8 +89,8 @@ test_that("alldiffs_lme4", {
   testthat::expect_true(as.character(Var.reord.diffs$predictions$Variety[1]) == "Victory" &
                           as.character(Var.reord.diffs$predictions$Variety[2]) == "Victory")
   
-  #Test for re-order factors with reorderClassify
-  Var.reord.diffs <- reorderClassify(Var.diffs, newclassify = "Variety:Nitrogen")
+  #Test for re-order factors with renewClassify
+  Var.reord.diffs <- renewClassify(Var.diffs, newclassify = "Variety:Nitrogen")
   testthat::expect_true(as.character(Var.reord.diffs$predictions$Variety[1]) == "Victory" &
                           as.character(Var.reord.diffs$predictions$Variety[2]) == "Victory")
   
@@ -101,7 +101,7 @@ test_that("alldiffs_lme4", {
                                    sortFactor = "Variety", decreasing = TRUE)
   testthat::expect_true(as.character(Var.both.diffs$predictions$Variety[1]) == "Marvellous" & 
                           as.character(Var.both.diffs$predictions$Variety[2]) == "Marvellous")
-  Var.both.diffs <- reorderClassify(Var.diffs, newclassify = "Variety:Nitrogen", 
+  Var.both.diffs <- renewClassify(Var.diffs, newclassify = "Variety:Nitrogen", 
                                     sortFactor = "Variety", decreasing = TRUE)
   testthat::expect_true(as.character(Var.both.diffs$predictions$Variety[1]) == "Marvellous" & 
                           as.character(Var.both.diffs$predictions$Variety[2]) == "Marvellous")
@@ -148,7 +148,7 @@ test_that("validity_lme4", {
   testthat::expect_true(is.alldiffs(Var.diffs))
   testthat::expect_warning(msg <- validAlldiffs(Var.diffs))
   testthat::expect_equal(length(msg),5)
-  testthat::expect_true(all(unlist(lapply(msg, nchar)) ==  c(41, 63, 84, 62, 119)))
+  testthat::expect_true(all(unlist(lapply(msg, nchar)) ==  c(41, 63, 118, 62, 119)))
   testthat::expect_true(grepl("Predictions.frame", msg[2], fixed = TRUE))
   testthat::expect_true(grepl("classify", msg[5], fixed = TRUE))
   
@@ -331,7 +331,7 @@ test_that("sort.alldiffs_lme4", {
     testthat::expect_true(is.null(attr(GAB.diffs, which = "sortOrder")))
     
     #Test reodering of the classify
-    GAB.diffs.reord <- reorderClassify(GAB.diffs, newclassify = "A:B:Genotype")
+    GAB.diffs.reord <- renewClassify(GAB.diffs, newclassify = "A:B:Genotype")
     testthat::expect_equal(as.character(GAB.diffs.reord$predictions$Genotype[1]),"Axe")
     testthat::expect_equal(as.character(GAB.diffs.reord$predictions$Genotype[2]),"Espada")
     testthat::expect_true(abs(GAB.diffs.reord$predictions$predicted.value[2] - -0.2265723017) < 1e-06)
@@ -410,7 +410,7 @@ test_that("sort.alldiffsWater_lme4", {
     testthat::expect_true(is.null(attr(TS.diffs, which = "sortOrder")))
     
     #Test reodering of the classify
-    TS.diffs.reord <- reorderClassify(TS.diffs, newclassify = "Type:Sources")
+    TS.diffs.reord <- renewClassify(TS.diffs, newclassify = "Type:Sources")
     testthat::expect_equal(as.character(TS.diffs.reord$predictions$Sources[1]),"Rainwater")
     testthat::expect_equal(as.character(TS.diffs.reord$predictions$Sources[2]),"Recycled water")
     testthat::expect_true(abs(TS.diffs.reord$predictions$predicted.value[2] - 7.646389) < 1e-06)
@@ -532,3 +532,45 @@ test_that("as.predictions.frame_lme4", {
   } 
 })
 
+cat("#### Test for addBacktransforms on WaterRunoff with lme4\n")
+test_that("addBacktransforms_WaterRunoff_lme4", {
+  skip_if_not_installed("asreml")
+  skip_on_cran()
+  library(asremlPlus)
+  library(dae)
+  data(WaterRunoff.dat)
+  
+
+  if (requireNamespace("lmerTest", quietly = TRUE) & 
+      requireNamespace("emmeans", quietly = TRUE))
+  {
+    m1.lmer <- lmerTest::lmer(log.Turbidity ~ Benches + (Sources * (Type + Species)) + 
+                                (1|Benches:MainPlots),
+                              data=na.omit(WaterRunoff.dat))
+    TS.emm <- emmeans::emmeans(m1.lmer, specs = ~ Sources:Species)
+    TS.preds <- summary(TS.emm)
+    den.df <- min(TS.preds$df, na.rm = TRUE)
+    ## Modify TS.preds to be compatible with a predictions.frame
+    TS.preds <- as.predictions.frame(TS.preds, predictions = "emmean", 
+                                     se = "SE", interval.type = "CI", 
+                                     interval.names = c("lower.CL", "upper.CL"))
+    
+    ## Form an all.diffs object and check its validity
+    TS.vcov <- vcov(TS.emm)
+    TS.diffs <- allDifferences(predictions = TS.preds, classify = "Sources:Species", 
+                               vcov = TS.vcov, tdf = den.df)
+    validAlldiffs(TS.diffs)
+  }  
+  
+  ## Plot p-values for predictions obtained using asreml or lmerTest
+  if (exists("TS.diffs"))
+  {
+    ##Add the backtransforms component for predictions obtained using asreml or lmerTest  
+    TS.diffs <- addBacktransforms.alldiffs(TS.diffs, transform.power = 0)
+    testthat::expect_false(is.null(TS.diffs$backtransforms))
+    testthat::expect_true(all(abs(exp(TS.diffs$predictions$predicted.value)-
+                                    TS.diffs$backtransforms$backtransformed.predictions) < 1e-06))
+    testthat::expect_true(all(abs(exp(TS.diffs$predictions$upper.Confidence.limit)-
+                                    TS.diffs$backtransforms$upper.Confidence.limit) < 1e-06))
+  }
+})

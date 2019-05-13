@@ -50,10 +50,12 @@
              \code{offset} is nonzero), the backtransforms of the transformed 
              values and their lower and upper error intervals are added 
              to a \code{data.frame} that is consistent with the \code{predictions} 
-             \code{data.frame}. If the \code{error.intervals} are 
-             \code{halfLeastSignificant}, then backtransforms of the Confidence 
-             limits are stored, instead of the \code{halfLeastSignificant} 
-             intervals. If \code{transform.power} is other than 
+             \code{data.frame}. 
+%If the \code{error.intervals} are 
+%             \code{halfLeastSignificant}, then backtransforms of the Confidence 
+%             limits are stored, instead of the \code{halfLeastSignificant} 
+%             intervals. 
+              If \code{transform.power} is other than 
              one, the \code{standard.error} column of the \code{data.frame} 
              is set to \code{NA}. This \code{data.frame} is added to the 
              \code{\link{alldiffs.object}} as a \code{list} component called 
@@ -186,10 +188,11 @@
              involving that prediction. It also 
              determines, in conjunction with \code{avsed.tolerance}, which LSD will be used
              in calculating \code{error.intervals} and, hence, is used for plots.}
-\item{LSDby}{A \code{\link{character}} (vector) of factor names, being the names of the 
-             \code{\link{factor}s} for each of whose levels combinations a mean LSD, 
-             minLSD and max LSD is stored in the \code{LSD} component of the 
-             \code{\link{alldiffs.object}} when \code{meanLSD.type} is \code{factor.combinatons}.}
+\item{LSDby}{A \code{\link{character}} (vector) of variables names, being the names of the 
+             \code{\link{factor}s} or \code{\link{numeric}s} in the \code{classify} for each 
+             combination of which a mean LSD, minLSD and max LSD is stored in the \code{LSD} 
+             component of the \code{\link{alldiffs.object}} when \code{meanLSD.type} is 
+             \code{factor.combinatons}.}
 \item{pairwise}{A \code{\link{logical}} indicating whether all pairwise differences of the
              \code{predictions} and their standard errors and p-values are to be 
              computed and stored. If \code{tables} is equal to 

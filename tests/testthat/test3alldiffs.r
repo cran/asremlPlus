@@ -51,8 +51,8 @@ test_that("allDifferences_asreml3", {
   testthat::expect_true(as.character(Var.reord.diffs$predictions$Variety[1]) == "Victory" &
                           as.character(Var.reord.diffs$predictions$Variety[2]) == "Victory")
   
-  #Test for re-order factors with reorderClassify
-  Var.reord.diffs <- reorderClassify(Var.diffs, newclassify = "Variety:Nitrogen")
+  #Test for re-order factors with renewClassify
+  Var.reord.diffs <- renewClassify(Var.diffs, newclassify = "Variety:Nitrogen")
   testthat::expect_true(as.character(Var.reord.diffs$predictions$Variety[1]) == "Victory" &
                           as.character(Var.reord.diffs$predictions$Variety[2]) == "Victory")
   
@@ -63,7 +63,7 @@ test_that("allDifferences_asreml3", {
                                     sortFactor = "Variety", decreasing = TRUE)
   testthat::expect_true(as.character(Var.both.diffs$predictions$Variety[1]) == "Marvellous" & 
                           as.character(Var.both.diffs$predictions$Variety[2]) == "Marvellous")
-  Var.both.diffs <- reorderClassify(Var.diffs, newclassify = "Variety:Nitrogen", 
+  Var.both.diffs <- renewClassify(Var.diffs, newclassify = "Variety:Nitrogen", 
                                     sortFactor = "Variety", decreasing = TRUE)
   testthat::expect_true(as.character(Var.both.diffs$predictions$Variety[1]) == "Marvellous" & 
                           as.character(Var.both.diffs$predictions$Variety[2]) == "Marvellous")
@@ -123,7 +123,7 @@ test_that("sort.alldiffs_asreml3", {
   testthat::expect_true(is.null(attr(diffs, which = "sortOrder")))
   
   #Test reodering of the classify
-  diffs.reord <- reorderClassify(diffs, newclassify = "A:B:Genotype")
+  diffs.reord <- renewClassify(diffs, newclassify = "A:B:Genotype")
   testthat::expect_equal(as.character(diffs.reord$predictions$Genotype[1]),"Axe")
   testthat::expect_equal(as.character(diffs.reord$predictions$Genotype[2]),"Espada")
   testthat::expect_true(abs(diffs.reord$predictions$predicted.value[2] - -0.2265723017) < 1e-06)
@@ -692,3 +692,35 @@ test_that("linear.transform_WaterRunoff_asreml3", {
                                   save$lRGR_sm_32_42$backtransforms[1, c(2,4:5)]) < 1e-04))
 })
 
+test_that("addBacktransforms_WaterRunoff_asreml3", {
+  skip_if_not_installed("asreml")
+  skip_on_cran()
+  library(asreml, lib.loc = asr3.lib)
+  library(asremlPlus)
+  library(dae)
+  data(WaterRunoff.dat)
+  
+  ##Use asreml to get predictions and associated statistics
+  
+  asreml.options(keep.order = TRUE) #required for asreml-R4 only
+  current.asr <- asreml(fixed = log.Turbidity ~ Benches + (Sources * (Type + Species)), 
+                        random = ~ Benches:MainPlots,
+                        keep.order=TRUE, data= WaterRunoff.dat)
+  current.asrt <- as.asrtests(current.asr, NULL, NULL)
+  TS.diffs <- predictPlus(classify = "Sources:Type", 
+                          asreml.obj = current.asr, 
+                          wald.tab = current.asrt$wald.tab, 
+                          present = c("Sources", "Type", "Species"))
+  
+  ## Plot p-values for predictions obtained using asreml3
+  if (exists("TS.diffs"))
+  {
+    ##Add the backtransforms component for predictions obtained using asreml or lmerTest  
+    TS.diffs <- addBacktransforms.alldiffs(TS.diffs, transform.power = 0)
+    testthat::expect_false(is.null(TS.diffs$backtransforms))
+    testthat::expect_true(all(abs(exp(TS.diffs$predictions$predicted.value)-
+                                    TS.diffs$backtransforms$backtransformed.predictions) < 1e-06))
+    testthat::expect_true(all(abs(exp(TS.diffs$predictions$upper.Confidence.limit)-
+                                    TS.diffs$backtransforms$upper.Confidence.limit) < 1e-06))
+  }
+})
