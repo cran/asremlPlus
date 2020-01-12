@@ -248,6 +248,49 @@ test_that("sort.alldiffsWater4", {
                          as.character(diffs2.sort$predictions$Sources[1]))
   testthat::expect_equal(attr(TS.diffs.sort, which = "sortOrder"),
                          attr(diffs2.sort, which = "sortOrder"))
+  
+  #Test removing a multilevel classifying factor that is marginal to another factor using subset
+  diffs.full <- predictPlus.asreml(asreml.obj = m1.asr, 
+                                   classify = "Sources:Type:Species", 
+                                   wald.tab = current.asrt$wald.tab, 
+                                   present = c("Type","Species","Sources"),
+                                   tables = "none", Vmatrix = TRUE)
+  testthat::expect_true(setequal(names(diffs.full$predictions), 
+                                 c("Sources", "Type", "Species", "predicted.value", 
+                                   "standard.error", "upper.Confidence.limit", 
+                                   "lower.Confidence.limit", "est.status")))
+  diffs.fit <- linTransform(diffs.full, classify = "Sources:Type:Species",
+                            linear.transformation = ~ Sources:Type, 
+                            error.intervals="half", 
+                            meanLSD.type="factor", LSDby="Type", 
+                            tables = "none")
+  testthat::expect_true(setequal(names(diffs.fit$predictions), 
+                                 c("Sources", "Type", "Species", "predicted.value", 
+                                   "standard.error", "upper.halfLeastSignificant.limit", 
+                                   "lower.halfLeastSignificant.limit", "est.status")))
+  diffs.fit <- subset(diffs.fit, rmClassifyVars = "Type")
+  testthat::expect_true(setequal(names(diffs.fit$predictions), 
+                                 c("Sources", "Species", "predicted.value", 
+                                   "standard.error", "upper.halfLeastSignificant.limit", 
+                                   "lower.halfLeastSignificant.limit", "est.status")))
+  
+  #Check that renewClassify also works when the full classify is not supplied
+  diffs.red <- diffs.full
+  diffs.red$predictions <- diffs.red$predictions[,
+                                            -match("Type", names(diffs.red$predictions))]
+  diffs.red <- renewClassify(diffs.red, newclassify = "Sources:Species")
+  testthat::expect_true(setequal(names(diffs.red$predictions), 
+                                 c("Sources", "Species", "predicted.value", 
+                                   "standard.error", "upper.Confidence.limit", 
+                                   "lower.Confidence.limit", "est.status")))
+
+  #Check that renewClassify fails when newclassify does not uniquely index the predictions
+  diffs.red <- diffs.full
+  diffs.red$predictions <- diffs.red$predictions[,
+                                          -match("Species", names(diffs.red$predictions))]
+  testthat::expect_error(diffs.red <- renewClassify(diffs.red, 
+                                                    newclassify = "Sources:Type"))
+  
 })
 
 cat("#### Test for sort.alldiffs on Oats with asreml4\n")
@@ -458,6 +501,58 @@ test_that("facCombine.alldiffs4", {
   wald.tab <-  current.asrt$wald.tab
   den.df <- wald.tab[match("Host:Cadavers:Ladybird", rownames(wald.tab)), "denDF"]
   testthat::expect_equal(den.df,60)
+  
+  ## Use lme4 and emmmeans to get predictions and associated statistics
+  if (requireNamespace("lmerTest", quietly = TRUE) & 
+      requireNamespace("emmeans", quietly = TRUE))
+  {
+    m1.lmer <- lmerTest::lmer(logitP ~ Host*Cadavers*Ladybird + (1|Run),
+                              data=Ladybird.dat)
+    HCL.emm <- emmeans::emmeans(m1.lmer, specs = ~ Host:Cadavers:Ladybird)
+    HCL.preds <- summary(HCL.emm)
+    den.df <- min(HCL.preds$df)
+    ## Modify HCL.preds to be compatible with a predictions.frame
+    names(HCL.preds)[match(c("emmean", "SE", "lower.CL", "upper.CL"), 
+                           names(HCL.preds))] <- c("predicted.value", 
+                                                   "standard.error", 
+                                                   "lower.Confidence.limit",
+                                                   "upper.Confidence.limit")
+    HCL.preds$est.status <- "Estimable"
+    HCL.preds$est.status[is.na(HCL.preds$predicted.value)] <- "Aliased"
+    HCL.vcov <- vcov(HCL.emm)
+    HCL.sed <- NULL
+  }
+  
+  ## Form an all.diffs object with predictions obtained with either asreml or lmerTest
+  HCL.diffs <- as.alldiffs(predictions = HCL.preds, classify = "Host:Cadavers:Ladybird", 
+                           sed = HCL.sed, vcov = HCL.vcov, tdf = den.df)
+  
+  ## check the class and validity of the alldiffs object
+  is.alldiffs(HCL.diffs)
+  validAlldiffs(HCL.diffs)
+  testthat::expect_equal(nrow(HCL.diffs$predictions),12)
+  testthat::expect_equal(ncol(HCL.diffs$predictions),9)
+  
+  ## Combine Cadavers and Ladybird
+  Comb.diffs <- facCombine(HCL.diffs, factors = c("Cadavers","Ladybird"))
+  
+  ## check the validity of Comb.diffs
+  validAlldiffs(Comb.diffs)
+  testthat::expect_equal(nrow(Comb.diffs$predictions),12)
+  testthat::expect_equal(ncol(Comb.diffs$predictions),8)
+  testthat::expect_true(all(c("Host", "Cadavers_Ladybird", "predicted.value") %in% 
+                              names(Comb.diffs$predictions)))
+  
+  ## Recode Ladybird
+  HCL.diffs <- facRecode(HCL.diffs, factor = "Ladybird", newlevels = c("none", "present"))
+  testthat::expect_true(validAlldiffs(HCL.diffs))
+  testthat::expect_true(all(levels(HCL.diffs$predictions$Ladybird) == c("none", "present")))
+  
+  ## Rename Cadavers
+  HCL.diffs <- facRename(HCL.diffs, factor.names = "Cadavers", newnames = "Cadaver.nos")
+  testthat::expect_true(validAlldiffs(HCL.diffs))
+  testthat::expect_true("Cadaver.nos" %in% names(HCL.diffs$predictions))
+  
 })
 
 
@@ -574,10 +669,11 @@ test_that("linear.transform_WaterRunoff_asreml4", {
                                                    tables = "none"))
   #check for zero seds and their removal
   ksed <- na.omit(as.vector(diffs.L$sed))
-  testthat::expect_true(length(ksed[ksed/max(ksed, na.rm = TRUE) <= 1e-6]) == 66)
+  testthat::expect_true(length(ksed[ksed/max(ksed, na.rm = TRUE) <= 1e-6]) == 83)
   testthat::expect_true(abs(diffs.L$LSD["minLSD"] - 0.1246359) < 1e-06)
   testthat::expect_true(all(abs(diffs.L$predictions$predicted.value[c(1,6,11,16,21,28)] - 
-                                  (diffs.sub$predictions$predicted.value[1] - diffs.sub$predictions$predicted.value[6])) < 1e-06))
+                                  (diffs.sub$predictions$predicted.value[1] - 
+                                     diffs.sub$predictions$predicted.value[6])) < 1e-06))
   
   #More efficient version for manual
   data(WaterRunoff.dat)

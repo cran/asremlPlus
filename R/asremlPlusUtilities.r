@@ -5,7 +5,7 @@
 { 
   kopt <- pmatch(arg.val, options)
   if (any(is.na(kopt)))
-    stop("Value for argument, ",paste(arg.val, collapse = ","), ", is not an allowed option")
+    stop("Value ",paste(arg.val, collapse = ","), " is either not unique or is not an allowed option for its argument")
   if (length(kopt) > 1)
   {
     warning(paste("Only one value allowed for argument where", 
@@ -290,6 +290,12 @@ addtoTestSummary <- function(test.summary, terms, DF = 1, denDF = NA, p = NA,
 {
   if (!is.data.frame(wald.tab))
     wald.tab <- wald.tab$Wald
+  
+  #Check that have a valid wald.tab object
+  validwald <- validWaldTab(wald.tab)  
+  if (is.character(validwald))
+    stop(validwald)
+  
   if (!is.null(wald.tab))
     class(wald.tab) <- c("wald.tab", "data.frame")
   return(wald.tab)  

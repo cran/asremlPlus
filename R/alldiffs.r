@@ -599,7 +599,97 @@ facCombine.alldiffs <- function(object, factors, order="standard", combine.level
   return(object)
 }
 
-subset.alldiffs <- function(x, subset, rmClassifyVars = NULL, ...)
+facRecode.alldiffs <- function(object, factor, newlevels,  ...)
+{
+  #Check that a valid object of class alldiffs
+  validalldifs <- validAlldiffs(object)  
+  if (is.character(validalldifs))
+    stop(validalldifs)
+  fac <- factor
+  if (any(!(fac %in% names(object$predictions))))
+    stop("Some factors are not in the predictions component of object")
+  if (length(fac) != 1)
+    stop("Only one factor at a time")
+  object$predictions[fac] <- fac.recode(object$predictions[[fac]], newlevels = newlevels, ...)
+  
+  if (!is.null(object$backtransforms))
+  {
+    object$backtransforms[fac] <- object$predictions[fac]
+  }
+  
+  classify <- attr(object, which = "classify")
+  if (is.null(classify))
+    stop("The alldiffs object does not have the classify attribute set")
+  response <- attr(object, which = "response")
+  pred.labs <- makePredictionLabels(object$predictions, classify, response)
+  pred.lev <- pred.labs$pred.lev
+  #Set meanLSD attribute of predictions component
+  predictions <- object$predictions
+  if (is.null(object$LSD))
+    attr(predictions, which = "meanLSD") <- NA
+  else
+    attr(predictions, which = "meanLSD") <- object$LSD$meanLSD
+  object$predictions <- predictions
+  
+  if (!is.null(object$vcov))
+  {
+    colnames(object$vcov) <- rownames(object$vcov) <- pred.lev
+  }
+  if (!is.null(object$differences))
+  {
+    colnames(object$differences) <- rownames(object$differences) <- pred.lev
+  }
+  if (!is.null(object$p.differences))
+  {
+    colnames(object$p.differences) <- rownames(object$p.differences) <- pred.lev
+  }
+  if (!is.null(object$sed))
+  {
+    colnames(object$sed) <- rownames(object$sed) <- pred.lev
+  }
+  return(object)
+}
+
+facRename.alldiffs <- function(object, factor.names, newnames,  ...)
+{
+  #Check that a valid object of class alldiffs
+  validalldifs <- validAlldiffs(object)  
+  if (is.character(validalldifs))
+    stop(validalldifs)
+  if (any(!(factor.names %in% names(object$predictions))))
+    stop("Some factors are not in the predictions component of object")
+  if (length(factor.names) != length(newnames))
+    stop("The number of factor.names and newnames must be the same")
+  names(object$predictions)[match(factor.names, 
+                                  names(object$predictions))] <- newnames
+  
+  if (!is.null(object$backtransforms))
+  {
+    names(backtransforms$predictions)[match(newnames, 
+                                            names(object$backtransforms))] <- newnames
+  }
+  
+  classify <- attr(object, which = "classify")
+  if (is.null(classify))
+    stop("The alldiffs object does not have the classify attribute set")
+  class.facs <- fac.getinTerm(classify, rmfunction = TRUE)
+  class.facs[match(factor.names, class.facs)] <- newnames
+  classify <- fac.formTerm(class.facs)
+  attr(object, which = "classify") <- classify
+  response <- attr(object, which = "response")
+  #Set meanLSD attribute of predictions component
+  predictions <- object$predictions
+  if (is.null(object$LSD))
+    attr(predictions, which = "meanLSD") <- NA
+  else
+    attr(predictions, which = "meanLSD") <- object$LSD$meanLSD
+  object$predictions <- predictions
+  
+  return(object)
+}
+
+subset.alldiffs <- function(x, subset = rep(TRUE, nrow(x$predictions)), 
+                            rmClassifyVars = NULL, ...)
 {
   #Check that a valid object of class alldiffs
   validalldifs <- validAlldiffs(x)  
@@ -668,12 +758,19 @@ subset.alldiffs <- function(x, subset, rmClassifyVars = NULL, ...)
     classify <- x.attr[["classify"]]
     if (is.null(classify))
       stop("The alldiffs object does not have the classify attrtibute set")
-    rmfac <- fac.combine(as.list(x$predictions[rmClassifyVars]))
-    if (length(unique(rmfac)) > 1)
-      stop("The classify variables to be removed have more than one combination in the predictions; \nthe predictions cannot be unambiguosly identified.")
-    class.facs <- fac.getinTerm(classify, rmfunction = TRUE)
-    class.facs <- class.facs[!(class.facs %in% rmClassifyVars)]
-    classify <- fac.formTerm(class.facs)
+    class.vars <- fac.getinTerm(classify, rmfunction = TRUE)
+    if (!(all(rmClassifyVars %in% class.vars)))
+      stop("Not all the rmClassifyVars are in the classify for the alldiffs.object")
+    newclass <- setdiff(class.vars, rmClassifyVars)
+    if (any(table(x$predictions[newclass]) > 1))
+      stop("The classify variables remaining after rmClassifyVars excluded do not uniquely index the predictions")
+    # rmfac <- fac.combine(as.list(x$predictions[rmClassifyVars]))
+    # if (length(unique(rmfac)) > 1)
+    #   stop("The classify variables to be removed have more than one combination in the predictions; \nthe predictions cannot be unambiguosly identified.")
+    # class.facs <- fac.getinTerm(classify, rmfunction = TRUE)
+    # class.facs <- class.facs[!(class.facs %in% rmClassifyVars)]
+    # classify <- fac.formTerm(class.facs)
+    classify <- fac.formTerm(newclass)
     x$predictions <- x$predictions[, -c(match(rmClassifyVars, names(x$predictions)))]
     if (!is.null(x$backtransforms))
     {
@@ -936,7 +1033,7 @@ recalcLSD.alldiffs <- function(alldiffs.obj, meanLSD.type = "overall", LSDby = N
 sliceLSDs <- function(alldiffs.obj, by, t.value, alpha = 0.05, tolerance = 1E-04)
 {
   classify <- attr(alldiffs.obj, which = "classify")
-  if (!all(grepl(by, classify, fixed = TRUE)))
+  if (!all(unlist(lapply(by, grepl, x = classify, fixed = TRUE))))
     stop("One of the elements of LSDby is not in the classify")
   
   sed <- alldiffs.obj$sed
@@ -983,13 +1080,25 @@ sliceLSDs <- function(alldiffs.obj, by, t.value, alpha = 0.05, tolerance = 1E-04
                    function(lev, sed, t.value)
                    {
                      krows <- lev == fac.comb
-                     ksed <- sed[krows, krows]
-                     stats <- LSDstats(ksed, t.value)
+                     if (length(fac.comb[krows]) == 1)
+                     {
+                       warning(paste("LSD calculated for a single prediction",
+                                     "- applies to two independent predictions with the same standard error"))
+                       stats <- rep(t.value * sqrt(2) * 
+                                       alldiffs.obj$predictions$standard.error[krows] /2,
+                                     3)
+                       names(stats) <- c("minLSD", "meanLSD", "maxLSD")
+                     } else
+                     {
+                       ksed <- sed[krows, krows]
+                       stats <- LSDstats(ksed, t.value)
+                     }
                      return(stats)
                    }, sed = sed, t.value = t.value)
     if (!is.null(LSDs))
     {
-      LSDs <- as.data.frame(do.call(rbind, LSDs))
+      LSDs <- cbind(levs,
+                    as.data.frame(do.call(rbind, LSDs)))
       rownames(LSDs) <- levs
     }
   }  
@@ -1073,25 +1182,48 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
       overall.meanLSD <- overall.LSDs["meanLSD"]
       nLSD <- length(alldiffs.obj$LSD$meanLSD)
       sed.range <- abs(alldiffs.obj$LSD$minLSD - alldiffs.obj$LSD$maxLSD) /  alldiffs.obj$LSD$meanLSD
-      if (!is.na(avsed.tolerance) & overall.sed.range <= avsed.tolerance) #always plot overall LSD
-      {
-        alldiffs.obj$predictions <- within(alldiffs.obj$predictions, 
-                                           { 
-                                             lower.halfLeastSignificant.limit <- 
-                                               alldiffs.obj$predictions[["predicted.value"]] - 
-                                               0.5 * overall.meanLSD
-                                             upper.halfLeastSignificant.limit <- 
-                                               alldiffs.obj$predictions[["predicted.value"]] + 
-                                               0.5 * overall.meanLSD
-                                           })
-      } else #process for each meanLSD.type option
+      # if (!is.na(avsed.tolerance) & overall.sed.range <= avsed.tolerance) #always plot overall LSD
+      # {
+      #   alldiffs.obj$predictions <- within(alldiffs.obj$predictions, 
+      #                                      { 
+      #                                        lower.halfLeastSignificant.limit <- 
+      #                                          alldiffs.obj$predictions[["predicted.value"]] - 
+      #                                          0.5 * overall.meanLSD
+      #                                        upper.halfLeastSignificant.limit <- 
+      #                                          alldiffs.obj$predictions[["predicted.value"]] + 
+      #                                          0.5 * overall.meanLSD
+      #                                      })
+      # } else #process for each meanLSD.type option
+      # {
+      #   if (avLSD == "overall")
+      #   {
+      #     if (nLSD != 1)
+      #       stop("There is not just one LSD for meanLSD.type overall")
+      #     warning("The avsed.tolerance is exceeded - reverting to confidence intervals")
+      #     revert = TRUE
+      #   } else
+      #process for each meanLSD.type option
       {
         if (avLSD == "overall")
         {
-          if (nLSD != 1)
-            stop("There is not just one LSD for meanLSD.type overall")
-          warning("The avsed.tolerance is exceeded - reverting to confidence intervals")
-          revert = TRUE
+          if (!is.na(avsed.tolerance) & overall.sed.range <= avsed.tolerance)
+          {
+            if (nLSD != 1)
+              stop("There is not just one LSD for meanLSD.type overall")
+            alldiffs.obj$predictions <- within(alldiffs.obj$predictions,
+                                               {
+                                                 lower.halfLeastSignificant.limit <-
+                                                   alldiffs.obj$predictions[["predicted.value"]] -
+                                                   0.5 * overall.meanLSD
+                                                 upper.halfLeastSignificant.limit <-
+                                                   alldiffs.obj$predictions[["predicted.value"]] +
+                                                   0.5 * overall.meanLSD
+                                               })
+          } else
+          {              
+            warning("The avsed.tolerance is exceeded - reverting to confidence intervals")
+            revert = TRUE
+          } 
         } else
         {
           if (avLSD == "factor.combinations")
@@ -1642,13 +1774,18 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
                                  sortWithinVals = sortWithinVals,
                                  decreasing = decreasing, ...)
   newattr <- attributes(alldiffs.obj)
-  #Find missing atTributes in new alldiffs.obj and add them back in 
+  #Find missing attributes in new alldiffs.obj and add them back in 
   kattr <- kattr[names(kattr)[!(names(kattr) %in% names(newattr))]]
   if (length(kattr) > 0)
   {
     newattr <- c(newattr,kattr)
     attributes(alldiffs.obj) <- newattr
   }
+  #Check that the newclassify uniquely indexes the predictions
+  newclass.vars <- fac.getinTerm(newattr$classify, rmfunction = TRUE)
+  if (any(table(alldiffs.obj$predictions[newclass.vars]) > 1))
+    stop("The newclassify variables do not uniquely index the predictions")
+ 
   return(alldiffs.obj)
 }
 

@@ -1,5 +1,60 @@
 \name{news}
 \title{News for Package asremlPlus}
+\section{asremlPlus Version 4.1-36 (2020-01-12)}{
+  \itemize{
+    \item{Correct date in DESCRIPTION for CRAN rsubmission.}
+    }
+}
+\section{asremlPlus Version 4.1-35 (2020-01-11)}{
+  \itemize{
+    \item{Rebuild for CRAN submission.}
+    }
+}
+\section{asremlPlus Version 4.1-34 (2019-12-14)}{
+  \itemize{
+    \item{Change default for \code{subset} argument in subset.alldiffs so that the complete set of predictions is returned. Also, change check on the resulting classify so that it checks whether the variables in the classify uniquely index the predictions.}
+    \item{Include in renewClassify.alldiffs a check that the \code{newclassify} uniquely indexes the predictions.}
+    }
+}
+\section{asremlPlus Version 4.1-33 (2019-11-08)}{
+  \itemize{
+    \item{Add \code{printPlot = FALSE} to both plotPvalues.data.frame and plotPvalues.alldiffs. Change return for plotPvalues.data.frame from nothing to the plot produced using ggplot.}
+    }
+}
+\section{asremlPlus Version 4.1-32 (2019-09-30)}{
+  \itemize{
+    \item{Fix bug in check for predict.asreml returning sed and/or vcov when requested.}
+    }
+}
+\section{asremlPlus Version 4.1-31 (2019-09-19)}{
+  \itemize{
+    \item{Add new functions facRecode.alldiffs and facRename.alldiffs.}
+    }
+}
+\section{asremlPlus Version 4.1-30 (2019-09-05)}{
+  \itemize{
+    \item{Implement a check that predict.asreml has returned sed and/or vcov when requested.}
+    }
+}
+\section{asremlPlus Version 4.1-29 (2019-07-08)}{
+  \itemize{
+    \item{Allow for calculation of notional LSDs when LSDs for a single observation are specified.}
+    \item{Removed restriction that overall LSD is always used when the range of the SEDs divided by the average of the SEDs is less than the \code{avsed.tolerance}.}
+    \item{A bug in detecting valid wald.tab objects was fixed.}
+    }
+}
+\section{asremlPlus Version 4.1-28 (2019-07-04)}{
+  \itemize{
+    \item{Modify testranfix.asrtests, as.asrtests, recalcWaldTab.asrtests and chooseModel.asrtests to allow for p-values based on a conditional Wald F-statistic if one is present in the \code{wald.tab}.}
+    \item{Allow for 6-column \code{wald.tab} such as is obtained for \code{ssType} set to \code{"conditional"}.}
+    }
+}
+\section{asremlPlus Version 4.1-27 (2019-06-01)}{
+  \itemize{
+    \item{Revise Wheat vignette to use qqplotr for Normal Probability Plots.}
+    \item{Revise test for tilde (~) in formula supplied to changeTerms so that only a leading tilde causes an error.}
+    }
+}
 \section{asremlPlus Version 4.1-26 (2019-05-12)}{
   \itemize{
     \item{Rebuild for R 3.6.0.}
