@@ -1,8 +1,7 @@
 \name{chooseModel.asrtests}
 \alias{chooseModel.asrtests}
-\alias{chooseModel}
-\title{Determines the set of significant terms taking into account the hierarchy or 
-       marginality relations and records the tests performed in an \code{\link{asrtests.object}}.}
+\title{Determines and records the set of significant terms using an \code{\link{asrtests.object}}, 
+       taking into account the hierarchy or marginality relations of the terms.}
 \description{Performs a series of hypothesis tests taking into account the 
   marginality of terms. In particular, a term will not be tested if it is 
   marginal to (or nested in) one that is significant. For example, if A:B is significant, then 
@@ -14,25 +13,31 @@
   be nested in the full model in which case the test is not valid. For fixed terms, 
   the Wald tests are performed and the p-value for the term obtained. If it is not 
   significant and \code{drop.fix.ns} is TRUE, the term is permanently removed 
-  from the model. A row is added to 
+  from the model. A row that records the outcome of a test is added to 
   \code{test.summary} for each term that is tested. }
 \usage{
-\method{chooseModel}{asrtests}(asrtests.obj, terms.marginality=NULL, 
+\method{chooseModel}{asrtests}(object, terms.marginality=NULL, 
             alpha = 0.05, allow.unconverged = TRUE, 
             checkboundaryonly = FALSE, drop.ran.ns=TRUE, 
             positive.zero = FALSE, bound.test.parameters = "none", 
             drop.fix.ns=FALSE, denDF = "numeric",  dDF.na = "none", 
             dDF.values = NULL, trace = FALSE, update = TRUE, 
             set.terms = NULL, ignore.suffices = TRUE, 
-            bounds = "P", initial.values = NA, ...)
+            bounds = "P", initial.values = NA, 
+            IClikelihood = "none", ...)
 }
 \arguments{
- \item{asrtests.obj}{an \code{\link{asrtests.object}} containing the components (i) \code{asreml.obj},
+ \item{object}{an \code{\link{asrtests.object}} containing the components (i) \code{asreml.obj},
        (ii) \code{wald.tab}, and (iii) \code{test.summary}.}
  \item{terms.marginality}{A square matrix of ones and zeros with row and column names 
-                being the names of the terms. The diagonal elements should be one, indicating 
-                that a term is marginal to itself. Elements should be one if the row 
-                term is marginal to the column term. All other elements should be zero.}
+                being the names of the terms. 
+               The names of fixed terms must match those in the \code{wald.tab} component of the 
+               \code{\link{asrtests.object}}, while the names of random terms must match those 
+               in the \code{vparameters} component of the 
+               \code{asreml.obj} component in the \code{\link{asrtests.object}}.
+               The diagonal elements of the matrix should be one, indicating 
+               that a term is marginal to itself. Elements should be one if the row 
+               term is marginal to the column term. All other elements should be zero.}
  \item{alpha}{The significance level for the test.}
  \item{allow.unconverged}{A \code{logical} indicating whether to accept a new model 
                       even when it does not converge. If \code{FALSE} and a fit when 
@@ -63,7 +68,7 @@
                       that, under the reduced model, are zero.}
  \item{drop.fix.ns}{A logical indicating whether to drop a fixed  
                    term from the model when it is nonsignificant }
- \item{denDF}{Specifies the enthod to use in computing approximate denominator 
+ \item{denDF}{Specifies the method to use in computing approximate denominator 
               degrees of freedom when \code{wald.asreml} is called. Can be \code{none} 
               to suppress the computations, \code{numeric} for numerical methods,
               \code{algebraic} for algebraic methods or \code{default}, the default, 
@@ -92,15 +97,17 @@
               functions are invoked; if FALSE then no output is displayed.}
 \item{update}{If \code{TRUE }then \code{update.asreml} is called in testing models. 
               In doing this the arguments \code{R.param} and \code{G.param} are 
-              set to those in the \code{asreml} object stored in \code{asrtests.obj} 
+              set to those in the \code{asreml} object stored in \code{object} 
               so that the values from the previous model are used as starting values. 
               If \code{FALSE} then a call is made to \code{asreml} in which the 
               only changes to the \code{asreml.obj} stored in the supplied 
-              \code{asrtests.obj} are (i) to the terms in the fixed and random models 
+              \code{object} are (i) to the terms in the fixed and random models 
               corresponding to terms in \code{terms.marginality} and (ii) those 
               modifications specified via \code{\dots}.}
  \item{set.terms}{A character vector specifying the terms that are to have 
-                  bounds and/or initial values set prior to fitting.}
+                  bounds and/or initial values set prior to fitting. 
+                  The names must match those in the \code{vparameters} component of the 
+                  \code{asreml.obj} component in the \code{\link{asrtests.object}}.}
  \item{ignore.suffices}{A logical vector specifying whether the suffices of the 
                     \code{asreml}-assigned names of the variance terms (i.e. the 
                     information to the right of an "!", other than "R!") is to 
@@ -127,6 +134,13 @@
                     applied to all the terms in \code{terms}. 
                     If any of the initial.values are equal to NA then they are 
                     left unchanged for those terms.}
+ \item{IClikelihood}{A \code{character} that controls both the occurence and the type 
+                    of likelihood for information criterion in the \code{test.summary} 
+                    of the \code{\link{asrtests.object}}. If \code{none}, none are 
+                    included. Otherwise, if \code{REML}, then the AIC and BIC based 
+                    on the Restricted Maximum Likelihood are included; if \code{full}, 
+                    then the AIC and BIC based on the full likelihood are included. 
+                    (See also \code{\link{infoCriteria.asreml}}.)}
  \item{\dots}{further arguments passed to \code{asreml}, \code{wald.asreml} and
                    \code{\link{as.asrtests}} via \code{\link{testranfix.asrtests}}.}
 }
@@ -138,12 +152,15 @@
          \item \code{sig.tests}: a \code{character vector} whose elements are the 
                 the significant terms amongst those tested.}
 }
+\references{Kenward, M. G., & Roger, J. H. (1997). Small sample inference for fixed effects from restricted maximum likelihood. 
+            \emph{Biometrics}, \bold{53}, 983-997.}
 
 \author{Chris Brien}
-\seealso{\code{\link{as.asrtests}}, \code{\link{testranfix.asrtests}}, 
-         \code{\link{testresidual.asrtests}}, \code{\link{REMLRT.asreml}}, \cr
-         \code{\link{rmboundary.asrtests}}, 
-         \code{\link{newfit.asreml}}, \code{\link{changeTerms.asrtests}}, 
+\seealso{\code{\link{chooseModel}}, \code{\link{chooseModel.data.frame}}, 
+         \code{\link{as.asrtests}}, \code{\link{testranfix.asrtests}}, \cr
+         \code{\link{testresidual.asrtests}}, \code{\link{REMLRT.asreml}}, 
+         \code{\link{rmboundary.asrtests}}, \code{\link{newfit.asreml}}, \cr
+         \code{\link{changeModelOnIC.asrtests}}, \code{\link{changeTerms.asrtests}}, 
          \code{\link{reparamSigDevn.asrtests}}}
 \examples{\dontrun{
 data(WaterRunoff.dat)

@@ -160,27 +160,27 @@ test_that("predictPresent.asreml4", {
   current.asrt <- as.asrtests(current.asr, NULL, NULL)
   #Example that fails because Date has levels that are not numeric in nature
   testthat::expect_error(diff.list <- predictPresent(terms = "Date:Sources:Species", 
-                                                    asreml.obj = current.asrt$asreml.obj, 
-                                                    wald.tab = current.asrt$wald.tab, 
-                                                    x.fac = "Date", 
-                                                    plots = "predictions", 
-                                                    error.intervals = "StandardError", 
-                                                    titles = titles, 
-                                                    transform.power = 0, 
-                                                    present = c("Type","Species","Sources"), 
-                                                    tables = "differences", 
-                                                    level.length = 6))
+                                                     asreml.obj = current.asrt$asreml.obj, 
+                                                     wald.tab = current.asrt$wald.tab, 
+                                                     x.fac = "Date", 
+                                                     plots = "predictions", 
+                                                     error.intervals = "StandardError", 
+                                                     titles = titles, 
+                                                     transform.power = 0, 
+                                                     present = c("Type","Species","Sources"), 
+                                                     tables = "differences", 
+                                                     level.length = 6))
   #Example that does not produce predictions because has Date but not xDay
   testthat::expect_error(diff.list <- predictPresent(terms = "Date:Sources:Species", 
-                                                      asreml.obj = current.asrt$asreml.obj, 
-                                                      wald.tab = current.asrt$wald.tab, 
-                                                      plots = "predictions", 
-                                                      error.intervals = "StandardError", 
-                                                      titles = titles, 
-                                                      transform.power = 0, 
-                                                      present = c("Type","Species","Sources","Date"), 
-                                                      tables = "differences", 
-                                                      level.length = 6))
+                                                     asreml.obj = current.asrt$asreml.obj, 
+                                                     wald.tab = current.asrt$wald.tab, 
+                                                     plots = "predictions", 
+                                                     error.intervals = "StandardError", 
+                                                     titles = titles, 
+                                                     transform.power = 0, 
+                                                     present = c("Type","Species","Sources","Date"), 
+                                                     tables = "differences", 
+                                                     level.length = 6))
   
   #### Get the observed combinations of the factors and variables in classify
   class.facs <- c("Sources","Species","Date","xDay")
@@ -228,6 +228,7 @@ test_that("predictPresent.asreml4", {
   })
 
 
+#### This test is not relevant to asreml3 because its saving of sed and vcov are different
 cat("#### Test for error when no predictions.asreml4\n")
 test_that("noPredictions.asreml4", {
   skip_if_not_installed("asreml")
@@ -239,7 +240,7 @@ test_that("noPredictions.asreml4", {
                          args=list(fixed = y ~ Species*Substrate*Irrigation,
                                    random = ~ Row + Column,
                                    keep.order=TRUE, data = gw.dat, 
-                                   maxiter=50, workspace = 1e09, stepsize = 0.0001))
+                                   maxiter=50, workspace = 1e08, stepsize = 0.0001))
   current.asrt <- asrtests(current.asr, NULL, NULL)
   current.asrt <- rmboundary(current.asrt)
   testthat::expect_error(diffs <- predictPresent(current.asrt$asreml.obj,
@@ -453,7 +454,7 @@ test_that("LSDby4", {
                             residual = ~idh(SpeedPress):WSpeedPress,
                             data = Fac3Syrup.dat))
   testthat::expect_true(abs(summary(m1)$varcomp$component[2] - 27.5) < 1e-05)
-  wald.tab <- wald(m1, denDF = "numeric")$Wald
+  wald.tab <- wald.asreml(m1, denDF = "numeric")$Wald
   testthat::expect_equal(nrow(wald.tab), 8)
   diffs <- predictPlus(m1, classify = "Nozzle:Pressure:Speed", 
                        #linear.transformation = ~(Nozzle + Pressure):Speed,

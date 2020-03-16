@@ -1,5 +1,65 @@
 \name{news}
 \title{News for Package asremlPlus}
+\section{asremlPlus Version 4.2-18 (2020-03-16
+)}{
+  \itemize{
+    \item{Increment version number for resubmission to CRAN.}
+}}
+\section{asremlPlus Version 4.2-17 (2020-03-16
+)}{
+  \itemize{
+    \item{Fix bug in changeTerms when both \code{addFixed} and \code{dropFixed} are \code{NULL}.}
+}}
+\section{asremlPlus Version 4.2-16 (2020-02-25
+)}{
+  \itemize{
+    \item{Revisions to the manual.}
+    \item{Fix bug in forming test.summary.}
+}}
+\section{asremlPlus Version 4.2-15 (2020-02-17)}{
+  \itemize{
+    \item{Added the \code{IClikelihood} argument to chooseModel.asrtests, reparamSigDevn.asrtests, rmboundary.asrtests, testranfix.asrtests, testresidual.asrtests, and testswapran.asrtests.}
+    \item{Fix bug in printFormulae when the formula is long.}
+    \item{Various bug fixes associated with asreml-R version 3.}
+}}
+\section{asremlPlus Version 4.2-14 (2020-02-14)}{
+  \itemize{
+    \item{Fix bug in processing a formula that includes an \code{at} function.}
+}}
+\section{asremlPlus Version 4.2-13 (2020-02-11)}{
+  \itemize{
+    \item{Removed the \code{material.diff} argument and the \code{both} option from the \code{which.IC} argument of changeModelOnIC.}
+}}
+\section{asremlPlus Version 4.2-12 (2020-02-09)}{
+  \itemize{
+    \item{Change \code{likelihood} in infoCriteria to \code{IClikelihood} to make it consistent with other functions.}
+    \item{Replace \code{tol.diff} with \code{material.diff} and set the default to 0.5 in changeModelOnIC.}
+    \item{Revise all vignettes.}
+}}
+\section{asremlPlus Version 4.2-11 (2020-02-08)}{
+  \itemize{
+    \item{Add a new vignette for the use of information criteria with the wheat experiment.}
+    \item{Fixed bugs in changeModelOnIC associated with \code{addFixed} and \code{dropFixed} and with dealing with unconverged models.}
+}}
+\section{asremlPlus Version 4.2-10 (2020-02-07)}{
+  \itemize{
+    \item{This version represents a major revision in that the facilities for employing information criteria (AIC and BIC) have been considerabley expanded. The infoCriteria method has been modified to add the possibility of calculating not only the the information criteria based on the REML likelihood, but those based on the full likelihood instead. There are now two infoCriteria methods, one for \code{asreml} objects and the other for \code{list}s of \code{asreml} objects. An alternative is to use changeTerms.asrtests wiith \code{IClikelihood} set to \code{REML} or \code{full} and the information criteria will be included in the The \code{test.summary} of the \code{asrtest} object. A new function changeModelOnIC has been included to allow model selection to be based on the information criteria, rather than on hypothesis tests. However, the two methods of selecting models can be interweaved.}
+    \item{Add  argument \code{omit.columns} to print.test.summary that allows the specification of columns to be omitted from the printout.}
+    \item{Various modifications to the internal code for the handling of the \code{test.summary} component of an \code{asrtest.object} to allow more flexibility in the make up of \code{test.summary}.}
+    \item{Add function iterate.asrtests to execute additional iterations of the fit stored in an  \code{asreml.obj} within an \code{asrtests} object; the model itself cannot be changed.}
+    \item{Add functions getFormulae.asreml and printFormulae.asreml to extract and print the \code{formula}e stored in the \code{call} of an \code{asreml} object.}
+    \item{Add \code{trace} argument to newfit.asreml and activated it for asreml-R version 4.} 
+    \item{Made R >= 3.5.0 a requirement for asremlPlus.}
+}}
+\section{asremlPlus Version 4.1-37 (2020-01-27)}{
+  \itemize{
+    \item{Add chooseModel.data.frame function.}
+    \item{Modify linTransform.alldiffs so that submodels involving covariates are possible.}
+    \item{Add print.test.summary function}
+    \item{Split Ladybird vignette into two, one based on asreml and the other on lm, lmerTest and emmeans.}
+    \item{Modified newfit to circumvent problems in the test functions in dealing with terms that include the \code{at} function and modified testranfix to improve its detection of multiple terms.}
+    }
+}
 \section{asremlPlus Version 4.1-36 (2020-01-12)}{
   \itemize{
     \item{Correct date in DESCRIPTION for CRAN rsubmission.}

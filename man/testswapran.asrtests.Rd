@@ -23,7 +23,8 @@
             alpha = 0.05, allow.unconverged = TRUE, checkboundaryonly = FALSE, 
             positive.zero = FALSE, bound.test.parameters = "none", 
             bound.exclusions = c("F","B","S","C"), REMLDF = NULL, 
-            denDF="numeric", trace = FALSE, update = TRUE, 
+            denDF="numeric", IClikelihood = "none", 
+            trace = FALSE, update = TRUE, 
             set.terms = NULL, ignore.suffices = TRUE, 
             bounds = "P", initial.values = NA, ...)}
 \arguments{
@@ -31,7 +32,9 @@
                 containing the componets (i) \code{asreml.obj}, (ii) \code{wald.tab} 
                 (iii) \code{test.summary}.}
  \item{oldterms}{Terms, stored as a \code{character}, that are to be removed from the 
-                 random model using \code{asreml}.}
+                 random model using \code{asreml}. The names of the terms must 
+                 match those in the \code{vparameters} component of the \code{asreml.obj} 
+                 component in the \code{\link{asrtests.object}}.}
  \item{newterms}{Terms, stored as a \code{character}, that are to be added to the 
                  random model using \code{asreml}.}
  \item{simpler}{A logical indicating whether the new model to be fitted. after the
@@ -77,7 +80,7 @@
                     for two models being compared in a REML ratio test using 
                     \code{\link{REMLRT.asreml}}. If \code{NULL} then this is determined from 
                     the information in the \code{asreml} object for the two models.}
- \item{denDF}{Specifies the enthod to use in computing approximate denominator 
+ \item{denDF}{Specifies the method to use in computing approximate denominator 
               degrees of freedom when \code{wald.asreml} is called. Can be \code{none} 
               to suppress the computations, \code{numeric} for numerical methods,
               \code{algebraic} for algebraic methods or \code{default}, the default, 
@@ -85,6 +88,13 @@
               on problem size. The denominator degrees of freedom are calculated 
               according to Kenward and Roger (1997) for fixed terms in the dense 
               part of the model.}
+ \item{IClikelihood}{A \code{character} that controls both the occurence and the type 
+                    of likelihood for information criterion in the \code{test.summary} 
+                    of the \code{\link{asrtests.object}}. If \code{none}, none are 
+                    included. Otherwise, if \code{REML}, then the AIC and BIC based 
+                    on the Restricted Maximum Likelihood are included; if \code{full}, 
+                    then the AIC and BIC based on the full likelihood are included. 
+                    (See also \code{\link{infoCriteria.asreml}}.)}
  \item{trace}{If TRUE then partial iteration details are displayed when ASReml-R 
               functions are invoked; if FALSE then no output is displayed.}
  \item{update}{If \code{TRUE }then \code{update.asreml} is called to change 
@@ -97,7 +107,9 @@
               \code{newterms}, and (ii) modifications specified via \code{\dots} 
               are made.}
  \item{set.terms}{A character vector specifying the terms that are to have 
-                  bounds and/or initial values set prior to fitting.}
+                  bounds and/or initial values set prior to fitting. 
+                  The names must match those in the \code{vparameters} component 
+                  of the \code{asreml.obj} component in the \code{\link{asrtests.object}}.}
  \item{ignore.suffices}{A logical vector specifying whether the suffices of the 
                     \code{asreml}-assigned names of the variance terms (i.e. the 
                     information to the right of an "!", other than "R!") is to 
@@ -137,10 +149,14 @@
        its name, a p-value set to \code{NA}, and action set to Absent.
 }
 
+\references{Kenward, M. G., & Roger, J. H. (1997). Small sample inference for fixed effects from restricted maximum likelihood. 
+            \emph{Biometrics}, \bold{53}, 983-997.}
+
 \author{Chris Brien}
 \seealso{\code{\link{as.asrtests}}, \code{\link{chooseModel.asrtests}}, 
          \code{\link{REMLRT.asreml}}, \code{\link{rmboundary.asrtests}}, \cr
          \code{\link{newfit.asreml}}, \code{\link{testresidual.asrtests}}, 
+         \code{\link{changeModelOnIC.asrtests}}, \cr 
          \code{\link{changeTerms.asrtests}}, \code{\link{reparamSigDevn.asrtests}}}
 \examples{\dontrun{
 current.asrt <- testswapran(current.asrt, oldterms = "str(~ Cart/xDays, ~us(2):id(184))",

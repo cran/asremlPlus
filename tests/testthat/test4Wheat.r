@@ -1,7 +1,7 @@
 #devtools::test("asremlPlus")
 context("model_selection")
 
-cat("#### Test for wheat example with asreml4\n")
+cat("#### Test for wheat76 example with asreml4\n")
 test_that("Wheat_asreml4", {
   skip_if_not_installed("asreml")
   skip_on_cran()
@@ -18,25 +18,29 @@ test_that("Wheat_asreml4", {
                         data=Wheat.dat)
   summary(current.asr)
   info <- infoCriteria(current.asr)
-  testthat::expect_equal(info$DF, 5)
-  testthat::expect_lt(abs(info$AIC - 1346.76), 1e-03)
+  testthat::expect_equal(info$varDF, 5)
+  testthat::expect_lt(abs(info$AIC - 1346.768), 0.10)
   
   # Load current fit into an asrtests object
-  current.asrt <- as.asrtests(current.asr, NULL, NULL)
+  current.asrt <- as.asrtests(current.asr, NULL, NULL, 
+                              label = "Maximal model", IClikelihood = "full")
+  testthat::expect_lt(abs(current.asrt$test.summary$AIC - 1653.1), 0.50)
+  
   
   # Check for and remove any boundary terms
-  current.asrt <- rmboundary(current.asrt)
+  current.asrt <- rmboundary(current.asrt, IClikelihood = "full")
   
   #Check term for within Column pairs
   current.asrt <- testranfix(current.asrt, term = "WithinColPairs", 
-                             drop.fix.ns=TRUE)
+                             drop.fix.ns=TRUE, IClikelihood = "full")
   
   # Test nugget term
-  current.asrt <- testranfix(current.asrt, "units", positive=TRUE)
+  current.asrt <- testranfix(current.asrt, "units", positive=TRUE, IClikelihood = "full")
   
   # Test Row autocorrelation
   current.asrt <- testresidual(current.asrt, "~ Row:ar1(Column)", 
-                               label="Row autocorrelation", simpler=TRUE)
+                               label="Row autocorrelation", simpler=TRUE, 
+                               IClikelihood = "full")
   
   # Test Col autocorrelation (depends on whether Row autocorrelation retained)
   p <- getTestPvalue(current.asrt, label = "Row autocorrelation")
@@ -44,18 +48,20 @@ test_that("Wheat_asreml4", {
   { if (p <= 0.05)
     current.asrt <- testresidual(current.asrt, "~ ar1(Row):Column", 
                                  label="Col autocorrelation", simpler=TRUE,
-                                 update=FALSE)
+                                 IClikelihood = "full", update=FALSE)
     else
       current.asrt <- testresidual(current.asrt, "~ Row:Column", 
                                    label="Col autocorrelation", simpler=TRUE,
-                                   update=FALSE)
+                                   IClikelihood = "full", update=FALSE)
   }
   print(current.asrt)
   testthat::expect_equal(length(current.asrt), 3)
   testthat::expect_equal(nrow(current.asrt$wald.tab), 3)
-  testthat::expect_equal(nrow(current.asrt$test.summary), 5)
+  testthat::expect_equal(nrow(current.asrt$test.summary), 6)
+  testthat::expect_lt(abs(current.asrt$test.summary$AIC[6] - 1651.329), 0.10)
+  testthat::expect_lt(abs(current.asrt$test.summary$BIC[6] - 1756.701), 0.10)
   info <- infoCriteria(current.asrt$asreml.obj)
-  testthat::expect_equal(info$DF, 5)
+  testthat::expect_equal(info$varDF, 5)
   testthat::expect_lt(abs(info$AIC - 1353.762), 1e-03)
   
   # Get current fitted asreml object
@@ -69,7 +75,7 @@ test_that("Wheat_asreml4", {
   #Produce variogram and variogram faces plot (Stefanaova et al, 2009)
   if (requireNamespace("lattice"))
   {
-    plot.varioGram(varioGram(current.asr))
+    plot.varioGram(varioGram.asreml(current.asr))
   }
   V <- estimateV(current.asr)
   faces <- variofaces(current.asr, V=V, maxiter=50, units="addtores")

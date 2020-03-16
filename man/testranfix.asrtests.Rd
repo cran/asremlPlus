@@ -24,14 +24,18 @@
            bound.test.parameters = "none", 
            bound.exclusions = c("F","B","S","C"), REMLDF = NULL, 
            drop.fix.ns = FALSE, denDF="numeric", dDF.na = "none", 
-           dDF.values = NULL, trace = FALSE, update = TRUE,
+           dDF.values = NULL, IClikelihood = "none", 
+           trace = FALSE, update = TRUE,
            set.terms = NULL, ignore.suffices = TRUE, 
            bounds = "P", initial.values = NA, ...)}
 \arguments{
  \item{asrtests.obj}{An \code{\link{asrtests.object}} containing the components (i) \code{asreml.obj},
        (ii) \code{wald.tab}, and (iii) \code{test.summary}.}
  \item{term}{A single model term that is valid in \code{asreml}, stored 
-             as a \code{character}.}
+             as a \code{character}. The names of fixed terms must match those in the \code{wald.tab} 
+             component of the \code{\link{asrtests.object}}, while the names of random terms must 
+             match those in the \code{vparameters} component of the \code{asreml.obj} component 
+             in the \code{\link{asrtests.object}}.}
  \item{alpha}{The significance level for the test.}
  \item{allow.unconverged}{A \code{logical} indicating whether to accept a new model 
                       even when it does not converge. If \code{FALSE}, it will be 
@@ -75,7 +79,7 @@
                     the information in the \code{asreml} object for the two models.}
  \item{drop.fix.ns}{A \code{logical} indicating whether to drop a fixed  
                    term from the model when it is nonsignificant }
- \item{denDF}{Specifies the enthod to use in computing approximate denominator 
+ \item{denDF}{Specifies the method to use in computing approximate denominator 
               degrees of freedom when \code{wald.asreml} is called. Can be \code{none} 
               to suppress the computations, \code{numeric} for numerical methods,
               \code{algebraic} for algebraic methods or \code{default}, the default, 
@@ -100,6 +104,13 @@
               Its values will be used when \code{denDF} in a test for a fixed effect
               is \code{NA}. This vector must be the same length as the number of 
               fixed terms, including (Intercept) whose value could be \code{NA}.}
+ \item{IClikelihood}{A \code{character} that controls both the occurence and the type 
+                    of likelihood for information criterion in the \code{test.summary} 
+                    of the \code{\link{asrtests.object}}. If \code{none}, none are 
+                    included. Otherwise, if \code{REML}, then the AIC and BIC based 
+                    on the Restricted Maximum Likelihood are included; if \code{full}, 
+                    then the AIC and BIC based on the full likelihood are included. 
+                    (See also \code{\link{infoCriteria.asreml}}.)}
  \item{trace}{If TRUE then partial iteration details are displayed when ASReml-R 
               functions are invoked; if FALSE then no output is displayed.}
  \item{update}{If \code{TRUE} then \code{update.asreml} is called to fit the model 
@@ -111,7 +122,9 @@
               (i) models are modifed for the supplied \code{terms} and 
               (ii) modifications specified via \code{\dots} are made.}
  \item{set.terms}{A character vector specifying the terms that are to have 
-                  bounds and/or initial values set prior to fitting.}
+               bounds and/or initial values set prior to fitting. 
+               The names must match those in the \code{vparameters} component of the 
+               \code{asreml.obj} component in the \code{\link{asrtests.object}}.}
  \item{ignore.suffices}{A logical vector specifying whether the suffices of the 
                     \code{asreml}-assigned names of the variance terms (i.e. the 
                     information to the right of an "!", other than "R!") is to 
@@ -150,12 +163,15 @@
        its name, DF set to NA, p-value set to \code{NA}, and action set to Absent.
 }
 
+\references{Kenward, M. G., & Roger, J. H. (1997). Small sample inference for fixed effects from restricted maximum likelihood. 
+            \emph{Biometrics}, \bold{53}, 983-997.}
+
 \author{Chris Brien}
 \seealso{\code{\link{asremlPlus-package}}, \code{\link{as.asrtests}}, 
          \code{\link{chooseModel.asrtests}}, \code{\link{REMLRT.asreml}}, \cr
          \code{\link{rmboundary.asrtests}}, 
-         \code{\link{newfit.asreml}}, \code{\link{reparamSigDevn.asrtests}}, 
-         \code{\link{changeTerms.asrtests}}}
+         \code{\link{newfit.asreml}}, \code{\link{changeModelOnIC.asrtests}}, \cr
+         \code{\link{changeTerms.asrtests}}, \code{\link{reparamSigDevn.asrtests}}}
 \examples{\dontrun{
 data(Wheat.dat)
 current.asr <- asreml(yield ~ Rep + WithinColPairs + Variety, 
