@@ -77,7 +77,7 @@
 }
 
 "getFormulae.asreml" <- function(asreml.obj, which = c("fixed", "random", "residual"), 
-                                 expanded = FALSE, ...)
+                                 expanded = FALSE, envir = parent.frame(), ...)
 {
   asr4 <- isASRemlVersionLoaded(4, notloaded.fault = TRUE)
 
@@ -90,33 +90,44 @@
     forms.opt <- gsub("residual", "rcov", forms.opt, fixed = TRUE)
   
   #Get formula(e)
-  mod <- lapply(forms.opt, 
-                function(form, asreml.obj) {asreml.obj$call[[form]]}, 
-                asreml.obj = asreml.obj)
-  names(mod) <- forms.opt
+  modlist <- lapply(forms.opt, 
+                    function(form, asreml.obj) 
+                    {
+                      modl <- asreml.obj$call[[form]]
+                      #evaluate mod in the frame of the function call that led to here 
+                      modl <- eval(modl, envir = envir) 
+                      return(modl)
+                    }, 
+                    asreml.obj = asreml.obj)
+  names(modlist) <- forms.opt
   
   #Expand if required
   if (expanded)
-    mod <- lapply(mod, function(x) update.formula(x, ~., ...))
-  
-  return(mod)
+    modlist <- lapply(modlist, 
+                      function(x) 
+                      {  
+                        if (!is.null(x)) x <- update.formula(x, ~., ...) 
+                        else x <- x
+                      })
+  return(modlist)
 }
 
 "printFormulae.asreml" <- function(asreml.obj, which = c("fixed", "random", "residual"), 
-                                   expanded = FALSE, ...)
+                                   expanded = FALSE, envir = parent.frame(), ...)
 {
   asr4 <- isASRemlVersionLoaded(4, notloaded.fault = TRUE)
-  mod <- getFormulae.asreml(asreml.obj, which = which, expanded = expanded, ...)
+  mod <- getFormulae.asreml(asreml.obj, which = which, expanded = expanded, envir = envir,  ...)
   mod.ch <- lapply(mod, 
                    function(m) 
                    {
-                     m <- capture.output(m) 
-                     m <- m[-length(m)]
-                     if (length(m > 1))
+                     m <- capture.output(m)
+#                     m <- m[-length(m)]
+                     if (length(m) > 1)
                      {
                        m <- unlist(lapply(m, function(m) m <- stringr::str_trim(m, side = "left")))
                        m <- paste0(m, collapse = "")
                      }
+                     return(m)
                    })
   if ("random" %in% names(mod.ch))
     mod.ch$random <- gsub("~", "~ ", mod.ch$random)
@@ -381,16 +392,31 @@
 
 "chkWald" <- function(wald.tab)
 {
-  if (!is.data.frame(wald.tab))
-    wald.tab <- wald.tab$Wald
-  
-  #Check that have a valid wald.tab object
-  validwald <- validWaldTab(wald.tab)  
-  if (is.character(validwald))
-    stop(validwald)
+  if (!is.null(wald.tab)) 
+  {
+     if (is.list(wald.tab))
+      wald.tab <- wald.tab$Wald
+     else
+       if (is.matrix(wald.tab))
+       {
+         hd <- attr(wald.tab, which = "heading")
+         wald.tab <- as.data.frame(wald.tab, stringsAsFactors = FALSE)
+         nofixed <- dim(wald.tab)[1]
+         wald.tab <- wald.tab[1:(nofixed-1), c(1,3,4)] #Remove Residual line
+         wald.tab$F.inc <- wald.tab$'Wald statistic'/wald.tab$Df
+         hd[1] <- "Conservative Wald F tests for fixed effects \n"
+         attr(wald.tab, which = "heading") <- hd
+       }
+    
+    #Check that have a valid wald.tab object
+    validwald <- validWaldTab(wald.tab)  
+    if (is.character(validwald))
+      stop(validwald)
+  }
   
   if (!is.null(wald.tab))
     class(wald.tab) <- c("wald.tab", "data.frame")
+
   return(wald.tab)  
 }
 

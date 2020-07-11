@@ -139,8 +139,8 @@ test_that("IC_wheat94_asreml4", {
   
   vpar3 <- current.asrt$asreml.obj$vparameters[1:3]
   current.asrt <- iterate(current.asrt)
-  testthat::expect_true(all(abs(current.asrt$asreml.obj$vparameters[1:3] - vpar3) > 1e-04))
-  testthat::expect_true(abs(current.asrt$asreml.obj$loglik - -1563.459) < 1e-03)
+  testthat::expect_true(all(abs(current.asrt$asreml.obj$vparameters[1:3] - vpar3) < 1e-03))
+  testthat::expect_true(abs(current.asrt$asreml.obj$loglik - -1563.459) < 1)
   testthat::expect_equal(nrow(current.asrt$wald.tab), 1)
   
   #Add random Row and Col terms
@@ -150,7 +150,8 @@ test_that("IC_wheat94_asreml4", {
   current.asrt <- iterate(current.asrt)
   #check that denDf for current model is the same as the number of variance parameters
   testthat::expect_true(
-    nrow(summary(current.asrt$asreml.obj)$varcomp) == 
+    length(vpc.char(current.asrt$asreml.obj)[!(vpc.char(current.asrt$asreml.obj) 
+                                               %in% c("F","S","B"))])  == 
       current.asrt$test.summary$denDF[current.asrt$test.summary$terms == "Add Row + Col"])
   
   #Add fixed lin(Row) and lin(Col) terms
@@ -166,7 +167,8 @@ test_that("IC_wheat94_asreml4", {
                               label = "Add spl(Col)", 
                               IClikelihood = "full")
   testthat::expect_equal(
-    nrow(summary(current.asrt$asreml.obj)$varcomp),  
+    length(vpc.char(current.asrt$asreml.obj)[!(vpc.char(current.asrt$asreml.obj) 
+                                               %in% c("F","S","B"))]),  
     current.asrt$test.summary$denDF[current.asrt$test.summary$terms == "Add spl(Col)"][1])
   
   #Restart with fixed Rowcode and Colcode covariates, units and autocorrelation
@@ -197,7 +199,7 @@ test_that("IC_wheat94_asreml4", {
                               label = "Add spl(Col)", IClikelihood = "full")
   
   current.asrt <- iterate(current.asrt)
-  testthat::expect_equal(nrow(current.asrt$test.summary), 14)
+  testthat::expect_true(nrow(current.asrt$test.summary) %in% c(13,14))
   print(current.asrt$test.summary, omit.columns = "p")
   
   
@@ -228,8 +230,10 @@ test_that("IC_wheat94_asreml4", {
   #Drop random spl(Col) term
   current.asrt <- changeTerms(current.asrt, dropRandom = "spl(Col)", 
                               label = "Drop spl(Col)", IClikelihood = "full")
-  testthat::expect_equal(nrow(summary(current.asrt$asreml.obj)$varcomp), 
-                         current.asrt$test.summary$denDF[4])
+  testthat::expect_equal(
+    length(vpc.char(current.asrt$asreml.obj)[!(vpc.char(current.asrt$asreml.obj) 
+                                               %in% c("F","S","B"))]), 
+    current.asrt$test.summary$denDF[4])
   testthat::expect_true((abs(diff(current.asrt$test.summary$BIC[3:4])) - 4.062308) < 1e-05)
   
   #Use hypothesis testing with the maximal model
@@ -254,29 +258,56 @@ test_that("IC_wheat94_asreml4", {
   current.asrt <- testranfix(current.asrt, term = "units", alpha = 0.20)
   testthat::expect_equal(nrow(current.asrt$test.summary), 10)
   
+})
+
+cat("#### Test for getFormulae with wheat94 using asreml4\n")
+test_that("Formulae_wheat94_asreml4", {
+  skip_if_not_installed("asreml")
+  skip_on_cran()
+  library(dae)
+  library(asreml)
+  library(asremlPlus)
+  ## use asremlPlus to analyse the wheat (barley) example from section 8.6 of the asreml manual (Butler et al. 2010)
+  data(wheat94.dat)
+
+  fm.max <- asreml(yield ~ lin(Row) + lin(Col) + Rowcode + Colcode,
+                   random = ~ Variety + Block + Row + spl(Col) + Col + units,
+                   residual = ~ ar1(Col):ar1(Row),
+                   data = wheat94.dat)
+  
+  mod <- getFormulae(fm.max, which = "all", envir = sys.frame(sys.nframe()))
+  testthat::expect_true(all(unlist(lapply(mod, function(form) is.null(form) | 
+                                            inherits(form, what = "formula")))))
+  testthat::expect_true(all(names(mod) == c("fixed", "random", "residual", "sparse")))
+  
   #Print fitted model
-  mod <- getFormulae(current.asrt$asreml.obj, which = "all")
   testthat::expect_equal(length(mod), 4)
   testthat::expect_true(is.null(mod$sparse))
-  mod <- printFormulae(current.asrt$asreml.obj, which = "all")
-  testthat::expect_equal(length(mod), 4)
-  mod <- printFormulae(current.asrt$asreml.obj, expanded = TRUE)
-  testthat::expect_equal(length(mod), 3)
-  mod <- printFormulae(current.asrt$asreml.obj, which = c("fixed", "random"))
-  testthat::expect_equal(length(mod), 2)
-  mod <- printFormulae(current.asrt$asreml.obj, which = "fixed")
-  testthat::expect_equal(length(mod), 1)
   
-  #Test for getFormulae
-  asreml.obj <- asreml(yield ~ lin(Row) + lin(Col),
-                       sparse = ~ Rowcode + Colcode,
-                       random = ~ Variety + Block + Row + spl(Col) + Col + units,
-                       residual = ~ ar1(Col):ar1(Row),
-                       data = wheat94.dat)
-  mod <- getFormulae(asreml.obj, which = "all")
+  p <- printFormulae(fm.max, which = "all")
+  testthat::expect_true(all(nchar(p) > 11))
+  testthat::expect_equal(length(p), 4)
+  p <- printFormulae(fm.max, expanded = TRUE)
+  testthat::expect_equal(length(p), 3)
+  p <- printFormulae(fm.max, which = c("fixed", "random"))
+  testthat::expect_equal(length(p), 2)
+  p <- printFormulae(fm.max, which = "fixed")
+  testthat::expect_equal(length(p), 1)
+  
+  #Test when have formulae in a character or list
+  fix.mod <- mod$fixed
+  fm.max <- asreml(fixed = fix.mod,
+                   random = mod$random,
+                   residual = mod$residual,
+                   data = wheat94.dat)
+  mod.fm <- getFormulae(fm.max, which = "all", envir = sys.frame(sys.nframe()))
+  testthat::expect_true(all(unlist(lapply(mod.fm, function(form) is.null(form) | 
+                                            inherits(form, what = "formula")))))
   testthat::expect_equal(length(mod), 4)
-  testthat::expect_true(!is.null(mod$sparse))
+  testthat::expect_true(is.null(mod$sparse))
+  p <- printFormulae(fm.max, which = "all")
+  testthat::expect_true(all(nchar(p) > 11))
   
 })
 
-
+  
