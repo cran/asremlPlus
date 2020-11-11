@@ -153,6 +153,8 @@
              Least Significant Difference (LSD) being added and subtracted to the 
              predictions, the LSD being calculated using the square root of the mean of the 
              variances of all or a subset of pairwise differences between the predictions. 
+             If the LSD is zero, as can happen when predictions are constrained to be equal,
+             then the limits of the error intervals are set to \code{NA}. 
              If \code{meanLSD.type} is set to \code{overall}, the \code{avsed.tolerance} is not 
              \code{NA} and the range of the SEDs divided by the average of the SEDs exceeds 
              \code{avsed.tolerance} then the \code{error.intervals} calculations and the plotting 
@@ -262,10 +264,11 @@
               the order for sorting the components of the \code{\link{alldiffs.object}} is for 
                increasing or decreasing magnitude of the predicted values.}
  \item{wald.tab}{A \code{\link{data.frame}} containing the pseudo-anova table for the 
-                 fixed terms produced by a call to \code{wald.asreml}. The main 
-                 use of it here is in determinining the degrees of freedom of the standard errors
-                 of the predictions. denominator degrees of freedom when
-                 p-values or confidence intervals are to be calculated.}
+               fixed terms produced by a call to \code{wald.asreml}. The main 
+               use of it here is in determinining the degrees of freedom for 
+               calculating confidence or half-LSD \code{error.intervals} and p-values, 
+               the latter to be stored in the \code{p.differences} component of the 
+               \code{alldiffs.object} that is created.}
  \item{alpha}{A \code{\link{numeric}} giving the significance level for LSDs or one minus 
               the confidence level for confidence intervals.}
  \item{dDF.na}{A \code{\link{character}} specifying the method to use to 

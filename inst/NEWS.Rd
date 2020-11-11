@@ -1,5 +1,28 @@
 \name{news}
 \title{News for Package asremlPlus}
+\section{asremlPlus Version 4.2-26 (2020-11-11)}{
+  \itemize{
+    \item{M<odify URLs for CRAN submission.}
+}}
+\section{asremlPlus Version 4.2-25 (2020-11-11)}{
+  \itemize{
+    \item{Try to neutralize problem that occurs with \code{colourise} in print.predictions.frame.}
+    \item{Rebuild for R 4.0.3 nd recompile vignetted for CRAN submission.}
+}}
+\section{asremlPlus Version 4.2-24 (2020-09-25)}{
+  \itemize{
+    \item{Include a \code{key} option in the \code{which} that produces \code{vparametersummary} rather than the full \code{asremlsummary}.}
+    \item{Remove attributes from formuale when executing printFormulae.}
+    \item{Add the ChickpeaEnd data set.}
+}}
+\section{asremlPlus Version 4.2-23 (2020-09-07)}{
+  \itemize{
+    \item{Modify code so that error intervals are set to NA when the LSDs are zero.}
+}}
+\section{asremlPlus Version 4.2-22 (2020-09-04)}{
+  \itemize{
+    \item{Modify code for calculating LSDs so that all zero LSDs are allowed; this is needed when a linear transformation has resulted in predictions that are equal.}
+}}
 \section{asremlPlus Version 4.2-21 (2020-07-11)}{
   \itemize{
     \item{Rebuild the vignettes prior to CRAN submission.}
