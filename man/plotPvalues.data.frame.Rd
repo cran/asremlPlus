@@ -6,8 +6,8 @@
              two factors whose levels specify, for each p-value, which factor levels are 
              being compared.}
 \usage{\method{plotPvalues}{data.frame}(object, p = "p", x, y, 
-            gridspacing = 0, show.sig = FALSE, triangles = "both", 
-            title = NULL, axis.labels = NULL, 
+            gridspacing = 0, show.sig = FALSE, alpha = 0.10, triangles = "both", 
+            title = NULL, axis.labels = NULL, axis.text.size = 12, 
             colours = RColorBrewer::brewer.pal(3, "Set2"), 
             ggplotFuncs = NULL, printPlot = TRUE, ...)}
 \arguments{
@@ -18,7 +18,7 @@
  \item{x}{A \code{character} giving the name of the column in \code{object} that contains 
              the factor whose levels index the p-values that are to be plotted in the same column.}
  \item{y}{A \code{character} giving the name of the column in \code{object} that contains 
-             the labels of the the p-values that are to be plotted as the rows.}
+             the labels of the p-values that are to be plotted as the rows.}
  \item{gridspacing}{A \code{numeric} specifying the number(s) of rows and columns 
              that form groups in the grid of differences. This is most useful when  
              two or more factors index the rows and columns. If a single, nonzero 
@@ -31,19 +31,24 @@
              `***' indicates that \eqn{p \leq 0.001}{p <= 0.001}, 
              `**' that \eqn{ 0.001 < p \leq 0.01}{0.001 < p <= 0.01}, 
              `*' that \eqn{ 0.01 < p \leq 0.05}{0.01 < p <= 0.05}
-             `.' that \eqn{ 0.05 < p \leq 0.10}{0.05 < p <= 0.10}.}
+             `.' that \eqn{ 0.05 < p \leq 0.10}{0.05 < p <= 0.10}. The last is only 
+             included for \code{alpha} = 0.10.}
+ \item{alpha}{A \code{\link{numeric}} giving the significance level for testing 
+             pairwise differences; must be 0.05 or 0.10.}
  \item{triangles}{A \code{character} indicating whether the plot should include the 
              \code{lower}, \code{upper} or \code{both} traingle(s). Here it is only used 
               to adjust gridlines for the omission of the diagonal.}
  \item{title}{A \code{character} string giving the main title for the plot.}
  \item{axis.labels}{A \code{character} string giving the label to use for both the x- and y-axis.}
+ \item{axis.text.size}{A \code{\link{numeric}} giving the size of the \code{labels} on the axes   
+                  of the \code{heatmap}.}
  \item{colours}{A vector of of colours to be passed to the \code{ggplot} function 
                 \code{scale\_colour\_gradientn}.}
  \item{ggplotFuncs}{A \code{\link{list}}, each element of which contains the 
                 results of evaluating a \code{\link{ggplot}} function. 
                 It is created by calling the \code{\link{list}} function with 
                 a \code{\link{ggplot}} function call for each element. 
-                It is passed to \code{ggplot}.}
+                These functions are applied in creating the \code{ggplot} object.}
  \item{printPlot}{A \code{logical} indicating whether or not the a plot is to be printed. This would 
                 be used when just the returned \code{ggplot} object is required.}
  \item{\dots}{Provision for passsing arguments to functions called internally - 
@@ -76,20 +81,21 @@ SS.diffs <- predictPlus.asreml(classify = "Sources:Type",
 if (requireNamespace("lmerTest", quietly = TRUE) & 
     requireNamespace("emmeans", quietly = TRUE))
 {
-  m1.lmer <- lmerTest::lmer(pH ~ Benches + Sources * Species + 
+  m1.lmer <- lmerTest::lmer(pH ~ Benches + (Sources * (Type + Species)) + 
                               (1|Benches:MainPlots),
-                            data=tmp)
-  TS.emm <- emmeans::emmeans(m1.lmer, specs = ~ Sources:Species)
+                            data=na.omit(WaterRunoff.dat))
+  TS.emm <- emmeans::emmeans(m1.lmer, specs = ~ Sources:Type)
   TS.preds <- summary(TS.emm)
   den.df <- min(TS.preds$df, na.rm = TRUE)
   ## Modify TS.preds to be compatible with a predictions.frame
   TS.preds <- as.predictions.frame(TS.preds, predictions = "emmean", 
                                    se = "SE", interval.type = "CI", 
                                    interval.names = c("lower.CL", "upper.CL"))
-  
+   
   ## Form an all.diffs object and check its validity
-  TS.vcov <- vcov(TS.emm)
-  TS.diffs <- allDifferences(predictions = TS.preds, classify = "Sources:Species", 
+  els <- as.numeric(rownames(TS.preds))
+  TS.vcov <- vcov(TS.emm)[els,els]
+  TS.diffs <- allDifferences(predictions = TS.preds, classify = "Sources:Type", 
                              vcov = TS.vcov, tdf = den.df)
   validAlldiffs(TS.diffs)
 }  

@@ -44,9 +44,9 @@
 \code{\link{facCombine.alldiffs}}
       \tab Combines several factors into one in the components of \cr
       \tab an \code{\link{alldiffs.object}}.  \cr
-\code{\link{facRecode.alldiffs}}
-      \tab Recodes factor levels using values in a vector. The values in the \cr 
-      \tab vector do not have to be unique.    \cr
+\code{\link{facRecast.alldiffs}}
+      \tab Reorders and/or revises the factor levels using the order of old levels \cr
+      \tab in \code{levels.order} and the new labels for the levels given in \code{newlabels}. \cr
 \code{\link{facRename.alldiffs}}
       \tab Renames \code{\link{factor}}s in the \code{prediction} component of \cr
       \tab an \code{\link{alldiffs.object}}.    \cr
@@ -65,6 +65,9 @@
       \tab Prints the values in an \code{\link{alldiffs.object}} in a nice format. \cr
 \code{\link{print.asrtests}}
       \tab Prints the values in an \code{\link{asrtests.object}}. \cr
+\code{\link{print.LSDdata}}
+      \tab Prints the components of a list containing data on the \cr
+      \tab LSDs for all pairwise differences of predictions.      \cr
 \code{\link{print.predictions.frame}}
       \tab Prints the values in a \code{\link{predictions.frame}}, with or without title and heading. \cr
 \code{\link{print.test.summary}}
@@ -79,6 +82,9 @@
 \code{\link{subset.alldiffs}}
        \tab Subsets the components in an \code{\link{alldiffs.object}} according \cr 
        \tab to the supplied condition. \cr
+\code{\link{subset.list}}
+       \tab Forms a \code{list} that contains a subset of the components of \cr
+       \tab the supplied \code{\link{list}}.     \cr
 \code{\link{validAlldiffs}}
        \tab Checks that an object is a valid \code{\link{alldiffs.object}}. \cr
 \code{\link{validAsrtests}}
@@ -183,9 +189,21 @@
        \tab differences or the variance matrix of predictions, forms \cr
        \tab all pairwise differences between the set of predictions, and \cr
        \tab p-values for the differences. \cr
+\code{\link{exploreLSDs}}
+       \tab Explores the computed LSD values for pairwise differences \cr
+       \tab between predictions.    \cr
 \code{\link{linTransform.alldiffs}} 
        \tab Calculates a linear transformation of the \cr
        \tab predictions stored in an \code{\link{alldiffs.object}}. \cr
+\code{\link{pairdiffsTransform.alldiffs}} 
+       \tab Calculates the differences between nominated pairs of \cr 
+       \tab predictions stored in an \code{\link{alldiffs.object}} \cr
+\code{\link{plotLSDs.data.frame}}
+       \tab Plots a heat map of computed LSD values for pairwise \cr
+       \tab differences between predictions. \cr
+\code{\link{plotLSDs.alldiffs}}
+       \tab Plots a heat map of computed LSD values for pairwise \cr
+       \tab differences between predictions. \cr
 \code{\link{plotPredictions.data.frame}}
        \tab Plots the predictions for a term, possibly with \cr
        \tab error bars. \cr
@@ -205,9 +223,12 @@
 \code{\link{predictPresent.asreml}}
        \tab Forms the predictions for each of one or more terms \cr
        \tab and presents them in tables and/or graphs. \cr
+\code{\link{ratioTransform.alldiffs}} 
+       \tab Calculates the ratios of noinated pairs of predictions \cr 
+       \tab stored in an \code{\link{alldiffs.object}}.   \cr
 \code{\link{recalcLSD.alldiffs}} 
-       \tab Adds or recalculates the LSD component of an \cr 
-       \tab \code{\link{alldiffs.object}}.                           \cr
+       \tab Adds or recalculates the \code{\link{LSD.frame}} that is a \cr 
+       \tab component of an \code{\link{alldiffs.object}}.           \cr
 \code{\link{redoErrorIntervals.alldiffs}} 
        \tab Adds or replaces the error intervals stored in the \cr
        \tab prediction component of an \code{\link{alldiffs.object}}. \cr
@@ -220,7 +241,10 @@
 \code{\link{subset.alldiffs}}
        \tab Subsets the components in an \code{\link{alldiffs.object}} according \cr 
        \tab to the supplied condition. \cr
-\cr
+\code{\link{sort.predictions.frame}}
+       \tab Sorts a \code{\link{predictions.frame}} according to the \cr
+       \tab predicted values. associated with a factor.\cr
+
 (vii) Response transformation \cr\cr
 
 \code{\link{angular}}
@@ -253,7 +277,7 @@ The functions whose names end in 'alldiffs" utilize an \code{\link{alldiffs.obje
    (i) a \code{\link{predictions.frame}}, being a data frame containing predicted values, variables indexing them and their standard errores and estimability status; 
        the lower and upper limits of error intervals will be included when these are requested,
    (ii) optionally, square matrices containing all pairwise differences, the standard errors and p-values of the differences, 
-        and a summary of the LSD values, 
+        and a \code{data.frame} containing LSD values and their summary statistics, 
    (iii) optionally, the variance matrix of the predictions, and 
    (iv) if the response was trandformed for analysis, a data frame with backtransforms of the predicted values.
 

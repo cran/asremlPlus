@@ -51,10 +51,6 @@
              values and their lower and upper error intervals are added 
              to a \code{data.frame} that is consistent with the \code{predictions} 
              \code{data.frame}. 
-%If the \code{error.intervals} are 
-%             \code{halfLeastSignificant}, then backtransforms of the Confidence 
-%             limits are stored, instead of the \code{halfLeastSignificant} 
-%             intervals. 
               If \code{transform.power} is other than 
              one, the \code{standard.error} column of the \code{data.frame} 
              is set to \code{NA}. This \code{data.frame} is added to the 
@@ -68,20 +64,20 @@
 }
 \usage{
 \method{predictPlus}{asreml}(asreml.obj, classify, term = NULL, 
-            linear.transformation = NULL, titles = NULL,  
+            inestimable.rm = TRUE, linear.transformation = NULL, 
+            error.intervals = "Confidence", alpha = 0.05, 
+            wald.tab = NULL, dDF.na = "residual",  dDF.values = NULL, 
+            pairwise = TRUE, Vmatrix = FALSE, 
+            avsed.tolerance = 0.25, accuracy.threshold = NA, 
+            LSDtype = "overall", LSDsupplied = NULL, LSDby = NULL, 
+            LSDstatistic = "mean", LSDaccuracy = "maxAbsDeviation", 
             x.num = NULL, x.fac = NULL,  
             x.pred.values = NULL, x.plot.values = NULL, 
-            error.intervals = "Confidence", avsed.tolerance = 0.25, 
-            meanLSD.type = "overall", LSDby = NULL, 
-            pairwise = TRUE, Vmatrix = FALSE, 
-            tables = "all" , level.length = NA, 
+            titles = NULL,  tables = "all" , level.length = NA, 
             transform.power = 1, offset = 0, scale = 1, 
-            inestimable.rm = TRUE, 
-            sortFactor = NULL, sortWithinVals = NULL, 
-            sortOrder = NULL, decreasing = FALSE, 
-            wald.tab = NULL, alpha = 0.05, 
-            dDF.na = "residual",  dDF.values = NULL, 
-            trace = FALSE, ...)
+            sortFactor = NULL, sortParallelToCombo = NULL, 
+            sortNestingFactor = NULL, sortOrder = NULL, 
+            decreasing = FALSE, trace = FALSE, ...)
 }
 \arguments{
  \item{asreml.obj}{\code{asreml} object for a fitted model.}
@@ -92,19 +88,30 @@
                  variable names with the \code{:} operator. To predict the overall 
                  mean, set the \code{classify} to "\code{(Intercept)}".}
  \item{term}{A \code{\link{character}} string giving the variables that define the term 
-               that was fitted using \code{asreml} and that corresponds 
-               to \code{classify}. It only needs to be specified when 
-               it is different to \code{classify}.}
+               that was fitted using \code{asreml} and that corresponds to \code{classify}. 
+               It only needs to be specified when it is different to \code{classify}; it 
+               is stored as an attribute of the \code{\link{alldiffs.object}}. 
+               It is likely to be needed when the fitted model includes terms that involve  
+               both a \code{\link{numeric}} covariate and a \code{\link{factor}} that 
+               parallel each other; the \code{classify} would include the covariate and 
+               the \code{term} would include the \code{factor}.}
+\item{inestimable.rm}{A \code{logical} indicating whether rows for  predictions 
+               that are not estimable are to be removed from the components of 
+               the \code{\link{alldiffs.object}}.}
  \item{linear.transformation}{A \code{\link{formula}} or a \code{\link{matrix}}. 
                If a \code{\link{formula}} is given then it is taken to be a submodel of 
-               the model term corresponding to the \code{classify}. The projection matrix 
+               a model term corresponding to the \code{classify}. The projection matrix 
                that transforms the \code{predictions} so that they conform to the submodel 
-               is obtained; the submodel should involving the variables in the 
-               \code{classify}. For example, 
-               for \code{classify} set to \code{"A:B"}, the submodel \code{~ A + B} will 
-               result in the \code{predictions} for the combinations of 
+               is obtained; the submodel does not have to involve variables in the 
+               \code{classify}, but the variables must be columns in the \code{predictions} 
+               component of \code{alldiffs.obj} and the space for the submodel must be a 
+               subspace of the space for the term specified by the \code{classify}. 
+               For example, for \code{classify} set to \code{"A:B"}, the submodel 
+               \code{~ A + B} will result in the \code{predictions} for the combinations of 
                \code{A} and \code{B} being made additive for the \code{\link{factor}s} 
-               \code{A} and \code{B}.
+               \code{A} and \code{B}. The submodel space corresponding to \code{A + B} is 
+               a subspace of the space \code{A:B}. In this case both the submodel and the 
+               the classify involve only the factors A and B.
                
                If a \code{\link{matrix}} is provided then it will be 
                used to apply the linear transformation to the \code{predictions}. 
@@ -117,12 +124,156 @@
                In either case, as well as the values of the linear combinations, 
                their standard errors, pairwise differences and associated statistics 
                are returned.}
+ \item{error.intervals}{A \code{\link{character}} string indicating the type of error interval, if any, 
+             to calculate in order to indicate uncertainty in the results. 
+             Possible values are \code{"none"}, \code{"StandardError"}, \code{"Confidence"} 
+             and \code{"halfLeastSignificant"}. The default is for confidence limits to 
+             be used. The \code{"halfLeastSignificant"} option results in half the 
+             Least Significant Difference (LSD) being added and subtracted to the 
+             predictions, the LSD being calculated using the square root of the mean of the 
+             variances of all or a subset of pairwise differences between the predictions. 
+             If the LSD is zero, as can happen when predictions are constrained to be equal,
+             then the limits of the error intervals are set to \code{NA}. 
+             If \code{LSDtype} is set to \code{overall}, the \code{avsed.tolerance} is not 
+             \code{NA} and the range of the SEDs divided by the average of the SEDs exceeds 
+             \code{avsed.tolerance} then the \code{error.intervals} calculations and the plotting 
+             will revert to confidence intervals.}
+\item{alpha}{A \code{\link{numeric}} giving the significance level for LSDs or one minus 
+              the confidence level for confidence intervals.
+              It is stored as an attribute to the \code{\link{alldiffs.object}}.}
+\item{wald.tab}{A \code{\link{data.frame}} containing the pseudo-anova table for the 
+               fixed terms produced by a call to \code{wald.asreml}. The main 
+               use of it here is in determinining the degrees of freedom for 
+               calculating confidence or half-LSD \code{error.intervals} and p-values, 
+               the latter to be stored in the \code{p.differences} component of the 
+               \code{alldiffs.object} that is created.}
+\item{dDF.na}{A \code{\link{character}} specifying the method to use to 
+               obtain approximate denominator degrees of 
+               freedom. when the numeric or algebraic methods produce an 
+               \code{NA}. Consistent with when no denDF are available, the 
+               default is \code{"residual"} and so the residual degrees of 
+               freedom from \code{asreml.obj$nedf} are used. 
+               If \code{dDF.na = "none"}, no subtitute denominator degrees of 
+               freedom are employed; if \code{dDF.na = "maximum"}, the maximum 
+               of those denDF that are available, excluding that for the 
+               Intercept, is used; if all denDF are \code{NA}, \code{asreml.obj$nedf} is used. If 
+              \code{dDF.na = "supplied"}, a \code{vector} of values for the 
+              denominator degrees of freedom is to be supplied in \code{dDF.values}. 
+              Any other setting is ignored and a warning message produced. 
+              Generally, substituting these degrees of freedom is 
+              anticonservative in that it is likely that the degrees of freedom 
+              used will be too large.}
+\item{dDF.values}{A \code{\link{vector}} of values to be used when 
+              \code{dDF.na = "supplied"}. Its values will be used when 
+              \code{denDF} in a test for a fixed effect is \code{NA}. 
+              This vector must be the same length as the number of 
+              fixed terms, including (Intercept) whose value could be 
+              \code{NA}.}
+\item{pairwise}{A \code{\link{logical}} indicating whether all pairwise differences of the
+             \code{predictions} and their standard errors and p-values are to be 
+             computed and stored. If \code{tables} is equal to 
+             \code{"differences"} or \code{"all"} or \code{error.intervals} is 
+             equal to \code{"halfLeastSignificant"}, they will be stored 
+             irrespective of the value of \code{pairwise}.}
+\item{Vmatrix}{A \code{\link{logical}} indicating whether the variance matrix of the 
+             \code{predictions} will be stored as a component of the 
+             \code{\link{alldiffs.object}} that is returned. 
+              If \code{linear.transformation} is set, it will 
+             be stored irrespective of the value of \code{Vmatrix}.}
+\item{avsed.tolerance}{A \code{\link{numeric}} giving the value of the SED range, the range of the SEDs 
+             divided by the square root of the mean of the variances of all or a subset of the 
+             pairwise differences, that is considered reasonable in calculating 
+             \code{error.intervals}. To have it ignored, set it to \code{NA}. It should be a 
+             value between 0 and 1. The following rules apply:
+             \enumerate{
+             \item If \code{avsed.tolerance} is \code{NA} then mean LSDs of the type specified by 
+             \code{LSDtype} are calculated and used in \code{error.intervals} and plots.
+             \item Irrespective of the setting of \code{LSDtype}, if \code{avsed.tolerance} is not 
+             exceeded then the mean LSDs are used in \code{error.intervals} and plots. 
+             \item If \code{LSDtype} is set to \code{overall}, \code{avsed.tolerance} is not 
+             \code{NA}, and \code{avsed.tolerance} is exceeded then  \code{error.intervals} and 
+             plotting revert to confidence intervals. 
+             \item If \code{LSDtype} is set to \code{factor.combinations} and \code{avsed.tolerance} 
+             is not exceeded for any factor combination then the half LSDs are 
+             used in \code{error.intervals} and plots; otherwise, \code{error.intervals} and 
+             plotting revert to confidence intervals. 
+             \item If \code{LSDtype} is set to \code{per.prediction} and \code{avsed.tolerance} 
+             is not exceeded for any prediction then the half LSDs are used in \code{error.intervals} 
+             and plots; otherwise, \code{error.intervals} and plotting revert to confidence intervals.
+             }}
+\item{accuracy.threshold}{A \code{\link{numeric}} specifying the value of the LSD accuracy measure,  
+             which measure is specified by \code{LSDaccuracy}, as a threshold value in determining whether the 
+             \code{hallfLeastSignificant} \code{error.interval} for a predicted value is a reasonable  
+             approximation; this will be the case if the LSDs across all pairwise comparisons for which 
+             the interval's LSD was computed, as specified by \code{LSDtype} and \code{LSDby}, 
+             are similar enough to the interval's LSD, as measured by \code{LSDaccuracy}.  
+             If it is \code{NA}, it will be ignored. If it is 
+             not \code{NA}, a column of \code{\link{logical}s} named \code{LSDwarning}  will be added 
+             to the \code{predictions} component of the \code{\link{alldiffs.object}}. The value of 
+             \code{LSDwarning} for a \code{predicted.value} will be \code{TRUE} if the value of the 
+             \code{LSDaccuracy} measure computed from the LSDs for differences between this 
+             \code{predicted.value} and the other \code{predicted.values} as compared to its 
+             \code{assignedLSD} exceeds the value of \code{accuracy.threshold}. Otherwise, the 
+             value of \code{LSDwarning} for a \code{predicted.value} will be \code{FALSE}.}
+\item{LSDtype}{A \code{\link{character}} string that can be \code{overall}, \code{factor.combinations}, 
+              \code{per.prediction} or \code{supplied}. It determines whether the values stored in an 
+              \code{\link{LSD.frame}} are  
+             (i) the \code{overall} number of pairwise comparisons, \code{c}, and the  minimum, mean, 
+              maximum and accuracy of all pairwise LSDs, 
+             (ii) the number of pairwise comparisons, \code{c}, and the minimum, mean, maximum and 
+             acuracy for the pairwise LSDs for each \code{factor.combination}, unless there is only 
+             one prediction for a \code{factor.combination}, when notional LSDs are calculated,  
+             (iii) the \code{per.prediction} number of pairwise comparisons, \code{c}, and the minimum, 
+             mean, maximum and accuracy, based, for each prediction, on all pairwise differences 
+             involving that prediction, or 
+            (iv) \code{supplied} values of the LSD, specified with the \code{LSDsupplied} argument; these 
+             values are to be placed in the \code{assignedLSD} column of the \code{\link{LSD.frame}} 
+             stored in an \code{\link{alldiffs.object}} so that they can be used in LSD calculations.
+             See \code{\link{LSD.frame}} for further information on the calculation of the values in this 
+             \code{data.frame}.}
+\item{LSDsupplied}{A \code{\link{data.frame}} or a named \code{\link{numeric}} containing a set of \code{LSD} 
+             values that correspond to the observed combinations of the values of the \code{LSDby} variables 
+             in the \code{\link{predictions.frame}} or a single LSD value that is an overall LSD. 
+             If a \code{\link{data.frame}}, it may have a column for each \code{LSDby} variable and a column 
+             of \code{LSD} values or a single column of \code{LSD} values with rownames being the combinations 
+             of the observed combinations of the values of the \code{LSDby} variables. Any name can be used 
+             for the column of \code{LSD} values; \code{assignedLSD} is sensible, but not obligatory. Otherwise, 
+             a \code{\link{numeric}} containing the \code{LSD} values, each of which is named for the observed 
+             combination of the values of the \code{LSDby} variables to which it corresponds. (Applying the 
+             \code{function} \code{dae::fac.combine} to the \code{predictions} component is one way of 
+             forming the required combinations for the (row) names.)  The values supplied 
+             will be incorporated into \code{assignedLSD} column of the \code{\link{LSD.frame}} stored as the 
+             \code{LSD} component of the \code{\link{alldiffs.object}}.}
+\item{LSDby}{A \code{\link{character}} (vector) of variables names, being the names of the 
+             \code{\link{factor}s} or \code{\link{numeric}s} in the \code{classify} for each 
+             combination of which a mean LSD, minLSD and maxLSD is stored in the \code{LSD} 
+             component of the \code{\link{alldiffs.object}} when \code{LSDtype} is 
+             \code{factor.combinatons}.}
+\item{LSDstatistic}{A \code{\link{character}} nominating one of \code{minmum}, \code{q10}, \code{median}, 
+             \code{mean}, \code{q90} or \code{maximum} as the value(s) to use in the calculation of the 
+             \code{halfLeastSignificant} \code{error.intervals}. Here \code{q10} and \code{q90} indicate 
+             the sample quantiles corresponging to probabilities of 0.1 and 0.9, the function 
+             \code{\link{quantile}} being used to obtain them. The values of the nominated statistics are 
+             stored in the column named \code{assignedLSD} in an \code{\link{LSD.frame}}. 
+            \code{LSDstatistic} is ignored if it is not \code{NULL}.}
+\item{LSDaccuracy}{A \code{\link{character}} nominating one of \code{maxAbsDeviation}, \code{maxDeviation}, 
+             \code{q90Deviation} or \code{RootMeanSqDeviation} as the statistic to be calculated as a measure 
+             of the accuracy of \code{assignedLSD}. The option \code{q90Deviation} produces the sample quantile 
+             corresponding to a probability of 0.90. The deviations are the differences between the LSDs used in 
+             calculating the LSD statistics and each assigned LSD and the accuracy is expressed as a 
+             proportion of the assigned LSD value. The calculated values are stored in the column named 
+             \code{accuracyLSD} in an \code{\link{LSD.frame}}.}
  \item{titles}{A \code{\link{list}}, each component of which is named for a column in 
                the \code{data.frame} for \code{asreml.obj} and contains a 
                \code{character string} giving a title to use 
                in output (e.g. tables and graphs). Here they will 
                be used for table headings.}
- \item{x.num}{A \code{\link{character}} string giving the name of the numeric covariate that 
+\item{tables}{A \code{\link{character}} vector containing a combination of 
+              \code{none}, 
+              \code{predictions}, \code{vcov}, \code{backtransforms}, \code{differences}, 
+              \code{p.differences}, \code{sed}, \code{LSD} and \code{all}.
+              These nominate which components of the \code{\link{alldiffs.object}} to print.}
+\item{x.num}{A \code{\link{character}} string giving the name of the numeric covariate that 
               (i) corresponds to \code{x.fac}, (ii) is potentially included in 
               terms in the fitted model, and (iii) which corresponds to the 
               x-axis variable. It should have the same number of unique values 
@@ -145,158 +296,69 @@
                needed when values different to those in \code{x.num} are to be 
                plotted or \code{x.fac} is to be plotted because there is no 
                \code{x.num} term corresponding to the same term with \code{x.fac}.} 
- \item{error.intervals}{A \code{\link{character}} string indicating the type of error interval, if any, 
-             to calculate in order to indicate uncertainty in the results. 
-             Possible values are \code{"none"}, \code{"StandardError"}, \code{"Confidence"} 
-             and \code{"halfLeastSignificant"}. The default is for confidence limits to 
-             be used. The \code{"halfLeastSignificant"} option results in half the 
-             Least Significant Difference (LSD) being added and subtracted to the 
-             predictions, the LSD being calculated using the square root of the mean of the 
-             variances of all or a subset of pairwise differences between the predictions. 
-             If the LSD is zero, as can happen when predictions are constrained to be equal,
-             then the limits of the error intervals are set to \code{NA}. 
-             If \code{meanLSD.type} is set to \code{overall}, the \code{avsed.tolerance} is not 
-             \code{NA} and the range of the SEDs divided by the average of the SEDs exceeds 
-             \code{avsed.tolerance} then the \code{error.intervals} calculations and the plotting 
-             will revert to confidence intervals.}
-\item{avsed.tolerance}{A \code{\link{numeric}} giving the value of the SED range, the range of the SEDs 
-             divided by the square root of the mean of the variances of all or a subset of the 
-             pairwise differences, that is considered reasonable in calculating 
-             \code{error.intervals}. It should be a value between 0 and 1. The following rules apply:
-             \enumerate{
-             \item If \code{avsed.tolerance} is \code{NA} then mean LSDs of the type specified by 
-             \code{meanLSD.type} are calculated and used in \code{error.intervals} and plots.
-             \item Irrespective of the setting of \code{meanLSD.type}, if \code{avsed.tolerance} is not 
-             exceeded then the mean LSDs are used in \code{error.intervals} and plots. 
-             \item If \code{meanLSD.type} is set to \code{overall}, \code{avsed.tolerance} is not 
-             \code{NA}, and \code{avsed.tolerance} is exceeded then  \code{error.intervals} and 
-             plotting revert to confidence intervals. 
-             \item If \code{meanLSD.type} is set to \code{factor.combinations} and \code{avsed.tolerance} 
-             is not exceeded for any factor combination then the half LSDs are 
-             used in \code{error.intervals} and plots; otherwise, \code{error.intervals} and 
-             plotting revert to confidence intervals.
-             \item If \code{meanLSD.type} is set to \code{per.prediction} and \code{avsed.tolerance} 
-             is not exceeded for any prediction then the half LSDs are used in \code{error.intervals} 
-             and plots; otherwise, \code{error.intervals} and plotting revert to confidence intervals.
-             }}
- \item{meanLSD.type}{A \code{\link{character}} string determining whether the mean LSD stored is 
-             (i) the \code{overall} mean, based on the square root of the mean of the variances of 
-             all pairwise variances, (ii) the mean for each \code{factor.combination} of the 
-             \code{\link{factor}s} specified by \code{LSDby}, which is based on the square root of 
-             the mean of the variances for all pairwise differences for each factor combination, unless 
-             there is only one predction for a \code{factor.combination}, when notional LSDs are 
-             calculated that are based on the standard error of the prediction multiplied by the square 
-              root of two, or 
-             (iii) the \code{per.prediction} mean, based, for each prediction, 
-             on the square root of the mean of the variances for all pairwise differences involving 
-             that prediction. It also 
-             determines, in conjunction with \code{avsed.tolerance}, which LSD will be used
-             in calculating \code{error.intervals} and, hence, is used for plots.}
-\item{LSDby}{A \code{\link{character}} (vector) of variables names, being the names of the 
-             \code{\link{factor}s} or \code{\link{numeric}s} in the \code{classify} for each 
-             combination of which a mean LSD, minLSD and max LSD is stored in the \code{LSD} 
-             component of the \code{\link{alldiffs.object}} when \code{meanLSD.type} is 
-             \code{factor.combinatons}.}
-\item{pairwise}{A \code{\link{logical}} indicating whether all pairwise differences of the
-             \code{predictions} and their standard errors and p-values are to be 
-             computed and stored. If \code{tables} is equal to 
-             \code{"differences"} or \code{"all"} or \code{error.intervals} is 
-             equal to \code{"halfLeastSignificant"}, they will be stored 
-             irrespective of the value of \code{pairwise}.}
-\item{Vmatrix}{A \code{\link{logical}} indicating whether the variance matrix of the 
-             \code{predictions} will be stored as a component of the \code{\link{alldiffs.object}} 
-             that is returned. If \code{linear.transformation} is set, it will 
-             be stored irrespective of the value of \code{Vmatrix}.}
- \item{tables}{A \code{\link{character}} vector containing a combination of 
-              \code{none}, 
-              \code{predictions}, \code{vcov}, \code{backtransforms}, \code{differences}, 
-              \code{p.differences}, \code{sed}, \code{LSD} and \code{all}.
-              These nominate which components of the \code{\link{alldiffs.object}} to print.}
- \item{level.length}{The maximum number of characters from the the levels of 
+\item{level.length}{The maximum number of characters from the levels of 
             factors to use in the row and column labels of the tables of 
             pairwise differences and their p-values and standard errors.}
- \item{transform.power}{A \code{\link{numeric}} specifying the power of a transformation, if 
+\item{transform.power}{A \code{\link{numeric}} specifying the power of a transformation, if 
               one has been applied to the response variable. Unless it is equal 
               to 1, the default, back-transforms of the predictions will be 
-              obtained and presented in tables or graphs as appropriate. 
+              obtained and stored in the \code{backtransorms} component of the 
+              \code{\link{alldiffs.object}}. 
               The back-transformation raises the predictions to the power equal 
               to the reciprocal of \code{transform.power}, unless it equals 0 in 
               which case the exponential of the predictions is taken.} 
- \item{offset}{A \code{\link{numeric}} that has been added to each value of the 
+\item{offset}{A \code{\link{numeric}} that has been added to each value of the 
                response after any scaling and before applying any power transformation.}
- \item{scale}{A \code{\link{numeric}} by which each value of the response has been multiplied 
+\item{scale}{A \code{\link{numeric}} by which each value of the response has been multiplied 
                before adding any offset and applying any power transformation.}
- \item{inestimable.rm}{A \code{logical} indicating whether rows for  predictions 
-               that are not estimable are to be removed from the components of 
-               the \code{\link{alldiffs.object}}.}
-\item{sortFactor}{A \code{character} containing the name of the 
+\item{sortFactor}{A \code{\link{character}} containing the name of the 
               \code{factor} that indexes the set of predicted values that determines 
-              the sorting of the components of the \code{\link{alldiffs.object}} by 
-              \code{\link{sort.alldiffs}}. If \code{NULL} then sorting is not carried 
-              out. If there is more than one variable 
-              in the \code{classify} term then \code{sortFactor} is sorted for the 
-              predicted values within each combination of the values of the sortWithin 
-              variables: the \code{classify} variables, excluding the 
+               the sorting of the components. If there is only one variable in the 
+              \code{classify} term then \code{sortFactor} can be \code{NULL} and 
+              the order is defined by the complete set of predicted values. 
+              If there is more than one variable in the \code{classify} term 
+              then \code{sortFactor} must be set. In this case the \code{sortFactor} 
+              is sorted in the same order within each combination of the values of 
+              the \code{sortParallelToCombo} variables: the \code{classify} variables, excluding the 
               \code{sortFactor}. There should be only one predicted value for 
               each unique value of \code{sortFactor} within each set defined by a 
-              combination of the values of the sortWithin variables.}
- \item{sortWithinVals}{A \code{list} with a component named for each \code{factor} and 
-              \code{numeric} that is a \code{classify} variable for the predictions, 
-              excluding \code{sortFactor}. Each component should contain a single 
-              value that is a value of the variable. The combination of this set 
-              of values will be used to define a subset of the predicted values whose 
-              order will define the order of \code{sortFactor} to be used for all 
-              combinations of the \code{sortWithinVals} variables. If 
-              \code{sortWithinVals} is \code{NULL} then the first value of each 
-              sortWithin variable in \code{predictions} component is used 
-              to define \code{sortWithinVals}. If there is only one variable in the 
-              classify then \code{sortWithinVals} is ignored.}
+              combination of the values of the \code{classify} variables, excluding the 
+              \code{sortFactor} \code{factor}. 
+              The order to use is determined by either \code{sortParallelToCombo} or 
+              \code{sortOrder}.}
+ \item{sortParallelToCombo}{A \code{\link{list}} that specifies a combination of the values 
+              of the \code{factor}s and \code{numeric}s, excluding \code{sortFactor}, that 
+              are in \code{classify}. Each of the components of the supplied \code{\link{list}} 
+              is named for a \code{classify} variable and specifies a single value for it. The 
+              combination of this set of values will be used to define a subset of the predicted 
+              values whose order will define the order of \code{sortFactor}. Each of the other 
+              combinations of the values of the \code{factor}s and \code{numeric}s will be sorted 
+              in parallel. If \code{sortParallelToCombo} is \code{NULL} then the first value of               
+              each \code{classify} variable, except for the \code{sortFactor} \code{factor},  
+              in the \code{predictions} component is used to define \code{sortParallelToCombo}. 
+              If there is only one variable in the \code{classify} then 
+              \code{sortParallelToCombo} is ignored.}
+ \item{sortNestingFactor}{A \code{\link{character}} containing the name of the 
+              \code{factor} that defines groups of the \code{sortFactor} within which the predicted 
+              values are to be ordered. 
+              If there is only one variable in the \code{classify} then 
+              \code{sortNestingFactor} is ignored.}
  \item{sortOrder}{A \code{character vector} whose length is the same as the number 
                of levels for \code{sortFactor} in the \code{predictions} component of the 
               \code{\link{alldiffs.object}}. It specifies the desired order of the 
               levels in the reordered components of the \code{\link{alldiffs.object}}. 
-              The argument \code{sortWithinVals} is ignored.
+              The argument \code{sortParallelToCombo} is ignored.
 
               The following creates a \code{sortOrder} vector \code{levs} for factor 
               \code{f} based on the values in \code{x}: 
               \code{levs <- levels(f)[order(x)]}.}
- \item{decreasing}{A \code{logical} passed to \code{order} that detemines whether 
+\item{decreasing}{A \code{logical} passed to \code{order} that detemines whether 
               the order for sorting the components of the \code{\link{alldiffs.object}} is for 
                increasing or decreasing magnitude of the predicted values.}
- \item{wald.tab}{A \code{\link{data.frame}} containing the pseudo-anova table for the 
-               fixed terms produced by a call to \code{wald.asreml}. The main 
-               use of it here is in determinining the degrees of freedom for 
-               calculating confidence or half-LSD \code{error.intervals} and p-values, 
-               the latter to be stored in the \code{p.differences} component of the 
-               \code{alldiffs.object} that is created.}
- \item{alpha}{A \code{\link{numeric}} giving the significance level for LSDs or one minus 
-              the confidence level for confidence intervals.}
- \item{dDF.na}{A \code{\link{character}} specifying the method to use to 
-               obtain approximate denominator degrees of 
-               freedom. when the numeric or algebraic methods produce an 
-               \code{NA}. Consistent with when no denDF are available, the 
-               default is \code{"residual"} and so the residual degrees of 
-               freedom from \code{asreml.obj$nedf} are used. 
-               If \code{dDF.na = "none"}, no subtitute denominator degrees of 
-               freedom are employed; if \code{dDF.na = "maximum"}, the maximum 
-               of those denDF that are available, excluding that for the 
-               Intercept, is used; if all denDF are \code{NA}, \code{asreml.obj$nedf} is used. If 
-              \code{dDF.na = "supplied"}, a \code{vector} of values for the 
-              denominator degrees of freedom is to be supplied in \code{dDF.values}. 
-              Any other setting is ignored and a warning message produced. 
-              Generally, substituting these degrees of freedom is 
-              anticonservative in that it is likely that the degrees of freedom 
-              used will be too large.}
- \item{dDF.values}{A \code{\link{vector}} of values to be used when 
-              \code{dDF.na = "supplied"}. Its values will be used when 
-              \code{denDF} in a test for a fixed effect is \code{NA}. 
-              This vector must be the same length as the number of 
-              fixed terms, including (Intercept) whose value could be 
-              \code{NA}.}
- \item{trace}{A \code{\link{logical}} that control output from ASReml-R. 
+\item{trace}{A \code{\link{logical}} that control output from ASReml-R. 
               If TRUE then partial iteration details are displayed when ASReml-R 
               functions are invoked; if FALSE then no output is displayed.}
- \item{\dots}{further arguments passed to \code{predict.asreml}.}
+\item{\dots}{further arguments passed to \code{predict.asreml}.}
 }
 \value{For \code{linear.transformations} set to \code{NULL}, an S3-class 
        \code{\link{alldiffs.object}} with predictions and their standard 
@@ -326,6 +388,12 @@
            The name of the \code{response}, the \code{response.title}, 
            the \code{term}, the \code{classify}, \code{tdf}, \code{sortFactor} 
            and the \code{sortOrder} will be set as attributes to the object. 
+           Also, if \code{error.intervals} is \code{"halfLeastSignificant"}, then those of 
+           \code{LSDtype}, \code{LSDby} and \code{LSDstatistic} that are not \code{NULL} 
+           will be added as attributes of the object and of the \code{predictions frame}; 
+           additionally, \code{LSDvalues} will be added as attribute of the 
+           \code{predictions frame}, \code{LSDvalues} being the LSD values used in 
+           calculating the \code{error.intervals}. 
            Note that the \code{classify} in an \code{\link{alldiffs.object}} is based on the 
            variables indexing the predictions, which may differ from the 
            \code{classify} used to obtain the original predictions (for example, 

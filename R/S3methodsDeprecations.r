@@ -3,6 +3,7 @@
 changeModelOnIC <- function(asrtests.obj, ...) UseMethod("changeModelOnIC")
 changeTerms <- function(asrtests.obj, ...) UseMethod("changeTerms")
 chooseModel <- function(object, ...) UseMethod("chooseModel")
+getTestEntry <- function(asrtests.obj, ...) UseMethod("getTestEntry")
 getTestPvalue <- function(asrtests.obj, ...) UseMethod("getTestPvalue")
 iterate <- function(asrtests.obj, ...) UseMethod("iterate")
 recalcWaldTab <- function(asrtests.obj, ...) UseMethod("recalcWaldTab")
@@ -24,7 +25,10 @@ REMLRT <- function(h0.asreml.obj, h1.asreml.obj, ...) UseMethod("REMLRT")
 variofaces <- function(asreml.obj, ...) UseMethod("variofaces")
 
 addBacktransforms <- function(alldiffs.obj, ...) UseMethod("addBacktransforms")
+exploreLSDs <- function(alldiffs.obj, ...) UseMethod("exploreLSDs")
 linTransform <- function(alldiffs.obj, ...) UseMethod("linTransform")
+pairdiffsTransform <- function(alldiffs.obj, ...) UseMethod("pairdiffsTransform")
+ratioTransform <- function(alldiffs.obj, ...) UseMethod("ratioTransform")
 recalcLSD <- function(alldiffs.obj, ...) UseMethod("recalcLSD")
 redoErrorIntervals <- function(alldiffs.obj, ...) UseMethod("redoErrorIntervals")
 renewClassify <- function(alldiffs.obj, ...) UseMethod("renewClassify")
@@ -33,8 +37,9 @@ setvarianceterms <- function(call, ...) UseMethod("setvarianceterms")
 
 allDifferences <- function(predictions, ...) UseMethod("allDifferences")
 facCombine <- function(object, ...) UseMethod("facCombine")
-facRecode <- function(object, ...) UseMethod("facRecode")
+facRecast <- function(object, ...) UseMethod("facRecast")
 facRename <- function(object, ...) UseMethod("facRename")
+plotLSDs <- function(object, ...) UseMethod("plotLSDs")
 plotPvalues <- function(object, ...) UseMethod("plotPvalues")
 plotVariofaces <- function(data, ...) UseMethod("plotVariofaces")
 plotPredictions <- function(data, ...) UseMethod("plotPredictions")
@@ -56,6 +61,11 @@ alldiffs <- function(...)
   invisible()
 }
 
+asrtests <- function(...)
+{ .Deprecated(new = "as.asrtests", package = "asremlPlus")
+  invisible()
+}
+
 choose.model.asreml <- function(...)
 { .Deprecated(new = "chooseModel.asrtests", package = "asremlPlus")
   invisible()
@@ -63,6 +73,17 @@ choose.model.asreml <- function(...)
 
 choose.model.asrtests <- function(...)
 { .Deprecated(new = "chooseModel.asrtests", package = "asremlPlus")
+  invisible()
+}
+
+
+facRecode <- function(...)
+{ .Deprecated(new = "facRecast.alldiffs", package = "asremlPlus")
+  invisible()
+}
+
+facRecode.alldiffs <- function(...)
+{ .Deprecated(new = "facRecast.alldiffs", package = "asremlPlus")
   invisible()
 }
 

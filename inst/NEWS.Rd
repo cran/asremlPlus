@@ -1,5 +1,89 @@
 \name{news}
 \title{News for Package asremlPlus}
+\section{asremlPlus Version 4.3-19 (2021-09-01)}{
+  \itemize{
+  \item{Rebuild under R 4.1.1 for new submission.}
+}}
+\section{asremlPlus Version 4.3-18 (2021-08-31)}{
+  \itemize{
+  \item{Change number of comparisons symbol in an \code{LSD.frame} from \code{n} to \code{c}.}
+}}
+\section{asremlPlus Version 4.3-17 (2021-08-30)}{
+  \itemize{
+  \item{Add False positives and negatives counts to LSD statistics.}
+}}
+\section{asremlPlus Version 4.3-16 (2021-08-24)}{
+  \itemize{
+  \item{Fix bug in redoErrorIntervals when only one factor in \code{LSDby}.}
+  \item{Add function print.LSDdata.}
+}}
+\section{asremlPlus Version 4.3-15 (2021-08-19)}{
+  \itemize{
+  \item{Fixed bug in \code{halfLeastSignificant.limit} when \code{LSDtype} is \code{factor.combination} and the \code{assignedLSD} is zero to now ensure that the limit is \code{NA}.}
+  \item{Reinstated passing of parameters from linTransform.alldiffs to redoErrorIntervals.alldiffs.}
+}}
+\section{asremlPlus Version 4.3-14 (2021-08-18)}{
+  \itemize{
+  \item{Fix newly introduced  bug for \code{LSDtype = "halfLeastSignificant"} when there is not a numeric covariate involved in the \code{LSDby} argument.}
+  \item{Stop extra frequency plot produced by exploreLSDs.}
+  \item{Minor internal modification.}
+}}
+\section{asremlPlus Version 4.3-13 (2021-08-16)}{
+  \itemize{
+  \item{Fix bug for \code{LSDtype = "halfLeastSignificant"} when there is a numeric covariate involved in the \code{LSDby} argument.}
+  \item{Minor internal modification.}
+}}
+\section{asremlPlus Version 4.3-12 (2021-08-11)}{
+  \itemize{
+  \item{Fix bug in pairdiffsTransform when only two factors in \code{classify}.}
+  \item{Add function subset.list.}
+  \item{Add functions exploreLSDs, plotLSDs.alldiffs, plotLSDs.matrix and plotLSDs.data.frame.}
+  \item{Incorporate arguments \code{retain.zerLSDs} and \code{zero.tolerance} into AllDifferences.data.frame, redoErrotIntervals.alldiffs amd exploreLSDs.alldiffs to allow control of the retention of the zero LSD values when calculating LSD summaries.}
+}}
+\section{asremlPlus Version 4.3-11 (2021-07-28)}{
+  \itemize{
+  \item{Deprecate the function asrtests, which has been replaced by the function as.asrtests.}
+  \item{There has been a substantial revision of the calculation and saving of the LSD component of an \code{alldiffs} object. 
+    \itemize{
+  \item{The argument \code{meanLSD.type} has been changed to \code{LSDtype}. All functions that are S3 methods for \code{alldiffs} objects will check for the \code{meanLSD.type} attribute and, if found, change it to \code{LSDtype}.} 
+  \item{The option \code{supplied} has been added to the argument \code{LSDtype} so that the user can supply LSD values to replace those in the \code{assignedLSD} column of the \code{LSD} component.}
+  \item{The two new arguments \code{LSDstatistic} and \code{LSDaccuracy} have been added. The argument \code{LSDstatistic} allows a choice of \code{minimum}, \code{mean}, \code{median} or \code{maximum}. The values of the nominated LSD statistics are stored in a column of the LSD component named \code{assignedLSD}. The argument \code{LSDaccuracy} allows the specification of a statistic summarizing the differences between the the LSDs and the assigned LSD value for each row of the LSD component. The values of the chosen measure are stored in a column of the \code{LSD} component named \code{accuracyLSD}. These two arguments have been added to the functions allDifferences.data.frame, as.alldiffs.object, as.alldiffs, linTransform.alldiffs, pairdiffsTransform, predictPlus.asreml, predictPresent.asreml, ratioTransform.alldiffs, recalcLSD.alldiffs and redoErrorIntervals.alldiffs.}
+  \item{The \code{LSD} component is always calculated and stored as a component when \code{pairwise} is \code{TRUE}.}}}
+  \item{A new argument \code{accuracy.threshold} has been introduced to control the addition of a column names \code{LSDwarning} to the \code{predictions} of an \code{alldiffs} object. THis column indicates whether or not the an \code{halfLeastSignificant} \code{error.interval} is reliable as determined using the supplied value of  \code{accuracy.threshold}.}
+  \item{The attributes of an alldiffs object  and of the \code{predictions} component have been modified. The arguments \code{LSDtype}, \code{LSDstatistic} and \code{LSDby}, if set, are attributes of an \code{alldiffs} object. They are also attributes of a \code{prediction.frame} and the \code{backtransforms} component of an \code{alldiffs} object, as is \code{LSDvalues}, when \code{halfLeastSignificant} \code{error.intervals} are specified. The \code{LSDvalues} attribute has the values used in calculating half-LSD intervals. The \code{meanLSD} attribute has been removed.}
+  \item{A separate entry for \code{LSD.frame} has been introduced into the manual to dedscribe the \code{data.frame} that is stored in the \code{LSD} component of an \code{alldiffs} object.}
+}}
+\section{asremlPlus Version 4.3-10 (2021-07-5)}{
+  \itemize{
+  \item{Fix bug in facRecast that meant that the argument \code{levels.order} was being ignored.}
+  \item{Fix a bug in facRecast where only the predictions component was appropriately re-ordered.}
+  \item{Add new functions ratioTransform.alldiffs and pairdiffsTransform.}
+  \item{Add new method to sort for a \code{predictions.frame}: function sort.predictions.frame.}
+  \item{Change the argument \code{sortWithinVals} to \code{sortParallelToCombo} in sort.alldiffs.}
+  \item{Add the new argument \code{sortNestinFactor} to sort.alldiffs.}
+  \item{Add new function getTestEntry.asrtests.}
+  \item{Fix bug in infoCriteria.asreml that resulted in values of \code{Inf} for the \code{full} likelihood.}
+}}
+\section{asremlPlus Version 4.2-36 (2021-05-16)}{
+  \itemize{
+  \item{Deprecate facRecode.alldiffs because it only make sense to redo the current levels or labels.}
+  \item{Tidy up function facRecast.alldiffs.}
+}}
+\section{asremlPlus Version 4.2-35 (2021-05-16)}{
+  \itemize{
+  \item{Add new function facRecast.alldiffs that supercedes facRecode.alldiffs.}
+  \item{Revise sort.alldiffs to use facRecast.alldiffs to reorder the alldiffs components. This fixed a bug when not all levels of the \code{saortFactor} are present in the subset on which the sort is based.}
+  \item{Add argument \code{alpha} to plotPvalues.data.frame and plotPvalues.alldiffs.}
+}}
+\section{asremlPlus Version 4.2-34 (2021-05-12)}{
+  \itemize{
+    \item{Add argument \code{axis.text.size} to plotPvalues.data.frame and plotPvalues.alldiffs.}
+}}
+\section{asremlPlus Version 4.2-33 (2021-05-06)}{
+  \itemize{
+    \item{Modify testresidual to not change the variance model when there is no difference in the variance DF between the models being compared.}
+    \item{In as.asrtests, add variance DF to \code{test.summary} when forming an \code{asrtests} object.}
+}}
 \section{asremlPlus Version 4.2-32 (2021-03-19)}{
   \itemize{
     \item{Rebuild vignerttes.}
@@ -34,7 +118,7 @@
 \section{asremlPlus Version 4.2-25 (2020-11-11)}{
   \itemize{
     \item{Try to neutralize problem that occurs with \code{colourise} in print.predictions.frame.}
-    \item{Rebuild for R 4.0.3 nd recompile vignetted for CRAN submission.}
+    \item{Rebuild for R 4.0.3 and recompile vignettes for CRAN submission.}
 }}
 \section{asremlPlus Version 4.2-24 (2020-09-25)}{
   \itemize{
@@ -286,7 +370,7 @@
     \item{Defined classes alldiffs, asrtests and predictions.frame.}
     \item{Added the functions is.alldiffs, validAlldiffs, is.asrtests, validAsrtests, is.predictions.frame and validPredictionsFrame for validating the objects.}
     \item{Added tests for the validity of objects to methods functions.}
-    \item{Provided as.asrtests function, while retaining asrtests function as a pseudonym for as.asrtests. Added as.prediction.frame function.}
+    \item{Provided as.asrtests function, while retaining asrtests function as a pseudonym for as.asrtests. Added an as.prediction.frame function.}
     \item{Add examples for \code{alldiffs} and \code{data.frame} methods functions that use lme4 to show how to use asremlPlus with packages othere than asreml.}
   }
 }

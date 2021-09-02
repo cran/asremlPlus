@@ -24,8 +24,12 @@ export(addBacktransforms,
        choose.model.asrtests,
        estimateV,
        estimateV.asreml,
+       exploreLSDs,
+       exploreLSDs.alldiffs,
        facCombine,
        facCombine.alldiffs,
+       facRecast,
+       facRecast.alldiffs,
        facRecode,
        facRecode.alldiffs,
        facRename,
@@ -33,6 +37,8 @@ export(addBacktransforms,
        getASRemlVersionLoaded,
        getFormulae,
        getFormulae.asreml,
+       getTestEntry,
+       getTestEntry.asrtests,
        getTestPvalue,
        getTestPvalue.asrtests,
        infoCriteria,
@@ -52,8 +58,13 @@ export(addBacktransforms,
        newfit.asreml,
        newrcov.asrtests,
        num.recode,
+       pairdiffsTransform,
+       pairdiffsTransform.alldiffs,
        permute.square,
        permute.to.zero.lowertri,
+       plotLSDs, 
+       plotLSDs.data.frame,
+       plotLSDs.alldiffs,
        plotPredictions,
        plotPredictions.data.frame,
        plotPvalues, 
@@ -72,11 +83,14 @@ export(addBacktransforms,
        pred.present.asreml,
        print.alldiffs,
        print.asrtests, 
+       print.LSDdata,
        print.predictions.frame, 
        print.test.summary,
        print.wald.tab, 
        printFormulae,
        printFormulae.asreml,
+       ratioTransform,
+       ratioTransform.alldiffs,
        recalcLSD, 
        recalcLSD.alldiffs, 
        recalcWaldTab,
@@ -102,7 +116,9 @@ export(addBacktransforms,
        sig.devn.reparam.asrtests,
        simulate.asreml,
        sort.alldiffs,
+       sort.predictions.frame,
        subset.alldiffs,
+       subset.list,
        testrcov.asreml,
        testrcov.asrtests,
        testresidual,
@@ -121,11 +137,12 @@ export(addBacktransforms,
 exportClasses(alldiffs, asrtests, predictions.frame)
 import(dae, ggplot2)
 importFrom("stats", "as.formula", "fitted", "fitted.values", "formula", "median", 
-                    "model.matrix", "na.omit", "pchisq", "pf", "predict", "pt", "qt", 
+                    "model.matrix", "na.omit", "pchisq", "pf", "predict", "pt", "qnorm", "qt", 
                     "quantile", "resid", "rnorm","simulate", "terms", "terms.formula", 
                     "update.formula")
 importFrom("RColorBrewer", "brewer.pal")
 importFrom("grDevices", "savePlot")
+importFrom("graphics", "hist")
 importFrom("dplyr", "anti_join")
 importFrom("methods", "languageEl", "languageEl<-", "validObject")
 importFrom("reshape", "melt")
@@ -134,6 +151,7 @@ importFrom("foreach", "foreach", "%do%", "%dopar%")
 importFrom("parallel", "makeCluster", "stopCluster", "detectCores", "nextRNGStream")
 importFrom("doParallel", "registerDoParallel")
 importFrom("stringr", "str_split", "str_trim", "str_sub")
+importFrom("sticky", "sticky")
 S3method(addBacktransforms, alldiffs)
 S3method(allDifferences, data.frame)
 S3method(changeModelOnIC, asrtests)
@@ -142,10 +160,13 @@ S3method(changeTerms, asrtests)
 S3method(chooseModel, asrtests) 
 S3method(chooseModel, data.frame) 
 S3method(estimateV, asreml) 
+S3method(exploreLSDs, alldiffs) 
 S3method(facCombine, alldiffs)
+S3method(facRecast, alldiffs)
 S3method(facRecode, alldiffs)
 S3method(facRename, alldiffs)
 S3method(getFormulae, asreml)
+S3method(getTestEntry, asrtests)
 S3method(getTestPvalue, asrtests)
 S3method(infoCriteria, asreml) 
 S3method(infoCriteria, list) 
@@ -154,16 +175,21 @@ S3method(linTransform, alldiffs)
 S3method(newfit, asreml) 
 S3method(plotPredictions, data.frame)
 S3method(plotPvalues, alldiffs)
+S3method(plotLSDs, data.frame)
+S3method(plotLSDs, alldiffs)
 S3method(plotPvalues, data.frame)
 S3method(plotVariofaces, data.frame)
 S3method(predictPresent, asreml)
 S3method(predictPlus, asreml)
 S3method(print, asrtests)
 S3method(print, alldiffs)
+S3method(print, LSDdata)
 S3method(print, predictions.frame)
 S3method(print, test.summary)
 S3method(print, wald.tab)
 S3method(printFormulae, asreml)
+S3method(pairdiffsTransform, alldiffs)
+S3method(ratioTransform, alldiffs)
 S3method(recalcWaldTab, asrtests)
 S3method(REMLRT, asreml) 
 S3method(recalcLSD, alldiffs)
@@ -175,7 +201,9 @@ S3method(rmboundary, asrtests)
 S3method(setvarianceterms, call)
 S3method(simulate, asreml)
 S3method(sort, alldiffs)
+S3method(sort, predictions.frame)
 S3method(subset, alldiffs)
+S3method(subset, list)
 S3method(testranfix, asreml)
 S3method(testranfix, asrtests)
 S3method(testresidual, asrtests)

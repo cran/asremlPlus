@@ -3,8 +3,8 @@
 \alias{getTestPvalue}
 \title{Gets the p-value for a test recorded in the test.summary data.frame of an \code{\link{asrtests.object}}}
 \description{Matches the \code{label} in the \code{term} column of the \code{test.summary} \code{data.frame} 
-  in the supplied \code{\link{asrtests.object}} and extracts the its p-value. It only matches 
-  the first occurence of \code{label}.}
+  in the supplied \code{\link{asrtests.object}} and extracts its p-value. It only matches 
+  the last occurence of \code{label}.}
 \usage{
 \method{getTestPvalue}{asrtests}(asrtests.obj, label, ...)}
 \arguments{
@@ -13,7 +13,9 @@
  \item{label}{A \code{character} specifying the \code{label} of the test for which  
               the p-value is required. If \code{\link{testranfix.asrtests}} was used 
               for the test of interest, then the \code{label} will be the value of 
-              the \code{term} argument supplied to \code{\link{testranfix.asrtests}}.}
+              the \code{term} argument supplied to \code{\link{testranfix.asrtests}. 
+               Other arguments will be relevant for other 
+              test functions.}}
  \item{\dots}{provision for passsing arguments to functions called internally - 
             not used at present.}
 }
@@ -21,7 +23,8 @@
 }
 
 \author{Chris Brien}
-\seealso{\code{\link{as.asrtests}}, \code{\link{testranfix.asrtests}}, 
+\seealso{\code{\link{getTestEntry.asrtests}}, \code{\link{as.asrtests}}, \cr 
+         \code{\link{testranfix.asrtests}}, 
          \code{\link{testswapran.asrtests}}, \code{\link{testresidual.asrtests}}, \cr    
          \code{\link{changeTerms.asrtests}}, \code{\link{chooseModel.asrtests}}}
 \examples{\dontrun{

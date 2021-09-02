@@ -90,7 +90,7 @@ test_that("allDifferences_asreml3", {
   testthat::expect_warning(Var.diffs.by <- linTransform(Var.diffs, 
                                                         linear.transformation = ~Nitrogen,
                                                         error.intervals = "half", 
-                                                        meanLSD.type = "factor", 
+                                                        LSDtype = "factor", 
                                                         LSDby = "Variety", 
                                                         tables = "none"))
 })
@@ -174,9 +174,9 @@ test_that("sort.alldiffs_asreml3", {
   testthat::expect_equal(attr(diffs.sort, which = "sortOrder"),
                          attr(diffs2.sort, which = "sortOrder"))
   
-  #Test sort.alldiffs with sortWithinVals and increasing order
+  #Test sort.alldiffs with sortParallelToCombo and increasing order
   diffs1.sort <- sort(diffs, sortFactor = "Genotype", 
-                      sortWithinVals = list(A = "N3", B = "D4"),
+                      sortParallelToCombo = list(A = "N3", B = "D4"),
                       decreasing = TRUE)
   testthat::expect_is(diffs1.sort, "alldiffs")
   testthat::expect_equal(as.character(diffs1.sort$predictions$Genotype[2]),"Wyalkatchem")
@@ -229,7 +229,7 @@ test_that("sort.alldiffsWater3", {
   testthat::expect_true(abs(TS.diffs.reord$predictions$predicted.value[2] - 7.646389) < 1e-06)
   
   #Test sort.alldiffs and save order for use with other response variables
-  TS.diffs.sort <- sort(TS.diffs, sortFactor = "Sources", sortWithinVals = list(Type = "Control"))
+  TS.diffs.sort <- sort(TS.diffs, sortFactor = "Sources", sortParallelToCombo = list(Type = "Control"))
   sort.order <- attr(TS.diffs.sort, which = "sortOrder")
   testthat::expect_is(TS.diffs.sort, "alldiffs")
   testthat::expect_true(validAlldiffs(TS.diffs.sort))
@@ -268,7 +268,7 @@ test_that("sort.alldiffsWater3", {
   diffs.fit <- linTransform(diffs.full, classify = "Sources:Type:Species",
                             linear.transformation = ~ Sources:Type, 
                             error.intervals="half", 
-                            meanLSD.type="factor", LSDby="Type", 
+                            LSDtype="factor", LSDby="Type", 
                             tables = "none")
   testthat::expect_true(setequal(names(diffs.fit$predictions), 
                                  c("Sources", "Type", "Species", "predicted.value", 
@@ -558,17 +558,22 @@ test_that("facCombine.alldiffs3", {
   testthat::expect_true(all(c("Host", "Cadavers_Ladybird", "predicted.value") %in% 
                               names(Comb.diffs$predictions)))
     
-  ## Recode Ladybird
-  HCL.diffs <- facRecode(HCL.diffs, factor = "Ladybird", newlevels = c("none", "present"))
-  testthat::expect_true(validAlldiffs(HCL.diffs))
-  testthat::expect_true(all(levels(HCL.diffs$predictions$Ladybird) == c("none", "present")))
- 
   ## Rename Cadavers
-  HCL.diffs <- facRename(HCL.diffs, factor.names = "Cadavers", newnames = "Cadaver.nos")
-  testthat::expect_true(validAlldiffs(HCL.diffs))
-  testthat::expect_true("Cadaver.nos" %in% names(HCL.diffs$predictions))
+  HCL.rename.diffs <- facRename(HCL.diffs, factor.names = "Cadavers", newnames = "Cadaver.nos")
+  testthat::expect_true(validAlldiffs(HCL.rename.diffs))
+  testthat::expect_true("Cadaver.nos" %in% names(HCL.rename.diffs$predictions))
   
-  
+  ## Recast Ladybird
+  HCL.recast.diffs <- facRecast(HCL.diffs, factor = "Ladybird", newlabels = c("none", "present"))
+  testthat::expect_true(validAlldiffs(HCL.recast.diffs))
+  testthat::expect_true(all(levels(HCL.recast.diffs$predictions$Ladybird) == c("none", "present")))
+  HCL.recast.diffs <- facRecast.alldiffs(HCL.recast.diffs, factor = "Host", levels.order = c("trefoil", "bean"))
+  testthat::expect_true(validAlldiffs(HCL.recast.diffs))
+  testthat::expect_true(all(levels(HCL.recast.diffs$predictions$Host) == c("trefoil", "bean")))
+  HCL.recast.diffs <- facRecast(HCL.recast.diffs, factor = "Ladybird", levels.order = c("present", "none"), 
+                                newlabels = c("yes","no"))
+  testthat::expect_true(validAlldiffs(HCL.recast.diffs))
+  testthat::expect_true(all(levels(HCL.recast.diffs$predictions$Ladybird) == c("yes", "no")))
   
 })
 
@@ -623,7 +628,7 @@ test_that("linear.transform_Oats_asreml3", {
                            linear.transformation = ~ Variety + Nitrogen, 
                            wald.tab = current.asrt$wald.tab,
                            error.intervals = "half", 
-                           meanLSD.type = "factor.comb",
+                           LSDtype = "factor.comb",
                            LSDby = "Nitrogen",
                            tables = "none")
   testthat::expect_is(diffs.mod, "alldiffs")

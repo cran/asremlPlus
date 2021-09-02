@@ -1,9 +1,9 @@
 #'### Functions to plot p-values for a set of pairwise differences
 #+
 "plotPvalues.data.frame" <- function(object, p = "p",  x, y, 
-                                     gridspacing = 0, show.sig = FALSE, 
+                                     gridspacing = 0, show.sig = FALSE, alpha = 0.10,
                                      triangles = "both", 
-                                     title = NULL, axis.labels = NULL, 
+                                     title = NULL, axis.labels = NULL, axis.text.size = 12, 
                                      colours = RColorBrewer::brewer.pal(3, "Set2"), 
                                      ggplotFuncs = NULL, printPlot = TRUE, ...)
   #Plots a data.frame of p-values that has columns x, y, p
@@ -12,6 +12,8 @@
     stop("One or more of the columns p, x and y are not in object")
   options <- c("both", "upper", "lower")
   tri.opt <- options[check.arg.values(triangles, options)]
+  if (!(alpha %in% c(0.05, 0.10)))
+    stop("alpha must be either 0.05 or 0.10")
   plt <- NULL
   
   if (all(is.na(object[[p]])))
@@ -31,8 +33,8 @@
                            limits=c(0,1)) +
       labs(x=axis.labels, y=axis.labels, title=title) + 
       theme_bw() +
-      theme(axis.text.x=element_text(angle=90, hjust=1, vjust=0.5, size=12),
-            axis.text.y=element_text(size=12),
+      theme(axis.text.x=element_text(angle=90, hjust=1, vjust=0.5, size=axis.text.size),
+            axis.text.y=element_text(size=axis.text.size),
             plot.title=element_text(face="bold"),
             panel.grid = element_blank(),
             legend.position = "right", 
@@ -41,11 +43,14 @@
       guides(fill=guide_colourbar(title = "p", nbin=50))
     if (show.sig)
     { 
-      object$sig <- ifelse(object[p] > 0.1, "",
-                           ifelse(object[p] > 0.05, ".",
+      object$sig <- ifelse(object[p] > alpha, "",
+#                           ifelse(object[p] > 0.05, ".",
                                   ifelse(object[p] > 0.01, "*",
                                          ifelse(object[p] > 0.001, "**",
-                                                "***"))))
+                                                "***")))#)
+      if (alpha == 0.1)
+        if (any(object[p] <= alpha & object[p] > 0.05))
+          object$sig[(object[p] <= alpha & object[p] > 0.05)] <- "."
       plt <- plt + geom_text(data=object, aes_string(label="sig"), size=3)
     }
     
@@ -82,13 +87,13 @@
 
 "plotPvalues.alldiffs" <- function(object, sections = NULL, 
                                    gridspacing = 0, factors.per.grid = 0, 
-                                   show.sig = FALSE, 
+                                   show.sig = FALSE, alpha = 0.10, 
                                    triangles = "both", 
-                                   title = NULL, axis.labels = TRUE, sep=",", 
-                                   colours = RColorBrewer::brewer.pal(3, "Set2"), 
+                                   title = NULL, axis.labels = TRUE, axis.text.size = 12, 
+                                   sep=",", colours = RColorBrewer::brewer.pal(3, "Set2"), 
                                    ggplotFuncs = NULL, printPlot = TRUE, 
-                                   sortFactor = NULL, sortWithinVals = NULL, 
-                                   sortOrder = NULL, decreasing = FALSE, 
+                                   sortFactor = NULL, sortParallelToCombo = NULL, 
+                                   sortNestingFactor = NULL, sortOrder = NULL, decreasing = FALSE, 
                                    ...)
   #Plots a matrix of p-values or, when  predictions are for combinations of two 
   #factors, produces a plot for each levels combination of  nominated section factors 
@@ -100,6 +105,8 @@
   validalldifs <- validAlldiffs(object)  
   if (is.character(validalldifs))
     stop(validalldifs)
+  object <- renameDiffsAttr(object)
+  
   if (is.null(object$p.differences))
     stop("The p.differences component of object cannot be NULL")
   if (all(is.na(object$p.differences)))
@@ -111,7 +118,8 @@
   #Sort alldiffs components, if required
   if (!is.null(sortFactor))
     object <- sort(object, decreasing = decreasing, sortFactor = sortFactor, 
-         sortWithinVals = sortWithinVals, sortOrder = sortOrder)
+         sortParallelToCombo = sortParallelToCombo, sortNestingFactor = sortNestingFactor, 
+         sortOrder = sortOrder)
   
   classify <- attr(object, which = "classify")
   #Get differences and convert to a data.frame
@@ -122,14 +130,15 @@
     if (tri.opt == "lower")
       object$p.differences[upper.tri(object$p.differences)] <- NA
   }
-  p <- within(reshape::melt(object$p.differences), 
+  p <- object$p.differences
+  rownames(p) <- colnames(p) <- NULL #needed because reshape::melt throws a warning re type.convert
+  p <- within(reshape::melt(p), 
               { 
-                X1 <- factor(X1, levels=dimnames(object$p.differences)[[1]])
-                X2 <- factor(X2, levels=levels(X1))
+                X1 <- factor(X1, labels=dimnames(object$p.differences)[[1]])
+                X2 <- factor(X2, labels=levels(X1))
               })
   names(p)[match("value", names(p))] <- "p"
-#  names(p)[c(1,2)] <- paste(classify, c(".1",".2"), sep = "")
-  
+
   #prepare for plotting
   n <- nrow(p)
   facs <- fac.getinTerm(classify)
@@ -167,18 +176,18 @@
                                    factors.per.grid = factors.per.grid)
     if (is.null(title))
       plotPvalues.data.frame(object = p, x = "X1", y = "X2", 
-                             gridspacing = gridspacing, show.sig = show.sig, 
+                             gridspacing = gridspacing, show.sig = show.sig, alpha = alpha, 
                              triangles = triangles, 
                              axis.labels = pairname, colours = colours, 
-                             printPlot = printPlot, ggplotFuncs = ggplotFuncs)
+                             printPlot = printPlot, 
+                             axis.text.size = axis.text.size, ggplotFuncs = ggplotFuncs)
     else
       plotPvalues.data.frame(object = p, x = "X1", y = "X2",  
-                             gridspacing = gridspacing, show.sig = show.sig, 
+                             gridspacing = gridspacing, show.sig = show.sig, alpha = alpha, 
                              triangles = triangles, 
                              title = title, axis.labels = pairname, 
                              colours = colours, printPlot = printPlot, 
-                             ggplotFuncs = ggplotFuncs)
-    
+                             axis.text.size = axis.text.size, ggplotFuncs = ggplotFuncs)
   } else #have sections
   { 
     #Prepare for sectioning
@@ -199,7 +208,7 @@
                                         }, 
                                         facs.levs = facs.levs, 
                                         predictions = object$predictions
-                                        ))
+                                        ), stringsAsFactors = FALSE)
       names(facs.levs) <- facs
       p$sections <- fac.combine(facs.levs[sections], combine.levels = TRUE)
       p[p.fac] <- fac.combine(facs.levs[pairdiffs], combine.levels = TRUE)
@@ -236,19 +245,21 @@
       }
       if (is.null(title))
         plotPvalues.data.frame(object = psect, x = "X1", y = "X2", 
-                               gridspacing = gridspacing, show.sig = show.sig, 
+                               gridspacing = gridspacing, show.sig = show.sig, alpha = alpha, 
                                triangles = triangles, 
                                title = paste("Plot of p-values for ",
                                              secname," = ",j, sep = ""),
                                axis.labels = pairname, colours = colours, 
-                               printPlot = printPlot, ggplotFuncs = ggplotFuncs)
+                               printPlot = printPlot, 
+                               axis.text.size = axis.text.size, ggplotFuncs = ggplotFuncs)
       else
         plotPvalues.data.frame(object = psect, x = "X1", y = "X2", 
-                               gridspacing = gridspacing, show.sig = show.sig, 
+                               gridspacing = gridspacing, show.sig = show.sig, alpha = alpha, 
                                triangles = triangles, 
                                title = paste(title," - ", secname," = ", j, sep=""),
                                axis.labels = pairname, colours = colours, 
-                               printPlot = printPlot, ggplotFuncs = ggplotFuncs)
+                               printPlot = printPlot, 
+                               axis.text.size = axis.text.size, ggplotFuncs = ggplotFuncs)
       
     }  
   }

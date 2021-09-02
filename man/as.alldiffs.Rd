@@ -8,14 +8,15 @@
              Predictions must be supplied to the function while the others will be set 
              only if they are supplied; those not supplied are set to \code{NULL}. 
              It also has attributes \code{response}, \code{response.title}, \code{term}, 
-             \code{classify}, \code{tdf}, \code{sortFactor} and \code{sortOrder}.
+             \code{classify}, \code{tdf}, \code{tdf}, \code{alpha}, \code{sortFactor} and \code{sortOrder}.
              which will be set to the values supplied or \code{NULL} if none are supplied.}
 
 \usage{as.alldiffs(predictions, vcov = NULL, differences = NULL, 
             p.differences = NULL, sed = NULL, LSD = NULL, 
             backtransforms = NULL, 
             response = NULL, response.title = NULL, 
-            term = NULL, classify = NULL, tdf = NULL, 
+            term = NULL, classify = NULL, 
+            tdf = NULL, alpha = 0.05, 
             sortFactor = NULL, sortOrder = NULL)}
 \arguments{
  \item{predictions}{A \code{\link{predictions.frame}}, being a \code{data.frame} beginning 
@@ -42,19 +43,12 @@
                     between the predictions; they are used in computing the p-values.}
  \item{vcov}{A \code{matrix} containing the variance matrix of the predictions; it is used in 
                     computing the variance of linear transformations of the predictions.}
-\item{LSD}{A \code{data.frame} containing the mean, minimum and maximum LSD for determining             
-                    the significance of pairwise differences, the mean LSD being calculated using 
-                    the square root of the mean of the variances of pairwise differences. 
-                    If \code{factor.combination} was specified for \code{meanLSD.type} when the 
-                    LSDs were being calculated, then \code{LSD} contains an LSD for each 
-                    \code{factor.combination} of the \code{\link{factor}s} specified by \code{LSDby}.  
-                    Each LSD is calculated from the square root of the mean of the variances for all 
-                    pairwise differences for each factor combination, unless there is only one 
-                    prediction for a \code{factor.combination}, when notional LSDs are calculated that 
-                    are based on the standard error of the prediction multiplied by the square root of two. 
-                    If \code{LSD} is not \code{NULL} then the overall mean LSD will be added as 
-                    an attribute named \code{meanLSD} of the \code{\link{alldiffs.object}}, as will 
-                    the values of \code{meanLSD.type} and \code{LSDby}. The LSD for a single prediction 
+\item{LSD}{An \code{\link{LSD.frame}} containing the mean, minimum and maximum LSD for determining             
+                    the significance of pairwise differences, as well as an assigned LSD and a measure 
+                    of the accuracy of the LSD. If \code{LSD} is \code{NULL} then the \code{\link{LSD.frame}} 
+                     stored in the \code{LSD} component will be calculated and 
+                    the values of \code{LSDtype}, \code{LSDby} and \code{LSDstatistic} added as attributes 
+                    of the \code{\link{alldiffs.object}}. The LSD for a single prediction 
                     assumes that any predictions to be compared are independent; this is not the case if 
                     residual errors are correlated.}
  \item{backtransforms}{A \code{data.frame} containing the backtransformed values of the predicted 
@@ -66,10 +60,14 @@
                     predictions. It is stored as an attribute to the \code{\link{alldiffs.object}}.}
  \item{response.title}{A \code{character} specifying the title for the response variable 
                     for the predictions. It is stored as an attribute to the \code{\link{alldiffs.object}}.}
- \item{term}{A character string giving the variables that define the term 
-                 that was fitted using \code{asreml} and that corresponds 
-                 to \code{classify}. It is often the same as \code{classify}. 
-                 It is stored as an attribute to the \code{\link{alldiffs.object}}.}
+ \item{term}{A \code{\link{character}} string giving the variables that define the term 
+               that was fitted using \code{asreml} and that corresponds to \code{classify}. 
+               It only needs to be specified when it is different to \code{classify}; it 
+               is stored as an attribute of the \code{\link{alldiffs.object}}. 
+               It is likely to be needed when the fitted model includes terms that involve  
+               both a \code{\link{numeric}} covariate and a \code{\link{factor}} that 
+               parallel each other; the \code{classify} would include the covariate and 
+               the \code{term} would include the \code{factor}.}
  \item{classify}{A character string giving the variables that define the margins
                  of the multiway table used in the prediction. Multiway tables are 
                  specified by forming an interaction type term from the 
@@ -80,6 +78,9 @@
                 the degrees of freedom for the t-distribution on which p-values and confidence 
                 intervals are based. 
                 It is stored as an attribute to the \code{\link{alldiffs.object}}.}
+ \item{alpha}{A \code{\link{numeric}} giving the significance level for LSDs or one minus 
+              the confidence level for confidence intervals.
+              It is stored as an attribute to the \code{\link{alldiffs.object}}.}
  \item{sortFactor}{A \code{character} containing the name of the 
               \code{factor} that indexes the set of predicted values that 
               determined the sorting of the components.}

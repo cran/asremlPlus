@@ -1,6 +1,5 @@
 \name{as.asrtests}
 \alias{as.asrtests}
-\alias{asrtests}
 \title{Forms an asrtests object that stores (i) a fitted asreml object, 
        (ii) a pseudo-anova table for the fixed terms and (iii) a history of 
        changes and hypthesis testing used in obtaining the model.}
@@ -15,17 +14,17 @@
              the \code{\link{recalcWaldTab}} arguments supplied via \code{\dots}.
 
              The \code{label} argument can be used to include an entry in \code{test.summary} 
-             for the starting model. If a \code{label} is included, the information criteria 
-             calculated using \code{asreml.obj} can also be added to the \code{test.summary}.
+             for the starting model. If a \code{label} is included, (i) the information criteria 
+             calculated using the \code{asreml.obj} will be added to the \code{test.summary}, if
+             \code{IClikelihood} is not set to \code{none} and (ii) the number of variance 
+             parameters is included in the denDF column, if \code{IClikelihood} is set to \code{none}.
 }
 
 \usage{
 as.asrtests(asreml.obj, wald.tab = NULL, test.summary = NULL, 
             denDF = "numeric", label = NULL, 
             IClikelihood = "none", bound.exclusions = c("F","B","S","C"), ...)
-asrtests(asreml.obj, wald.tab = NULL, test.summary = NULL, 
-         denDF = "numeric", label = NULL, 
-         IClikelihood = "none", bound.exclusions = c("F","B","S","C"), ...)}
+}
 \arguments{
  \item{asreml.obj}{an \code{asreml} object for a fitted model.}
  \item{wald.tab}{A \code{data.frame} containing a pseudo-anova table for 

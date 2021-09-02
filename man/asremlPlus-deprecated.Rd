@@ -3,8 +3,11 @@
 \alias{addrm.terms.asreml}
 \alias{addrm.terms.asrtests}
 \alias{alldiffs}
+\alias{asrtests}
 \alias{choose.model.asreml}
 \alias{choose.model.asrtests}
+\alias{facRecode}
+\alias{facRecode.alldiffs}
 \alias{info.crit}
 \alias{info.crit.asreml}
 \alias{newrcov.asrtests}
@@ -33,7 +36,9 @@
        \enumerate{
          \item addrm.terms.asreml and addrm.terms.asrtests -> \code{\link{changeTerms.asrtests}}, 
          \item alldiffs -> \code{\link{as.alldiffs}}, 
+         \item asrtests-> \code{\link{as.asrtests}}, 
          \item choose.model.asreml and choose.model.asrtests -> \code{\link{chooseModel.asrtests}}, 
+         \item facRecode and facRecode.alldiffs -> \code{\link{facRecast.alldiffs}},
          \item info.crit and info.crit.asreml -> \code{\link{infoCriteria.asreml}}, 
          \item newrcov.asrtests -> \code{\link{changeTerms.asrtests}}, 
          \item plotvariofaces.asreml -> \code{\link{plotVariofaces.data.frame}}, 
@@ -54,8 +59,11 @@
 \usage{addrm.terms.asreml(...)
 addrm.terms.asrtests(...)
 alldiffs(...)
+asrtests(...)
 choose.model.asreml(...)
 choose.model.asrtests(...)
+facRecode(...)
+facRecode.alldiffs(...)
 info.crit(...)
 info.crit.asreml(...)
 newrcov.asrtests(...)
