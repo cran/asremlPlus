@@ -20,7 +20,8 @@
        \code{test.summary} \code{data.frame} using the supplied \code{label}.}
 \usage{
 \method{testresidual}{asrtests}(asrtests.obj, terms=NULL, label = "R model", 
-             simpler = FALSE, alpha = 0.05, allow.unconverged = TRUE, 
+             simpler = FALSE, alpha = 0.05, 
+             allow.unconverged = TRUE, allow.fixedcorrelation = TRUE, 
              checkboundaryonly = FALSE, positive.zero = FALSE, 
              bound.test.parameters = "none", 
              bound.exclusions = c("F","B","S","C"), REMLDF = NULL, 
@@ -46,6 +47,14 @@
                       model does not converge, the supplied \code{asreml} object is returned.  
                       Also, if \code{FALSE} and the fit of the new model has converged, but that 
                       of the old model has not, the new model will be accepted.}
+ \item{allow.fixedcorrelation}{A \code{logical} indicating whether to accept a new model 
+              even when it contains correlations in the model whose values have been 
+              designated as fixed, bound or singular. If \code{FALSE} and the new model 
+              contains correlations whose values have not been able to be estimated, 
+              the supplied \code{asrtests.obj} is returned. The fit in the 
+              \code{asreml.obj} component of the supplied \code{asrtests.obj} will 
+              also be tested and a warning issued if both fixed correlations are found 
+              in it and \code{allow.fixedcorrelation} is \code{FALSE}.}
  \item{checkboundaryonly}{If \code{TRUE} then boundary and singular terms are not removed by 
               \code{\link{rmboundary.asrtests}}; a warning is issued instead.}
  \item{positive.zero}{Indicates whether the hypothesized values for the 
@@ -87,7 +96,7 @@
               part of the model.}
  \item{IClikelihood}{A \code{character} that controls both the occurence and the type 
                     of likelihood for information criterion in the \code{test.summary} 
-                    of the \code{\link{asrtests.object}}. If \code{none}, none are 
+                    of the new \code{\link{asrtests.object}}. If \code{none}, none are 
                     included. Otherwise, if \code{REML}, then the AIC and BIC based 
                     on the Restricted Maximum Likelihood are included; if \code{full}, 
                     then the AIC and BIC based on the full likelihood are included. 
@@ -106,7 +115,7 @@
  \item{set.terms}{A \code{\link{character}} vector specifying the terms that are to have 
                bounds and/or initial values set prior to fitting. 
                The names must match those in the \code{vparameters} component of the 
-               \code{asreml.obj} component in the \code{\link{asrtests.object}}.}
+               \code{asreml.obj} component in the new \code{\link{asrtests.object}}.}
  \item{ignore.suffices}{A \code{\link{logical}} vector specifying whether the suffices of the 
                     \code{asreml}-assigned names of the variance terms (i.e. the 
                     information to the right of an "!", other than "R!") is to 

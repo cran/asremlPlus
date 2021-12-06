@@ -16,6 +16,23 @@
   return(kopt)
 }
 
+#Check for fixed correlations
+isFixedCorrelOK.asreml <- function(asreml.obj, allow.fixedcorrelation = TRUE)  
+{
+  correlOK <- TRUE
+  if (!allow.fixedcorrelation)
+  {
+    vsumm <- summary(asreml.obj)$varcomp
+    vsumm <- vsumm[grepl("!cor", rownames(vsumm), fixed = TRUE),]
+    if (!all(is.na(vsumm)))
+    {
+      if (any(vsumm$bound %in% c("F","B","S")))
+        correlOK <- FALSE
+    }
+  }  
+  return(correlOK)
+}
+
 #Get the loaded version of asreml
 "getASRemlVersionLoaded" <- function(nchar = NULL, notloaded.fault = FALSE)
 {
@@ -443,6 +460,13 @@
   geninv.x
 }
 
+"setToZero" <- function(x, zero.tolerance = .Machine$double.eps ^ 0.5)
+{
+  zeroes <- abs(x) < zero.tolerance
+  if (any(zeroes))
+    x[zeroes] <- 0
+  return(x)
+}
 subset.list <- function(x, select = 1:length(x), ...)
 {
   selx <- select

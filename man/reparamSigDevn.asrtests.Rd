@@ -14,7 +14,8 @@
 \usage{
 \method{reparamSigDevn}{asrtests}(asrtests.obj,terms = NULL, 
                trend.num = NULL, devn.fac = NULL, 
-               allow.unconverged = TRUE, checkboundaryonly = FALSE, 
+               allow.unconverged = TRUE, allow.fixedcorrelation = TRUE, 
+               checkboundaryonly = FALSE, 
                denDF = "numeric", IClikelihood = "none", 
                trace = FALSE, update = TRUE, 
                set.terms = NULL, ignore.suffices = TRUE,
@@ -23,21 +24,29 @@
 \arguments{
  \item{asrtests.obj}{an \code{\link{asrtests.object}} containing the components (i) \code{asreml.obj},
        (ii) \code{wald.tab}, and (iii) \code{test.summary}.}
- \item{terms}{A character string vector giving the terms that are to be reparameterized.}
+ \item{terms}{A character string vector giving the random terms that are to be reparameterized.}
  \item{trend.num}{A character string giving the name of the numeric covariate that 
               corresponds to \code{devn.fac} and is potentially included in terms 
               in the fitted model.}
  \item{devn.fac}{A character string giving the name of the factor that corresponds to 
               \code{trend.num} and is included in terms in the fitted model.
                The name must match those in the \code{vparameters} component of the 
-               \code{asreml.obj} component in the \code{\link{asrtests.object}}.}
+               \code{asreml.obj} component in the \code{asrtests.obj}.}
  \item{allow.unconverged}{A \code{logical} indicating whether to accept a new model 
                       even when it does not converge. Initially all changes are made with 
                       \code{allow.unconverged} set to \code{TRUE}. If 
                       \code{allow.unconverged} has been set to \code{FALSE} in the call and 
                       the final fit does not converge, an attempt is made to achieve 
                       convergence by removing any boundary terms. If this is unsuccessful, 
-                      the supplied \code{asrtsts} object is returned.}
+                      the supplied \code{asrtests.obj} is returned.}
+ \item{allow.fixedcorrelation}{A \code{logical} indicating whether to accept a new model 
+              even when it contains correlations in the model whose values have been 
+              designated as fixed, bound or singular. If \code{FALSE} and the new model 
+              contains correlations whose values have not been able to be estimated, 
+              the supplied \code{asrtests.obj} is returned. The fit in the 
+              \code{asreml.obj} component of the supplied \code{asrtests.obj} will 
+              also be tested and a warning issued if both fixed correlations are found 
+              in it and \code{allow.fixedcorrelation} is \code{FALSE}.}
  \item{checkboundaryonly}{If \code{TRUE} then boundary and singular terms are not removed by 
               \code{\link{rmboundary.asrtests}}; a warning is issued instead.}
  \item{denDF}{Specifies the method to use in computing approximate denominator 
@@ -50,7 +59,7 @@
               part of the model.}
  \item{IClikelihood}{A \code{character} that controls both the occurence and the type 
                     of likelihood for information criterion in the \code{test.summary} 
-                    of the \code{\link{asrtests.object}}. If \code{none}, none are 
+                    of the new \code{\link{asrtests.object}}. If \code{none}, none are 
                     included. Otherwise, if \code{REML}, then the AIC and BIC based 
                     on the Restricted Maximum Likelihood are included; if \code{full}, 
                     then the AIC and BIC based on the full likelihood are included. 

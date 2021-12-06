@@ -1,5 +1,52 @@
 \name{news}
 \title{News for Package asremlPlus}
+\section{asremlPlus Version 4.3-31 (2021-12-06)}{
+  \itemize{
+  \item{Rebuild under R 4.1.2 for new submission.}
+}}
+\section{asremlPlus Version 4.3-30 (2021-11-22)}{
+  \itemize{
+  \item{Put in a trap for fixed-effects variances being inestimable when calculating the full likelihood.}
+}}
+\section{asremlPlus Version 4.3-29 (2021-11-06)}{
+  \itemize{
+  \item{Modify linTransform.alldiffs so that an intercept-only submodel can be fitted.}
+  \item{Revise the manual entry for exploreLSDs.alldiffs and for pairdiffsTransform.alldiffs.}
+}}
+\section{asremlPlus Version 4.3-28 (2021-10-26)}{
+  \itemize{
+  \item{Fix bug in newfit.asreml that re-orders the fixed model because of R limitations.}
+}}
+\section{asremlPlus Version 4.3-27 (2021-10-24)}{
+  \itemize{
+  \item{Fix problem in linTransform.alldiffs when the product of the numbers of levels in the classiify factors is large and not all combinations of the levels are observed.}
+  \item{Relax the requirement for \code{LSDby} variable to be in the \code{classify} to beng that they must be in the \code{predictions} component of the \code{alldiffs.obj}.}
+}}
+\section{asremlPlus Version 4.3-26 (2021-10-21)}{
+  \itemize{
+  \item{Fix bug in false.pos and false.neg for \code{LSDtype} set to \code{supplied} when \code{LSDby} is not \code{NULL}.}
+  \item{Add quantiles 25 (\code{q25}) and 75 (\code{q75}) to the values that \code{LSDstatistic} can take and the exploreLSDs.alldiffs investigates.}
+  \item{Allow for multiple \code{LSDstatistic} values when \code{LSDtype} is \code{factor.combination} and \code{LSDby} is set.}
+}}
+\section{asremlPlus Version 4.3-25 (2021-10-15)}{
+  \itemize{
+  \item{Add \code{sig.size}, \code{sig.face} and \code{sig.colour} arguments to plotPvalues.data.frame and plotPvalues.alldiffs.}
+}}
+\section{asremlPlus Version 4.3-24 (2021-10-14)}{
+  \itemize{
+  \item{Make sure that when \code{predicted.values} and the associated \code{vcov} and \code{sed} in an \code{\link{alldiffs.object}} have values that are close to zero as a result of the limitations of real number calculations, they are set to zero so as to avoid further calculation problems.}
+  \item{Add \code{zero.tolerance} argument to linTransform.alldiffs.}
+}}
+\section{asremlPlus Version 4.3-23 (2021-10-03)}{
+  \itemize{
+  \item{Modify the test for fixed correlation from a test for \code{Fixed} (\code{F}) to cover also correlations that are \code{bound} (\code{B}) or \code{singular} (\code{S}).}
+  \item{Add tests on incoming fits for fixed correlation.}
+}}
+\section{asremlPlus Version 4.3-22 (2021-10-01)}{
+  \itemize{
+  \item{Support is no longer provided in asremlPlus for versions of ASReml-R prior to version 4.0.}
+  \item{Add a new argument \code{allow.fixedcorrelation} to changeModelOnIC.alldiffs, newfit.asreml, chooseModel.asrtests, changeTerms.asrtests, testranfix.asrtests, testresidual.asrtests, testswapran.asrtests and reparamSigDevn.asrtests so that a model with a fixed correlation parameter may be rejected.}
+}}
 \section{asremlPlus Version 4.3-21 (2021-09-23)}{
   \itemize{
   \item{Fix a bug in pairdiffsTransform.alldiffs where the factors indexing the predictions were not generated correctly.}

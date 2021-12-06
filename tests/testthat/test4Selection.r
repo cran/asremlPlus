@@ -565,20 +565,20 @@ test_that("changeModelOnIC_Example_asreml4", {
   current.asr <- update(current.asr)
   current.asrt <- as.asrtests(current.asr, NULL, NULL, 
                               label = "Maximal model", IClikelihood = "full")
-  current.asrt <- rmboundary(current.asrt)
+  #current.asrt <- rmboundary(current.asrt)
   #testthat::expect_true(current.asrt$asreml.obj$converge)
   testthat::expect_true(current.asrt$test.summary$action[1] == "Starting model")
   testthat::expect_equal(current.asrt$test.summary$DF[1], 31)
   testthat::expect_equal(current.asrt$test.summary$denDF[1], 5)
-  testthat::expect_equal(nrow(summary(current.asrt$asreml.obj)$varcomp), 5)
+  testthat::expect_equal(nrow(summary(current.asrt$asreml.obj)$varcomp), 6)
   
-  # Drop both Row and Column terms
+  # Drop both Row and Column
   current.asrt <- changeModelOnIC(current.asrt, 
                                   dropRandom = "Row + Column", label = "Drop Row + Column",
                                   checkboundaryonly = TRUE,
                                   which.IC = "AIC", IClikelihood = "full")
   testthat::expect_true(current.asrt$asreml.obj$converge)
-  testthat::expect_equal(current.asrt$test.summary$denDF[3], -1)
+  testthat::expect_equal(current.asrt$test.summary$denDF[2], -1)
   
   # Replace residual with model without Row autocorrelation
   current.asrt <- changeModelOnIC(current.asrt, 
@@ -586,8 +586,8 @@ test_that("changeModelOnIC_Example_asreml4", {
                                   label="Row autocorrelation",
                                   IClikelihood = "full")
   testthat::expect_true(current.asrt$asreml.obj$converge)
-  testthat::expect_equal(current.asrt$test.summary$denDF[4], -2)
-  testthat::expect_true((abs(current.asrt$test.summary$AIC[4]) - 21.709629) < 1e-03)
+  testthat::expect_equal(current.asrt$test.summary$denDF[3], -2)
+  testthat::expect_true((abs(current.asrt$test.summary$AIC[3]) - 21.709898) < 1e-03)
   
   mod <- printFormulae(current.asrt$asreml.obj)
   testthat::expect_equal(length(mod), 3)
@@ -595,3 +595,183 @@ test_that("changeModelOnIC_Example_asreml4", {
   
 })
 
+
+
+cat("#### Test for fixedcorrelations using asreml4\n")
+test_that("Fixedcorrelations_asreml4", {
+  skip_if_not_installed("asreml")
+  skip_on_cran()
+  library(asreml)
+  library(asremlPlus)
+  ## use asremlPlus to analyse the wheat (barley) example from section 8.6 of the asreml manual (Butler et al. 2010)
+  data(PSA.27.dat)
+  
+  asreml.options(ai.sing = TRUE)
+  m.asr <- do.call(asreml, 
+                   args=list(fixed = PSA.27 ~ Lane + Position,
+                             residual = ~ ar1(Lane):Position,
+                             data = PSA.27.dat, maxiter=50))
+  m.asrt <- as.asrtests(m.asr, NULL, NULL, label = "Start with Lane autocorrelation",
+                        IClikelihood = "full")
+  m.asrt <- rmboundary(m.asrt)
+  testthat::expect_true(m.asrt$asreml.obj$converge)
+  
+  testthat::expect_warning(
+    m1.asrt <- changeModelOnIC(m.asrt, addRandom = "units", label = "units", allow.fixedcorrelation = FALSE,
+                               IClikelihood = "full"))
+  tests<- m1.asrt$test.summary
+  testthat::expect_equal(m1.asrt$test.summary$action[2], "Unchanged - fixed correlation")
+  testthat::expect_true(is.null(getFormulae(m1.asrt$asreml.obj)$random))
+  
+  m2.asrt <- changeModelOnIC(m.asrt, addRandom = "units", label = "units", allow.fixedcorrelation = TRUE,
+                             IClikelihood = "full")
+  testthat::expect_equal(m2.asrt$test.summary$action[2], "Swapped")
+  testthat::expect_true(grepl("units", as.character(getFormulae(m2.asrt$asreml.obj)$random)[2], fixed = TRUE))
+  summary(m2.asrt$asreml.obj)$varcomp
+  testthat::expect_equal(unname(vpc.char(m2.asrt$asreml.obj)["Lane:Position!Lane!cor"]), "F")
+  
+  m3.asrt <- changeTerms(m.asrt, addRandom = "units", label = "Add units", allow.fixedcorrelation = FALSE)
+  testthat::expect_equal(m3.asrt$test.summary$action[2], "Unchanged - fixed correlation")
+  testthat::expect_true(is.null(getFormulae(m3.asrt$asreml.obj)$random))
+  
+  m4.asrt <- changeTerms(m.asrt, addRandom = "units", label = "Add units", allow.fixedcorrelation = TRUE)
+  testthat::expect_equal(m4.asrt$test.summary$action[2], "Changed random")
+  testthat::expect_true(grepl("units", as.character(getFormulae(m4.asrt$asreml.obj)$random)[2], fixed = TRUE))
+  
+  m4.asrt <- testranfix(m4.asrt, term = "units", positive.zero = TRUE, allow.fixedcorrelation = TRUE)
+  testthat::expect_equal(m4.asrt$test.summary$action[3], "Retained")
+  testthat::expect_true(grepl("units", as.character(getFormulae(m4.asrt$asreml.obj)$random)[2], fixed = TRUE))
+  testthat::expect_equal(unname(vpc.char(m4.asrt$asreml.obj)["Lane:Position!Lane!cor"]), "F")
+
+  m5.asrt <- testranfix(m4.asrt, term = "units", positive.zero = TRUE, allow.fixedcorrelation = TRUE,
+                        IClikelihood = "REML")
+  testthat::expect_equal(m5.asrt$test.summary$action[4], "Retained")
+  testthat::expect_true(grepl("units", as.character(getFormulae(m5.asrt$asreml.obj)$random)[2], fixed = TRUE))
+  testthat::expect_equal(unname(vpc.char(m5.asrt$asreml.obj)["Lane:Position!Lane!cor"]), "F")
+  testthat::expect_true(all(abs(c(m5.asrt$test.summary$AIC[4],m5.asrt$test.summary$BIC[4]) - 
+                                  c(2352.823, 2361.365)) < 1e-04))
+  
+  m6.asrt <- testranfix(m4.asrt, term = "Lane", allow.fixedcorrelation = TRUE,
+                        IClikelihood = "REML")
+  testthat::expect_equal(m6.asrt$test.summary$action[4], "Significant")
+  
+  testthat::expect_warning(
+    m6.asrt <- testranfix(m4.asrt, term = "Lane", allow.fixedcorrelation = FALSE,
+                          IClikelihood = "REML"), 
+    regexp = "The estimated value of one or more correlations in the supplied asreml fit for PSA.27 is fixed")
+  testthat::expect_equal(m6.asrt$test.summary$action[4], "Significant")
+
+  #The fixed correlation is in m4.asrt and do not know how to remove it.
+  testthat::expect_warning(
+    m6.asrt <- testranfix(m4.asrt, term = "units", positive.zero = TRUE, allow.fixedcorrelation = FALSE), 
+    regexp = "The estimated value of one or more correlations in the supplied asreml fit for PSA.27 is fixed")
+  testthat::expect_equal(m6.asrt$test.summary$action[4], "Unchanged - fixed correlation")
+  testthat::expect_true(grepl("units", as.character(getFormulae(m6.asrt$asreml.obj)$random)[2], fixed = TRUE))
+
+  #Start with both Lane and Position autocorrelation
+  m.asr <- do.call(asreml, 
+                   args=list(fixed = PSA.27 ~ Lane + Position,
+                             random = ~ units,
+                             residual = ~ ar1(Lane):ar1(Position),
+                             data = PSA.27.dat, maxiter=75))
+  m.asrt <- as.asrtests(m.asr, NULL, NULL, label = "Start with all autocorrelation",
+                        IClikelihood = "full")
+  m.asrt <- rmboundary(m.asrt)
+  testthat::expect_true(m.asrt$asreml.obj$converge)
+  
+  m1.asrt <- changeModelOnIC(m.asrt, newResidual = "ar1(Lane):Position", label = "Lane autocorrelation", 
+                             allow.fixedcorrelation = FALSE,
+                             IClikelihood = "full")
+  testthat::expect_equal(m1.asrt$test.summary$action[2], "Unchanged - fixed correlation")
+  testthat::expect_true(grepl("ar1(Lane):ar1(Position)", 
+                              as.character(getFormulae(m1.asrt$asreml.obj)$residual)[2], fixed = TRUE))
+
+  m2.asrt <- changeModelOnIC(m.asrt, newResidual = "ar1(Lane):Position", label = "Lane autocorrelation", 
+                             allow.fixedcorrelation = TRUE,
+                             IClikelihood = "full")
+  testthat::expect_equal(m2.asrt$test.summary$action[2], "Swapped")
+  testthat::expect_true(grepl("ar1(Lane):Position", 
+                              as.character(getFormulae(m2.asrt$asreml.obj)$residual)[2], fixed = TRUE))
+  
+  m3.asrt <- testresidual(m.asrt, terms = "ar1(Lane):Position", label = "Lane autocorrelation", 
+                          simpler = TRUE, allow.fixedcorrelation = FALSE)
+  testthat::expect_equal(m3.asrt$test.summary$action[2], "Unchanged - fixed correlation")
+  testthat::expect_true(grepl("ar1(Lane):ar1(Position)", 
+                              as.character(getFormulae(m1.asrt$asreml.obj)$residual)[2], fixed = TRUE))
+
+  m4.asrt <- testresidual(m.asrt, terms = "ar1(Lane):Position", label = "Lane autocorrelation", 
+                          simpler = TRUE, allow.fixedcorrelation = TRUE)
+  testthat::expect_equal(m4.asrt$test.summary$action[2], "Swapped")
+  testthat::expect_true(grepl("ar1(Lane):Position", 
+                              as.character(getFormulae(m2.asrt$asreml.obj)$residual)[2], fixed = TRUE))
+  
+  #Check warning message when supplied asreml.obj has a fixed correlation
+  testthat::expect_output(testthat::expect_warning(
+    m.asr <- do.call(asreml, 
+                     args=list(fixed = PSA.27 ~ 1,
+                               random = ~ Lane + Position + units,
+                               residual = ~ ar1(Lane):Position,
+                               data = PSA.27.dat, maxiter=50))))
+  testthat::expect_warning(
+    m.asrt <- as.asrtests(m.asr, NULL, NULL, label = "Start with all autocorrelation",
+                          IClikelihood = "full"))
+  m.asrt <- rmboundary(m.asrt)
+  testthat::expect_false(m.asrt$asreml.obj$converge)
+  
+  testthat::expect_warning(
+    m1.asrt <- changeModelOnIC(m.asrt, dropRandom = "units", allow.fixedcorrelation = FALSE),
+    regexp = "The estimated value of one or more correlations in the supplied asreml fit for PSA.27 is fixed")
+  testthat::expect_warning(
+    m2.asrt <- testresidual(m.asrt, terms = "ar1(Lane):ar1(Position)", allow.fixedcorrelation = FALSE),
+    regexp = "The estimated value of one or more correlations in the supplied asreml fit for PSA.27 is fixed")
+  m1.asr <- newfit(m.asr, random. = ~ . - units, allow.fixedcorrelation = TRUE)
+  testthat::expect_false(any("units" == rownames(attr(m1.asr$formulae$random, which = "factors"))))
+  
+  testthat::expect_warning(
+    m2.asr <- newfit(m.asr, random. = ~ . - units, allow.fixedcorrelation = FALSE),
+    regexp = "The estimated value of one or more correlations in the supplied asreml fit for PSA.27 is fixed")
+  testthat::expect_true(any("units" == rownames(attr(m2.asr$formulae$random, which = "factors"))))
+
+  #Test repararmSigDevn
+  PSA.27.dat <- within(PSA.27.dat, 
+                       {
+                         xPosn <- dae::as.numfac(Position)
+                         xPosn <- xPosn - mean(unique(xPosn))
+                       })
+  m.asr <- do.call(asreml, 
+                   args=list(fixed = PSA.27 ~ Lane  + xPosn,
+                             random = ~ spl(xPosn) + Position + units,
+                             residual = ~ ar1(Lane):Position,
+                             data = PSA.27.dat, maxiter=75))
+  m.asrt <- as.asrtests(m.asr, NULL, NULL, label = "Start with all autocorrelation",
+                        IClikelihood = "full")
+  asreml.options(ai.sing = TRUE)
+  m1.asrt <- reparamSigDevn(m.asrt, terms = "Position", trend.num = "xPosn", devn.fac = "Position", 
+                            allow.fixedcorrelation = TRUE)
+  testthat::expect_equal(m1.asrt$test.summary$action[2], "Changed fixed, random")
+  testthat::expect_equal(unname(vpc.char(m1.asrt$asreml.obj)["Lane:Position!Lane!cor"]), "B")
+  
+  m2.asrt <- reparamSigDevn(m.asrt, terms = "Position", trend.num = "xPosn", devn.fac = "Position", 
+                            allow.fixedcorrelation = FALSE)
+  testthat::expect_equal(m2.asrt$test.summary$action[2], "Unchanged - fixed correlation")
+  
+  #Test testswapran
+  m.asr <- do.call(asreml, 
+                   args=list(fixed = PSA.27 ~ 1,
+                             random = ~ Lane + units,
+                             residual = ~ ar1(Lane):Position,
+                             data = PSA.27.dat, maxiter=100))
+  m.asrt <- as.asrtests(m.asr, NULL, NULL, label = "Start with all autocorrelation",
+                        IClikelihood = "full")
+  m.asrt <- rmboundary(m.asrt)
+  testthat::expect_true(m.asrt$asreml.obj$converge)
+  
+  m1.asrt <- testswapran(m.asrt, oldterms = "Lane", newterms = "Position", allow.fixedcorrelation = TRUE)
+  testthat::expect_equal(m1.asrt$test.summary$action[2], "Rejected")
+  testthat::expect_equal(unname(vpc.char(m1.asrt$asreml.obj)["Lane:Position!Lane!cor"]), "F")
+
+  testthat::expect_warning(
+    m2.asrt <- testswapran(m.asrt, oldterms = "Lane", newterms = "Position", allow.fixedcorrelation = FALSE),
+    regexp = "The estimated value of one or more correlations in the supplied asreml fit for PSA.27 is fixed")
+
+})

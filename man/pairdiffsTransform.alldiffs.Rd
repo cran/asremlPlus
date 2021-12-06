@@ -131,13 +131,16 @@
              combination of which a mean LSD, minLSD and maxLSD is stored in the \code{LSD} 
              component of the \code{\link{alldiffs.object}} when \code{LSDtype} is 
              \code{factor.combinatons}.}
-\item{LSDstatistic}{A \code{\link{character}} nominating one of \code{minmum}, \code{q10}, \code{median}, 
-             \code{mean}, \code{q90} or \code{maximum} as the value(s) to use in the calculation of the 
-             \code{halfLeastSignificant} \code{error.intervals}. Here \code{q10} and \code{q90} indicate 
-             the sample quantiles corresponging to probabilities of 0.1 and 0.9, the function 
-             \code{\link{quantile}} being used to obtain them. The values of the nominated statistics are 
-             stored in the column named \code{assignedLSD} in an \code{\link{LSD.frame}}. 
-            \code{LSDstatistic} is ignored if it is not \code{NULL}.}
+\item{LSDstatistic}{A \code{\link{character}} nominating one or more of \code{minmum}, \code{q10}, \code{q25},  
+             \code{mean}, \code{median}, \code{q75}, \code{q90} or \code{maximum} as the value(s) to use in 
+             the calculation of the \code{halfLeastSignificant} \code{error.intervals}. Here \code{q10},  
+             \code{q25}, \code{q75} and \code{q90} indicate the sample quantiles corresponding to 
+             probabilities of 0.1, 0.25, 0.75 and 0.9, the function \code{\link{quantile}} being used to 
+             obtain them. Multiple values are only allowed for \code{LSDtype} set to \code{factor.combination}, 
+             in which case \code{LSDby} must not be \code{NULL} and the number of values must equal the number 
+             of observed combinations of the values of the variables specified by \code{LSDby}. The values of 
+             the nominated statistics are stored in the column named \code{assignedLSD} in an 
+             \code{\link{LSD.frame}}. If \code{LSDstatistic} is \code{NULL} it is reset to \code{mean}.}
 \item{LSDaccuracy}{A \code{\link{character}} nominating one of \code{maxAbsDeviation}, \code{maxDeviation}, 
              \code{q90Deviation} or \code{RootMeanSqDeviation} as the statistic to be calculated as a measure 
              of the accuracy of \code{assignedLSD}. The option \code{q90Deviation} produces the sample quantile 
@@ -153,9 +156,7 @@
 \item{tables}{A \code{\link{character}} vector containing a combination of 
               \code{none}, \code{predictions}, \code{vcov}, \code{backtransforms}, \code{differences}, 
               \code{p.differences}, \code{sed}, \code{LSD} and \code{all}.  
-              These nominate which components of the \code{\link{alldiffs.object}} to print.
-              Only \code{none}, \code{predictions} and \code{all} apply to \code{method} 
-              \code{Fieller}.}
+              These nominate which components of the \code{\link{alldiffs.object}} to print.}
 \item{pairwise}{A \code{\link{logical}} indicating whether all pairwise differences of the
              \code{predictions} and their standard errors and p-values are to be 
              computed and stored. If \code{tables} is equal to 
@@ -199,7 +200,7 @@
 #### Form the differences for log(RGR) for Salinity
 load(system.file("extdata", "testDiffs.rda", package = "asremlPlus", mustWork = TRUE))
 #### For the ratios for Cl per WU Temperature - use backtransforms of log-predictions
-Preds.ratio.ClUp <- pairdiffsTransform(diffs.ClUp, method = "log",
+Preds.ratio.ClUp <- pairdiffsTransform(diffs.ClUp, 
                                        pairs.factor = "Temperature", 
                                        first.levels = "Hot",
                                        second.levels = "Cool",

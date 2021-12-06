@@ -233,74 +233,6 @@ setOldClass("asrtests")
   invisible()
 }
 
-"print.LSDdata" <- function(x,  which.print = c("statistics", "false.pos", "false.neg"), ...)
-{
-  options <- c("frequencies", "distinct.vals", "statistics", "accuracy", "false.pos", "false.neg", 
-               "per.pred.accuracy", "LSDmatrix", "summary", "all")
-  opt <- options[unlist(lapply(which.print, check.arg.values, options=options))]
-  if (all(c("summary", "all") %in% opt))
-    stop("Can only specify one of summary and all for which argument")
-
-  #make change to control printing
-  class(x) <- c("LSDdata", "data.frame")
-
-  if (any(c("frequencies", "all") %in% opt))
-  {
-    cat("\n\n####  Frequency distribution of LSDs \n\n")
-    fr <- as.data.frame(x$frequencies)
-    fr <- cbind(rownames(fr),fr)
-    rownames(fr) <- NULL
-    names(fr) <- c("midpoint", "frequency")
-    print(fr, ...)
-  }
-  
-  if (any(c("distinct.vals", "summary", "all") %in% opt))
-  {
-    cat("\n\n####  Distinct LSD values \n\n")
-    print(x$distinct.vals, ...)
-  }
-  
-  if (any(c("statistics", "summary", "all") %in% opt))
-  {
-    cat("\n\n####  Statistics calculated from LSD values \n\n")
-    print(x$statistics, ...)
-  }
-  
-  if (any(c("accuracy", "all") %in% opt))
-  {
-    cat(paste0("\n\n####  Accuracy (", attr(x, which = "LSDaccuracy"), 
-               ") of statistics calculated from LSD values \n\n"))
-    print(x$accuracy, ...)
-  }
-  
-  if (any(c("false.pos", "summary", "all") %in% opt))
-  {
-    cat(paste0("\n\n####  False positives resulting from use of various LSD statistics\n\n"))
-    print(x$false.pos, ...)
-  }
-  
-  if (any(c("false.neg", "summary", "all") %in% opt))
-  {
-    cat(paste0("\n\n####  False negatives resulting from use of various LSD statistics\n\n"))
-    print(x$false.neg, ...)
-  }
-  
-  if (any(c("per.pred.accuracy", "all") %in% opt))
-  {
-    cat(paste0("\n\n####  Accuracy (", attr(x, which = "LSDaccuracy"), 
-               ") for each prediction if LSD statistics are used \n\n"))
-    print(x$per.pred.accuracy, ...)
-  }
-  
-  if (any(c("LSDmatrix", "all") %in% opt))
-  {
-    cat("\n\n####  Matrix of all LSD values \n\n")
-    print(x$LSD, ...)
-  }
-  
-  invisible()
-}
-
 "print.wald.tab" <- function(x, which.wald = c("title", "heading", "table"), 
                              colourise = FALSE, ...)
 {
@@ -823,17 +755,19 @@ atLevelsMatch <- function(new, old, call)
 { 
   env <- environment(as.formula(old))
   new <- atLevelsMatch(new, old, call)
-  tmp <- update.formula(as.formula(old), new)
-  out <- formula(terms.formula(tmp, simplify = TRUE, keep.order = keep.order))
+  #update formula expands the formula using keep.order = FALSE (cannot be changed)
+  tmp <- update.formula(as.formula(old), new, keep.order = keep.order) 
+  out <- formula(terms.formula(tmp, keep.order = keep.order))
   environment(out) <- env
   return(out)
 }
 
 "newfit.asreml" <- function(asreml.obj, fixed., random., sparse., 
                             residual., rcov., update = TRUE, trace = FALSE, 
-                            allow.unconverged = TRUE, keep.order = TRUE, 
-                            set.terms = NULL, ignore.suffices = TRUE, 
-                            bounds = "P", initial.values = NA, ...)
+                            allow.unconverged = TRUE, allow.fixedcorrelation = TRUE,
+                            keep.order = TRUE, set.terms = NULL, 
+                            ignore.suffices = TRUE, bounds = "P", 
+                            initial.values = NA, ...)
 #a function to refit an asreml model with modified model formula
 #using either update.asreml or a direct call to asreml
 #- the principal difference is that the latter does not enforce the 
@@ -863,6 +797,17 @@ atLevelsMatch <- function(new, old, call)
   if (is.character(validasr))
     stop(validasr)
   
+  #Check for fixed correlations in supplied asrtests.obj
+  if (!isFixedCorrelOK(asreml.obj, allow.fixedcorrelation = allow.fixedcorrelation))
+  {
+    if (asr4)
+      kresp <- asreml.obj$formulae$fixed[[2]]
+    else
+      kresp <- asreml.obj$fixed.formula[[2]]
+    warning(paste("The estimated value of one or more correlations in the supplied asreml fit for", kresp,
+                  "is fixed and allow.fixedcorrelation is FALSE"))
+  }
+  
   if (is.null(call <- asreml.obj$call) && 
       is.null(call <- attr(asreml.obj, "call"))) 
     stop("Need an object with call component or attribute")
@@ -885,9 +830,13 @@ atLevelsMatch <- function(new, old, call)
   
   #Now update formulae
   if (!missing(fixed.)) 
-    languageEl(call, which = "fixed") <- 
-    my.update.formula(as.formula(languageEl(call, which = "fixed")), 
-                      fixed., call = call, keep.order = keep.order)
+  {
+    if (fixed. != ". ~ . ")
+      languageEl(call, which = "fixed") <- 
+        my.update.formula(as.formula(languageEl(call, which = "fixed")), 
+                          fixed., call = call, keep.order = keep.order)
+  }
+
   if (!missing(random.)) 
   {
     if (is.null(random.))
@@ -1065,6 +1014,14 @@ atLevelsMatch <- function(new, old, call)
     warning(asreml.new.obj$last.message)
     if (!allow.unconverged)
       asreml.new.obj <- asreml.obj
+  } else
+  {
+    #Check for fixed correlation
+    if (!isFixedCorrelOK(asreml.new.obj, allow.fixedcorrelation = allow.fixedcorrelation))
+    {
+      warning("At least one correlation's estimated value is fixed")
+      asreml.new.obj <- asreml.obj
+    }
   }
   
   #Reset trace to default on the way out
@@ -1324,7 +1281,8 @@ atLevelsMatch <- function(new, old, call)
                                    dropFixed = NULL, addFixed = NULL, 
                                    dropRandom = NULL,  addRandom = NULL, 
                                    newResidual = NULL, label = "Changed terms", 
-                                   allow.unconverged = TRUE, checkboundaryonly = FALSE, 
+                                   allow.unconverged = TRUE, allow.fixedcorrelation = TRUE, 
+                                   checkboundaryonly = FALSE, 
                                    trace = FALSE, update = TRUE, denDF = "numeric", 
                                    set.terms = NULL, ignore.suffices = TRUE, 
                                    bounds = "P", initial.values = NA, 
@@ -1356,6 +1314,10 @@ atLevelsMatch <- function(new, old, call)
     kresp <- asrtests.obj$asreml.obj$formulae$fixed[[2]]
   else
     kresp <- asrtests.obj$asreml.obj$fixed.formula[[2]]
+  #Check for fixed correlations in supplied asrtests.obj
+  if (!isFixedCorrelOK(asrtests.obj$asreml.obj, allow.fixedcorrelation = allow.fixedcorrelation))
+    warning(paste("The estimated value of one or more correlations in the supplied asreml fit for", kresp,
+                  "is fixed and allow.fixedcorrelation is FALSE"))
   all.terms <- c(dropFixed, addFixed, dropRandom, addRandom, newResidual)
   if (all(is.null(all.terms)))
     stop("In analysing ", kresp, ", must supply terms to be removed/added")
@@ -1458,7 +1420,8 @@ atLevelsMatch <- function(new, old, call)
                                       fixed. = fix.form, random. = ran.form, 
                                       residual. = res.form, 
                                       trace = trace, update = update, 
-                                      allow.unconverged = TRUE,
+                                      allow.unconverged = TRUE, 
+                                      allow.fixedcorrelation = TRUE, 
                                       set.terms = set.terms, 
                                       ignore.suffices = ignore.suffices, 
                                       bounds = bounds, 
@@ -1470,7 +1433,8 @@ atLevelsMatch <- function(new, old, call)
                                             fixed. = fix.form, random. = ran.form, 
                                             rcov. = res.form, 
                                             trace = trace, update = update, 
-                                            allow.unconverged = TRUE,
+                                            allow.unconverged = TRUE, 
+                                            allow.fixedcorrelation = TRUE, 
                                             set.terms = set.terms, 
                                             ignore.suffices = ignore.suffices, 
                                             bounds = bounds, 
@@ -1480,46 +1444,63 @@ atLevelsMatch <- function(new, old, call)
     #Update results, checking for convergence
     if (asreml.new.obj$converge | allow.unconverged)
     {
-      asreml.obj <- asreml.new.obj
-      #Update wald.tab
-      wald.tab <- asreml::wald.asreml(asreml.obj, denDF = denDF, trace = trace, ...)
-      wald.tab <- chkWald(wald.tab)
-      if (!asreml.obj$converge)
-        action <- paste(action, " - old uncoverged", sep="")
-      if (ic.lik != "none")
+      #Check fixed correlation
+      if (!isFixedCorrelOK(asreml.new.obj, allow.fixedcorrelation = allow.fixedcorrelation))
       {
-        ic <- infoCriteria(asreml.obj, IClikelihood = ic.lik, 
-                           bound.exclusions = bound.exclusions)
+        action <- "Unchanged - fixed correlation"
+        if (ic.lik != "none")
+          ic <- infoCriteria(asreml.obj, IClikelihood = ic.lik, 
+                             bound.exclusions = bound.exclusions)
+        else
+          ic <- ic.NA
         test.summary <- addtoTestSummary(test.summary, terms = label, 
                                          DF=ic$fixedDF, denDF = ic$varDF, 
                                          p = NA, AIC = ic$AIC, BIC = ic$BIC, 
                                          action = action)
-      } else
-        test.summary <- addtoTestSummary(test.summary, terms = label, DF=NA, denDF = NA, 
-                                         p = NA, action = action)
-      #Check for boundary terms
-      temp.asrt <- rmboundary.asrtests(as.asrtests(asreml.obj, wald.tab, test.summary, ...), 
-                                       checkboundaryonly = checkboundaryonly, 
-                                       IClikelihood = IClikelihood, 
-                                       trace = trace, update = update, 
-                                       set.terms = set.terms, 
-                                       ignore.suffices = ignore.suffices, 
-                                       bounds = bounds, 
-                                       initial.values = initial.values, ...)
-      if (nrow(temp.asrt$test.summary) > nrow(test.summary))
-      {
-        if (asr4)
-          warning("In analysing ",asreml.obj$formulae$fixed[[2]],
-                  ", boundary terms removed")
-        else
-          warning("In analysing ",asreml.obj$fixed.formula[[2]],
-                  ", boundary terms removed")
       }
-      asreml.obj <- temp.asrt$asreml.obj
-      test.summary <- temp.asrt$test.summary
-      #Update wald.tab
-      wald.tab <- asreml::wald.asreml(asreml.obj, denDF = denDF, trace = trace, ...)
-      wald.tab <- chkWald(wald.tab)
+      else
+      {
+        asreml.obj <- asreml.new.obj
+        #Update wald.tab
+        wald.tab <- asreml::wald.asreml(asreml.obj, denDF = denDF, trace = trace, ...)
+        wald.tab <- chkWald(wald.tab)
+        if (!asreml.obj$converge)
+          action <- paste(action, " - old uncoverged", sep="")
+        if (ic.lik != "none")
+        {
+          ic <- infoCriteria(asreml.obj, IClikelihood = ic.lik, 
+                             bound.exclusions = bound.exclusions)
+          test.summary <- addtoTestSummary(test.summary, terms = label, 
+                                           DF=ic$fixedDF, denDF = ic$varDF, 
+                                           p = NA, AIC = ic$AIC, BIC = ic$BIC, 
+                                           action = action)
+        } else
+          test.summary <- addtoTestSummary(test.summary, terms = label, DF=NA, denDF = NA, 
+                                           p = NA, action = action)
+        #Check for boundary terms
+        temp.asrt <- rmboundary.asrtests(as.asrtests(asreml.obj, wald.tab, test.summary, ...), 
+                                         checkboundaryonly = checkboundaryonly, 
+                                         IClikelihood = IClikelihood, 
+                                         trace = trace, update = update, 
+                                         set.terms = set.terms, 
+                                         ignore.suffices = ignore.suffices, 
+                                         bounds = bounds, 
+                                         initial.values = initial.values, ...)
+        if (nrow(temp.asrt$test.summary) > nrow(test.summary))
+        {
+          if (asr4)
+            warning("In analysing ",asreml.obj$formulae$fixed[[2]],
+                    ", boundary terms removed")
+          else
+            warning("In analysing ",asreml.obj$fixed.formula[[2]],
+                    ", boundary terms removed")
+        }
+        asreml.obj <- temp.asrt$asreml.obj
+        test.summary <- temp.asrt$test.summary
+        #Update wald.tab
+        wald.tab <- asreml::wald.asreml(asreml.obj, denDF = denDF, trace = trace, ...)
+        wald.tab <- chkWald(wald.tab)
+      }
     } else #unconverged and not allowed
     {
       #Check if get convergence with any boundary terms removed
@@ -1571,7 +1552,8 @@ atLevelsMatch <- function(new, old, call)
 }
 
 "testranfix.asrtests" <- function(asrtests.obj, term=NULL, alpha = 0.05, 
-                                  allow.unconverged = TRUE, checkboundaryonly = FALSE, 
+                                  allow.unconverged = TRUE, allow.fixedcorrelation = TRUE, 
+                                  checkboundaryonly = FALSE, 
                                   drop.ran.ns = TRUE, positive.zero = FALSE, 
                                   bound.test.parameters = "none", 
                                   bound.exclusions = c("F","B","S","C"), REMLDF = NULL, 
@@ -1604,6 +1586,18 @@ atLevelsMatch <- function(new, old, call)
   asreml.obj <- asrtests.obj$asreml.obj
   wald.tab <- asrtests.obj$wald.tab
   test.summary <- asrtests.obj$test.summary
+
+  #Check for fixed correlations in supplied asrtests.obj
+  if (!isFixedCorrelOK(asrtests.obj$asreml.obj, allow.fixedcorrelation = allow.fixedcorrelation))
+  {
+    if (asr4)
+      kresp <- asrtests.obj$asreml.obj$formulae$fixed[[2]]
+    else
+      kresp <- asrtests.obj$asreml.obj$fixed.formula[[2]]
+    warning(paste("The estimated value of one or more correlations in the supplied asreml fit for", kresp,
+                  "is fixed and allow.fixedcorrelation is FALSE"))
+  }
+  
   #Check for multiple terms
   term.form <- as.formula(paste("~ ",term, sep=""))
   term.obj <- as.terms.object(term, asreml.obj)
@@ -1759,52 +1753,61 @@ atLevelsMatch <- function(new, old, call)
             term.form <- as.formula(paste(". ~ . - ",term, sep=""))
             asreml.new.obj <- newfit.asreml(asreml.obj, fixed. = term.form, trace = trace, 
                                             update = update, 
-                                            allow.unconverged = TRUE,
+                                            allow.unconverged = TRUE, 
+                                            allow.fixedcorrelation = TRUE,
                                             set.terms = set.terms, 
                                             ignore.suffices = ignore.suffices, 
                                             bounds = bounds, 
                                             initial.values = initial.values, ...)
             if (asreml.new.obj$converge | allow.unconverged)
             {
-              action <- "Dropped"
-              asreml.obj <- asreml.new.obj
-              #Update wald.tab
-              wald.tab <- asreml::wald.asreml(asreml.obj, denDF = denDF, 
-                                              trace = trace, ...)
-              wald.tab <- chkWald(wald.tab)
-              if (!asreml.obj$converge)
-                action <- paste(action, " - unconverged", sep="")
-              if (ic.lik != "none")
-                ic <- infoCriteria(asreml.obj, IClikelihood = ic.lik, 
-                                   bound.exclusions = bound.exclusions)
-              else
-                ic <- ic.NA
-              test.summary <- addtoTestSummary(test.summary, terms = term, 
-                                               DF = ndf, denDF = den.df, p = p, 
-                                               AIC = ic$AIC, BIC = ic$BIC, 
-                                               action = action)
-              
-              #Check for boundary terms
-              temp.asrt <- rmboundary.asrtests(as.asrtests(asreml.obj, wald.tab, 
-                                                           test.summary, ...), 
-                                               checkboundaryonly = checkboundaryonly, 
-                                               IClikelihood = IClikelihood, 
-                                               trace = trace, update = update, 
-                                               set.terms = set.terms, 
-                                               ignore.suffices = ignore.suffices, 
-                                               bounds = bounds, 
-                                               initial.values = initial.values, ...)
-              if (nrow(temp.asrt$test.summary) > nrow(test.summary))
+              #Check for fixed correlation
+              if (!isFixedCorrelOK(asreml.new.obj, allow.fixedcorrelation = allow.fixedcorrelation))
               {
-                if (asr4)
-                  warning("In analysing ",asreml.obj$formulae$fixed[[2]],
-                          ", Boundary terms removed")
+                action <- "Unchanged - fixed correlation"
+                asreml.new.obj <- asreml.obj
+              } else
+              {
+                action <- "Dropped"
+                asreml.obj <- asreml.new.obj
+                #Update wald.tab
+                wald.tab <- asreml::wald.asreml(asreml.obj, denDF = denDF, 
+                                                trace = trace, ...)
+                wald.tab <- chkWald(wald.tab)
+                if (!asreml.obj$converge)
+                  action <- paste(action, " - unconverged", sep="")
+                if (ic.lik != "none")
+                  ic <- infoCriteria(asreml.obj, IClikelihood = ic.lik, 
+                                     bound.exclusions = bound.exclusions)
                 else
-                  warning("In analysing ",asreml.obj$fixed.formula[[2]],
-                          ", Boundary terms removed")
+                  ic <- ic.NA
+                test.summary <- addtoTestSummary(test.summary, terms = term, 
+                                                 DF = ndf, denDF = den.df, p = p, 
+                                                 AIC = ic$AIC, BIC = ic$BIC, 
+                                                 action = action)
+                
+                #Check for boundary terms
+                temp.asrt <- rmboundary.asrtests(as.asrtests(asreml.obj, wald.tab, 
+                                                             test.summary, ...), 
+                                                 checkboundaryonly = checkboundaryonly, 
+                                                 IClikelihood = IClikelihood, 
+                                                 trace = trace, update = update, 
+                                                 set.terms = set.terms, 
+                                                 ignore.suffices = ignore.suffices, 
+                                                 bounds = bounds, 
+                                                 initial.values = initial.values, ...)
+                if (nrow(temp.asrt$test.summary) > nrow(test.summary))
+                {
+                  if (asr4)
+                    warning("In analysing ",asreml.obj$formulae$fixed[[2]],
+                            ", Boundary terms removed")
+                  else
+                    warning("In analysing ",asreml.obj$fixed.formula[[2]],
+                            ", Boundary terms removed")
+                }
+                asreml.obj <- temp.asrt$asreml.obj
+                test.summary <- temp.asrt$test.summary
               }
-              asreml.obj <- temp.asrt$asreml.obj
-              test.summary <- temp.asrt$test.summary
             } else #unconverged and not allowed
             {
               #Check for boundary terms
@@ -1867,7 +1870,7 @@ atLevelsMatch <- function(new, old, call)
     term.form <- as.formula(paste("~ . - ",term, sep=""))
     asreml.new.obj <- newfit.asreml(asreml.obj, random. = term.form, trace = trace, 
                                     update = update, 
-                                    allow.unconverged = TRUE,
+                                    allow.unconverged = TRUE, allow.fixedcorrelation = TRUE, 
                                     set.terms = set.terms, 
                                     ignore.suffices = ignore.suffices, 
                                     bounds = bounds, 
@@ -1902,19 +1905,28 @@ atLevelsMatch <- function(new, old, call)
         }
       } else
       { 
-        if (test$DF <= 0)
-          p <- NA
-        else
-          p <- test$p
-        if (is.na(p) || p <= alpha)
+        #Check for fixed correlation
+        if (!isFixedCorrelOK(asreml.new.obj, allow.fixedcorrelation = allow.fixedcorrelation))
         {
-          action <- "Significant"
-        } else
-        { 
-          action <- "Nonsignificant"
+          p <- NA
+          action <- "Fixed correlation"
         }
-        if (!asreml.new.obj$converge)
-          action <- paste(action, " - new unconverged", sep="")
+        else        
+        {
+          if (test$DF <= 0)
+            p <- NA
+          else
+            p <- test$p
+          if (is.na(p) || p <= alpha)
+          {
+            action <- "Significant"
+          } else
+          { 
+            action <- "Nonsignificant"
+          }
+          if (!asreml.new.obj$converge)
+            action <- paste(action, " - new unconverged", sep="")
+        }
       }
     } else #drop.ran.ns
     {
@@ -1946,7 +1958,8 @@ atLevelsMatch <- function(new, old, call)
           term.form <- as.formula(paste("~ . + ",term, sep=""))
           asreml.new.obj <- newfit.asreml(asreml.obj, random. = term.form, trace = trace, 
                                           update = update, 
-                                          allow.unconverged = TRUE,
+                                          allow.unconverged = TRUE, 
+                                          allow.fixedcorrelation = TRUE,
                                           set.terms = set.terms, 
                                           ignore.suffices = ignore.suffices, 
                                           bounds = bounds, 
@@ -1985,29 +1998,38 @@ atLevelsMatch <- function(new, old, call)
         }
       } else #Evaluate test for drop.ran.ns
       {
-        if (test$DF <= 0)
-          p <- NA
-        else
-          p <- test$p
-        if (is.na(p) || p <= alpha)
+        #Check for fixed correlation
+        if (!isFixedCorrelOK(asreml.new.obj, allow.fixedcorrelation = allow.fixedcorrelation))
         {
-          if (drop.ran.ns)
-          {
-            action <- "Retained"
-          } else
-          {
-            action <- "Significant"
-          }
-        } else
-        { 
-          action <- "Dropped"
-          asreml.obj <- asreml.new.obj
-          #Update wald.tab
-          wald.tab <- asreml::wald.asreml(asreml.obj, denDF = denDF, trace = trace, ...)
-          wald.tab <- chkWald(wald.tab)
+          p <- NA
+          action <- "Unchanged - fixed correlation"
         }
-        if (!asreml.new.obj$converge)
-          action <- paste(action, " - new unconverged", sep="")
+        else
+        {
+          if (test$DF <= 0)
+            p <- NA
+          else
+            p <- test$p
+          if (is.na(p) || p <= alpha)
+          {
+            if (drop.ran.ns)
+            {
+              action <- "Retained"
+            } else
+            {
+              action <- "Significant"
+            }
+          } else
+          { 
+            action <- "Dropped"
+            asreml.obj <- asreml.new.obj
+            #Update wald.tab
+            wald.tab <- asreml::wald.asreml(asreml.obj, denDF = denDF, trace = trace, ...)
+            wald.tab <- chkWald(wald.tab)
+          }
+          if (!asreml.new.obj$converge)
+            action <- paste(action, " - new unconverged", sep="")
+        }
       }
     }
     
@@ -2056,7 +2078,7 @@ atLevelsMatch <- function(new, old, call)
 "testswapran.asrtests" <- function(asrtests.obj, oldterms = NULL, newterms = NULL, 
                                    label = "Swap in random model", simpler = FALSE, 
                                    alpha = 0.05, allow.unconverged = TRUE, 
-                                   checkboundaryonly = FALSE, 
+                                   allow.fixedcorrelation = TRUE, checkboundaryonly = FALSE, 
                                    positive.zero = FALSE, bound.test.parameters = "none", 
                                    bound.exclusions = c("F","B","S","C"), REMLDF = NULL, 
                                    denDF="numeric", IClikelihood = "none", 
@@ -2087,6 +2109,17 @@ atLevelsMatch <- function(new, old, call)
   wald.tab <- asrtests.obj$wald.tab
   test.summary <- asrtests.obj$test.summary
 
+  #Check for fixed correlations in supplied asrtests.obj
+  if (!isFixedCorrelOK(asrtests.obj$asreml.obj, allow.fixedcorrelation = allow.fixedcorrelation))
+  {
+    if (asr4)
+      kresp <- asrtests.obj$asreml.obj$formulae$fixed[[2]]
+    else
+      kresp <- asrtests.obj$asreml.obj$fixed.formula[[2]]
+    warning(paste("The estimated value of one or more correlations in the supplied asreml fit for", kresp,
+                  "is fixed and allow.fixedcorrelation is FALSE"))
+  }
+  
   #Test whether oldterms are in random model
   oldterms.obj <- as.terms.object(oldterms, asreml.obj)
   ranterms.obj <- as.terms.object(languageEl(asreml.obj$call, which="random"), asreml.obj)
@@ -2105,7 +2138,8 @@ atLevelsMatch <- function(new, old, call)
   new.form <- as.formula(paste("~ . - ",oldterms," + ",newterms, sep=""))
   asreml.new.obj <- newfit.asreml(asreml.obj, random. = new.form, 
                                   trace = trace, update = update, 
-                                  allow.unconverged = TRUE,
+                                  allow.unconverged = TRUE, 
+                                  allow.fixedcorrelation = TRUE,
                                   set.terms = set.terms, 
                                   ignore.suffices = ignore.suffices, 
                                   bounds = bounds, 
@@ -2148,51 +2182,60 @@ atLevelsMatch <- function(new, old, call)
     }
   } else
   {
-    #Evaluate the test
-    if (simpler)
-    { 
-      if (test$DF <= 0)
-        p <- NA
-      else
-        p <- test$p
-      if (is.na(p) | p <= alpha)
-        action <- "Unswapped"
-      else
-      { 
-        action <- "Swapped"
-        change <- TRUE
-      }
-    }
-    else
-    { 
-      if (test$DF <= 0)
-        p <- NA
-      else
-        p <- test$p
-      if (!is.na(p) & p <= alpha)
-      { 
-        action = "Swapped"
-        change <- TRUE
-      }
-      else
-      { 
-        action = "Rejected"
-      }
-    }
-    #check convergence, when it is allowed
-    if (allow.unconverged)
+    #Check fixed correlation
+    if (!isFixedCorrelOK(asreml.new.obj, allow.fixedcorrelation = allow.fixedcorrelation))
     {
-      if (!asreml.obj$converge & !asreml.new.obj$converge)
-      {
-        action <- paste(action, " - both unconverged", sep="")
-      } else
-      {
-        if (!asreml.obj$converge)
-          action <- paste(action, " - old unconverged", sep="")
+      p <- NA
+      action <- "Unchanged - fixed correlation"
+      change <- FALSE
+    } else
+    {
+      #Evaluate the test
+      if (simpler)
+      { 
+        if (test$DF <= 0)
+          p <- NA
         else
+          p <- test$p
+        if (is.na(p) | p <= alpha)
+          action <- "Unswapped"
+        else
+        { 
+          action <- "Swapped"
+          change <- TRUE
+        }
+      }
+      else
+      { 
+        if (test$DF <= 0)
+          p <- NA
+        else
+          p <- test$p
+        if (!is.na(p) & p <= alpha)
+        { 
+          action = "Swapped"
+          change <- TRUE
+        }
+        else
+        { 
+          action = "Rejected"
+        }
+      }
+      #check convergence, when it is allowed
+      if (allow.unconverged)
+      {
+        if (!asreml.obj$converge & !asreml.new.obj$converge)
         {
-          if (!asreml.new.obj$converge)
-            action <- paste(action, " - new unconverged", sep="")
+          action <- paste(action, " - both unconverged", sep="")
+        } else
+        {
+          if (!asreml.obj$converge)
+            action <- paste(action, " - old unconverged", sep="")
+          else
+          {
+            if (!asreml.new.obj$converge)
+              action <- paste(action, " - new unconverged", sep="")
+          }
         }
       }
     }
@@ -2244,7 +2287,8 @@ atLevelsMatch <- function(new, old, call)
 
 "testresidual.asrtests" <- function(asrtests.obj, terms = NULL, label = "R model", 
                                     simpler = FALSE, alpha = 0.05, 
-                                    allow.unconverged = TRUE, checkboundaryonly = FALSE, 
+                                    allow.unconverged = TRUE, allow.fixedcorrelation = TRUE, 
+                                    checkboundaryonly = FALSE, 
                                     positive.zero = FALSE, bound.test.parameters = "none", 
                                     bound.exclusions = c("F","B","S","C"), REMLDF = NULL, 
                                     denDF="numeric", IClikelihood = "none", 
@@ -2275,6 +2319,10 @@ atLevelsMatch <- function(new, old, call)
     kresp <- asrtests.obj$asreml.obj$formulae$fixed[[2]]
   else
     kresp <- asrtests.obj$asreml.obj$fixed.formula[[2]]    
+  #Check for fixed correlations in supplied asrtests.obj
+  if (!isFixedCorrelOK(asrtests.obj$asreml.obj, allow.fixedcorrelation = allow.fixedcorrelation))
+    warning(paste("The estimated value of one or more correlations in the supplied asreml fit for", kresp,
+                  "is fixed and allow.fixedcorrelation is FALSE"))
   if (is.null(terms))
     stop("In analysing ", kresp, ", must supply terms to be tested")
   else
@@ -2290,7 +2338,8 @@ atLevelsMatch <- function(new, old, call)
   if (asr4)
     asreml.new.obj <- newfit.asreml(asreml.obj, residual. = term.form, 
                                     trace = trace, update = update, 
-                                    allow.unconverged = TRUE,
+                                    allow.unconverged = TRUE, 
+                                    allow.fixedcorrelation = TRUE,
                                     set.terms = set.terms, 
                                     ignore.suffices = ignore.suffices, 
                                     bounds = bounds, 
@@ -2299,6 +2348,7 @@ atLevelsMatch <- function(new, old, call)
     asreml.new.obj <- newfit.asreml(asreml.obj, rcov. = term.form, 
                                     trace = trace, update = update, 
                                     allow.unconverged = TRUE,
+                                    allow.fixedcorrelation = TRUE,
                                     set.terms = set.terms, 
                                     ignore.suffices = ignore.suffices, 
                                     bounds = bounds, 
@@ -2342,51 +2392,60 @@ atLevelsMatch <- function(new, old, call)
     }
   } else
   {
-    #Evaluate the test
-    if (test$DF <= 0)
+    #Check fixed correlation
+    if (!isFixedCorrelOK(asreml.new.obj, allow.fixedcorrelation = allow.fixedcorrelation))
     {
       p <- NA
-      action <- "Unswapped"
+      action <- "Unchanged - fixed correlation"
+      change <- FALSE
     } else
     {
-      if (simpler)
-      { 
-        p <- test$p
-        if (!is.na(p) & p <= alpha)
-          action <- "Unswapped"
-        else
-        { 
-          action = "Swapped"
-          change <- TRUE
-        }
-      }
-      else
-      { 
-        p <- test$p
-        if (!is.na(p) & p <= alpha)
-        { 
-          action = "Swapped"
-          change <- TRUE
-        }
-        else
-          action = "Rejected"
-      }
-    }
-    
-    #check convergence, when it is allowed
-    if (allow.unconverged)
-    {
-      if (!asreml.obj$converge && !asreml.new.obj$converge)
+      #Evaluate the test
+      if (test$DF <= 0)
       {
-        action <- paste(action, " - both unconverged", sep="")
+        p <- NA
+        action <- "Unswapped"
       } else
       {
-        if (!asreml.obj$converge)
-          action <- paste(action, " - old unconverged", sep="")
+        if (simpler)
+        { 
+          p <- test$p
+          if (!is.na(p) & p <= alpha)
+            action <- "Unswapped"
+          else
+          { 
+            action = "Swapped"
+            change <- TRUE
+          }
+        }
         else
+        { 
+          p <- test$p
+          if (!is.na(p) & p <= alpha)
+          { 
+            action = "Swapped"
+            change <- TRUE
+          }
+          else
+            action = "Rejected"
+        }
+      }
+      
+      #check convergence, when it is allowed
+      if (allow.unconverged)
+      {
+        if (!asreml.obj$converge && !asreml.new.obj$converge)
         {
-          if (!asreml.new.obj$converge)
-            action <- paste(action, " - new unconverged", sep="")
+          action <- paste(action, " - both unconverged", sep="")
+        } else
+        {
+          if (!asreml.obj$converge)
+            action <- paste(action, " - old unconverged", sep="")
+          else
+          {
+            if (!asreml.new.obj$converge)
+              action <- paste(action, " - new unconverged", sep="")
+          }
         }
       }
     }
@@ -2485,7 +2544,9 @@ atLevelsMatch <- function(new, old, call)
 
 "reparamSigDevn.asrtests" <- function(asrtests.obj, terms = NULL, 
                                       trend.num = NULL, devn.fac = NULL, 
-                                      allow.unconverged = TRUE, checkboundaryonly = FALSE, 
+                                      allow.unconverged = TRUE, 
+                                      allow.fixedcorrelation = TRUE,
+                                      checkboundaryonly = FALSE, 
                                       denDF = "numeric", IClikelihood = "none", 
                                       trace = FALSE, update = TRUE, 
                                       set.terms = NULL, ignore.suffices = TRUE, 
@@ -2509,8 +2570,28 @@ atLevelsMatch <- function(new, old, call)
   if (is.character(validasrt))
     stop(validasrt)
   
+  #Check IClikelihood options
+  options <- c("none", "REML", "full")
+  ic.lik <- options[check.arg.values(IClikelihood, options)]
+  ic.NA <- data.frame(fixedDF = NA, varDF = NA, AIC = NA, BIC = NA)
+  
+  #Check for fixed correlations in supplied asrtests.obj
+  if (!isFixedCorrelOK(asrtests.obj$asreml.obj, allow.fixedcorrelation = allow.fixedcorrelation))
+  {
+    if (asr4)
+      kresp <- asrtests.obj$asreml.obj$formulae$fixed[[2]]
+    else
+      kresp <- asrtests.obj$asreml.obj$fixed.formula[[2]]
+    warning(paste("The estimated value of one or more correlations in the supplied asreml fit for", kresp,
+                  "is fixed and allow.fixedcorrelation is FALSE"))
+  }
+  
   #find out if any terms have either a devn.fac or a trend.num term 
   #  - (marginality implies cannot be both)
+  if (is.null(terms))
+    stop("The terms argument is NULL")
+  ranterms.obj <- as.terms.object(languageEl(asrtests.obj$asreml.obj$call, which="random"), 
+                                  asrtests.obj$asreml.obj)
   asrtests.old.obj <- asrtests.obj
   term.types <- trend.terms.types(terms = terms, devn.fac = devn.fac, trend.num = trend.num)
   #Check have terms involving devn.fac or trend.num
@@ -2519,6 +2600,9 @@ atLevelsMatch <- function(new, old, call)
   { 
     for (term in terms)
     { 
+      termno <- findterm(term, labels(ranterms.obj))
+      if (termno == 0)
+        stop(paste(term,"is not a random term"))
       factors <- fac.getinTerm(term)
       #Check this term involves a devn fac
       if (!is.null(devn.fac) && any(devn.fac %in%  factors))
@@ -2534,6 +2618,7 @@ atLevelsMatch <- function(new, old, call)
                                                addFixed = paste(lin.term, term, sep = " + " ), 
                                                dropRandom = ran.term, 
                                                trace = trace, allow.unconverged = TRUE, 
+                                               allow.fixedcorrelation = TRUE,
                                                update = update, set.terms = set.terms, 
                                                ignore.suffices = ignore.suffices, 
                                                bounds = bounds, IClikelihood = IClikelihood, 
@@ -2544,6 +2629,7 @@ atLevelsMatch <- function(new, old, call)
           asrtests.obj <- changeTerms.asrtests(asrtests.obj, addFixed = term, 
                                                dropRandom = ran.term, 
                                                trace = trace, allow.unconverged = TRUE, 
+                                               allow.fixedcorrelation = TRUE, 
                                                update = update, set.terms = set.terms, 
                                                ignore.suffices = ignore.suffices, 
                                                bounds = bounds, IClikelihood = IClikelihood, 
@@ -2589,7 +2675,24 @@ atLevelsMatch <- function(new, old, call)
       }
     }
   }
-  asrtests.obj$wald.tab <- recalcWaldTab(asrtests.obj, denDF = denDF, trace = trace, ...)
+  #Check fixed correlation
+  if (!isFixedCorrelOK(asrtests.obj$asreml.obj, allow.fixedcorrelation = allow.fixedcorrelation))
+  {
+    asrtests.obj <- asrtests.old.obj
+    if (ic.lik != "none")
+      ic <- infoCriteria(asreml.obj, IClikelihood = ic.lik, 
+                         bound.exclusions = c("F","B","S","C"))
+    else
+      ic <- ic.NA
+    test.summary <- addtoTestSummary(asrtests.old.obj$test.summary, terms = terms, 
+                                     DF=ic$fixedDF, denDF = ic$varDF, 
+                                     p = NA, AIC = ic$AIC, BIC = ic$BIC, 
+                                     action = "Unchanged - fixed correlation")
+    
+    asrtests.obj$test.summary <- test.summary
+  }
+  else
+    asrtests.obj$wald.tab <- recalcWaldTab(asrtests.obj, denDF = denDF, trace = trace, ...)
   invisible(asrtests.obj)
 }
 

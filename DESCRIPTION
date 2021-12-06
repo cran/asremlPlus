@@ -1,6 +1,6 @@
 Package: asremlPlus
-Version: 4.3-21
-Date: 2021-09-23
+Version: 4.3-31
+Date: 2021-12-06
 Title: Augments 'ASReml-R' in Fitting Mixed Models and Packages
         Generally in Exploring Prediction Differences
 Authors@R: person("Chris","Brien", role = c("aut","cre"),
@@ -13,7 +13,7 @@ Imports: dae, ggplot2, stats, methods, utils, reshape, dplyr, stringr,
 Suggests: testthat, lattice, emmeans, lmerTest, pbkrtest, R.rsp
 Enhances: asreml
 VignetteBuilder: R.rsp
-SystemRequirements: asreml-R 2.x
+SystemRequirements: asreml-R 4.x
 LazyData: true
 Description: Assists in automating the selection of terms to include in mixed models when  
   'asreml' is used to fit the models. Also used to display, in tables and graphs, predictions   
@@ -35,8 +35,8 @@ Description: Assists in automating the selection of terms to include in mixed mo
 License: MIT + file LICENSE
 URL: http://chris.brien.name
 NeedsCompilation: no
-Packaged: 2021-09-23 01:19:13 UTC; briencj
+Packaged: 2021-12-06 02:08:46 UTC; briencj
 Author: Chris Brien [aut, cre] (<https://orcid.org/0000-0003-0581-1817>)
 Maintainer: Chris Brien <chris.brien@adelaide.edu.au>
 Repository: CRAN
-Date/Publication: 2021-09-23 16:00:06 UTC
+Date/Publication: 2021-12-06 10:40:23 UTC

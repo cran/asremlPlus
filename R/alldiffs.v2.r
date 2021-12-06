@@ -10,7 +10,7 @@
 #             |
 #             |
 #      allDifferences    Calculates LSDs using LSDstats and sliceLSDs; sets object LSD attributes; 
-#                        sets predictions attribute, but not LSD attr; 
+#                        sets predictions attribute, but not predictions LSD attr; 
 #                        calls addBacktransforms that sets backtransforms attributes
 
 "is.LSD.frame" <- function(object)
@@ -143,6 +143,74 @@
 }
 
 setOldClass("predictions.frame")
+
+"print.LSDdata" <- function(x,  which.print = c("statistics", "false.pos", "false.neg"), ...)
+{
+  options <- c("frequencies", "distinct.vals", "statistics", "accuracy", "false.pos", "false.neg", 
+               "per.pred.accuracy", "LSDmatrix", "summary", "all")
+  opt <- options[unlist(lapply(which.print, check.arg.values, options=options))]
+  if (all(c("summary", "all") %in% opt))
+    stop("Can only specify one of summary and all for which argument")
+  
+  #make change to control printing
+  class(x) <- c("LSDdata", "data.frame")
+  
+  if (any(c("frequencies", "all") %in% opt))
+  {
+    cat("\n\n####  Frequency distribution of LSDs \n\n")
+    fr <- as.data.frame(x$frequencies)
+    fr <- cbind(rownames(fr),fr)
+    rownames(fr) <- NULL
+    names(fr) <- c("midpoint", "frequency")
+    print(fr, ...)
+  }
+  
+  if (any(c("distinct.vals", "summary", "all") %in% opt))
+  {
+    cat("\n\n####  Distinct LSD values \n\n")
+    print(x$distinct.vals, ...)
+  }
+  
+  if (any(c("statistics", "summary", "all") %in% opt))
+  {
+    cat("\n\n####  Statistics calculated from LSD values \n\n")
+    print(x$statistics, ...)
+  }
+  
+  if (any(c("accuracy", "all") %in% opt))
+  {
+    cat(paste0("\n\n####  Accuracy (", attr(x, which = "LSDaccuracy"), 
+               ") of statistics calculated from LSD values \n\n"))
+    print(x$accuracy, ...)
+  }
+  
+  if (any(c("false.pos", "summary", "all") %in% opt))
+  {
+    cat(paste0("\n\n####  False positives resulting from the use of various LSD statistics\n\n"))
+    print(x$false.pos, ...)
+  }
+  
+  if (any(c("false.neg", "summary", "all") %in% opt))
+  {
+    cat(paste0("\n\n####  False negatives resulting from the use of various LSD statistics\n\n"))
+    print(x$false.neg, ...)
+  }
+  
+  if (any(c("per.pred.accuracy", "all") %in% opt))
+  {
+    cat(paste0("\n\n####  Accuracy (", attr(x, which = "LSDaccuracy"), 
+               ") for each prediction if LSD statistics are used \n\n"))
+    print(x$per.pred.accuracy, ...)
+  }
+  
+  if (any(c("LSDmatrix", "all") %in% opt))
+  {
+    cat("\n\n####  Matrix of all LSD values \n\n")
+    print(x$LSD, ...)
+  }
+  
+  invisible()
+}
 
 #Form an alldiffs object from supplied component objects
 #A function that constructs an alldiffs object without the validity check
@@ -1323,11 +1391,8 @@ recalcLSD.alldiffs <- function(alldiffs.obj,
   if (length(avLSD) != 1)
     avLSD <- NULL
   
-  LSDstat.options <- c("minimum", "q10", "mean", "median", "q90", "maximum")
-  LSDstat <- LSDstat.options[check.arg.values(LSDstatistic, LSDstat.options)]
-  if (length(LSDstat) != 1)
-    stop("LSDstatistic must contain only one value")
-
+  LSDstat <- getLSDstatOpt(LSDstatistic = LSDstatistic, avLSD = avLSD, LSDby = LSDby)
+  
   LSDacc.options <- c("maxAbsDeviation", "maxDeviation", "q90Deviation", "RootMeanSqDeviation")
   LSDacc <- LSDacc.options[check.arg.values(LSDaccuracy, LSDacc.options)]
   if (length(LSDacc) == 0)
@@ -1390,7 +1455,7 @@ exploreLSDs.alldiffs <- function(alldiffs.obj,  LSDtype = "overall", LSDby = NUL
   if (length(LSDacc) == 0)
     LSDacc <- "maxAbsDeviation"
   
-  LSDstat.hdr <- c("minimum", "quantile10", "mean", "median", "quantile90", "maximum")
+  LSDstat.hdr <- c("min", "quant10", "quant25", "mean", "median", "quant75", "quant90", "max")
 
   #Deal with case when have vcov, but not sed
   if (is.null(alldiffs.obj$sed))
@@ -1409,9 +1474,11 @@ exploreLSDs.alldiffs <- function(alldiffs.obj,  LSDtype = "overall", LSDby = NUL
   }
   
   
-  classify <- attr(alldiffs.obj, which = "classify")
-  if (!all(unlist(lapply(LSDby, grepl, x = classify, fixed = TRUE))))
-    stop("One of the elements of LSDby is not in the classify")
+  if (!all(LSDby %in% names(alldiffs.obj$predictions)))
+    stop("At least one element of LSDby is not in the predictions component of the alldiffs object\n")
+  # classify <- attr(alldiffs.obj, which = "classify")
+  # if (!all(unlist(lapply(LSDby, grepl, x = classify, fixed = TRUE))))
+  #   stop("One of the elements of LSDby is not in the classify")
   
   denom.df <- attr(alldiffs.obj, which = "tdf")
   if (is.null(denom.df))
@@ -1529,12 +1596,9 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
   avLSD <- AvLSD.options[check.arg.values(LSDtype, AvLSD.options)]
   if (length(avLSD) != 1)
     avLSD <- NULL
-  LSDstat.options <- c("minimum", "q10", "mean", "median", "q90", "maximum")
-  LSDstat <- LSDstat.options[check.arg.values(LSDstatistic, LSDstat.options)]
-  if (length(LSDstat) == 0)
-    LSDstat <- "mean"
-  else if (length(LSDstat) != 1)
-    stop("LSDstatistic must contain only one value")
+ 
+  LSDstat <- getLSDstatOpt(LSDstatistic = LSDstatistic, avLSD = avLSD, LSDby = LSDby)
+  
   LSDname <- paste0(gsub("imum", "", LSDstat, fixed = TRUE), "LSD")
   if (!is.null(LSDby) &&  !is.character(LSDby))
     stop("LSDby must be a character")
@@ -1880,11 +1944,11 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
   avLSD <- AvLSD.options[check.arg.values(LSDtype, AvLSD.options)]
   if (!is.null(LSDby) &&  !is.character(LSDby))
     stop("LSDby must be a character")
+  if (!is.null(LSDsupplied) && avLSD != "supplied")
+    warning("LSDsupplied is not NULL and LSDtype in not set to supplied - LSDsupplied will be ignored.")
 
-  LSDstat.options <- c("minimum", "q10", "mean", "median", "q90", "maximum")
-  LSDstat <- LSDstat.options[check.arg.values(LSDstatistic, LSDstat.options)]
-  if (length(LSDstat) != 1)
-    stop("LSDstatistic must contain only one value")
+  LSDstat <- getLSDstatOpt(LSDstatistic = LSDstatistic, avLSD = avLSD, LSDby = LSDby)
+  
   LSDname <- paste0(gsub("imum", "", LSDstat, fixed = TRUE), "LSD")
  
   LSDacc.options <- c("maxAbsDeviation", "maxDeviation", "q90Deviation", "RootMeanSqDeviation")
@@ -2149,11 +2213,15 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
               alldiffs.obj$LSD$falseNeg <- falsesig["false.neg"]
             }
             else
-              alldiffs.obj$LSD$accuracyLSD <- sliceLSDs(alldiffs.obj, by = LSDby, t.value = t.value, 
+            {
+              slLSD <- sliceLSDs(alldiffs.obj, by = LSDby, t.value = t.value, 
                                                         LSDstatistic = LSDstat, LSDaccuracy = LSDacc, 
-                                                        alpha = alpha, which.stats = "accuracyLSD", 
+                                                        alpha = alpha, which.stats = "evalLSD", 
                                                         retain.zeroLSDs = retain.zeroLSDs, 
                                                         zero.tolerance = zero.tolerance)
+              alldiffs.obj$LSD[c("accuracyLSD", "falsePos", "falseNeg")] <- 
+                slLSD[c("accuracyLSD", "false.pos", "false.neg")]
+            }
           }
 
           attr(alldiffs.obj, which = "LSDtype") <- avLSD
@@ -2338,6 +2406,7 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
                                     LSDtype = "overall", LSDsupplied = NULL, 
                                     LSDby = NULL, LSDstatistic = "mean", 
                                     LSDaccuracy = "maxAbsDeviation",
+                                    zero.tolerance = .Machine$double.eps ^ 0.5, 
                                     response = NULL, response.title = NULL, 
                                     x.num = NULL, x.fac = NULL, 
                                     tables = "all", level.length = NA, 
@@ -2357,11 +2426,13 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
     stop(validalldifs)
   alldiffs.obj <- renameDiffsAttr(alldiffs.obj)
   
-  LSDstat.options <- c("minimum", "q10", "mean", "median", "q90", "maximum")
-  LSDstat <- LSDstat.options[check.arg.values(LSDstatistic, LSDstat.options)]
-  if (length(LSDstat) != 1)
-    stop("LSDstatistic must contain only one value")
-
+  AvLSD.options <- c("overall", "factor.combinations", "per.prediction", "supplied")
+  avLSD <- AvLSD.options[check.arg.values(LSDtype, AvLSD.options)]
+  if (length(avLSD) != 1)
+    avLSD <- NULL
+  
+  LSDstat <- getLSDstatOpt(LSDstatistic = LSDstatistic, avLSD = avLSD, LSDby = LSDby)
+  
   LSDacc.options <- c("maxAbsDeviation", "maxDeviation", "q90Deviation", "RootMeanSqDeviation")
   LSDacc <- LSDacc.options[check.arg.values(LSDaccuracy, LSDacc.options)]
   if (length(LSDacc) == 0)
@@ -2407,7 +2478,7 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
     if (is.null(classify))
       classify <- attr(alldiffs.obj, which = "classify")
     if (is.null(classify))
-      stop("The clssify has been neither set nor is an attribute of the alldiffs.obj")
+      stop("The classify has been neither set nor is an attribute of the alldiffs.obj")
     denom.df <- attr(alldiffs.obj, which = "tdf")
     if (is.null(denom.df))
       warning(paste("The degrees of freedom of the t-distribtion are not available in alldiffs.obj\n",
@@ -2443,9 +2514,9 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
       #Check that factors in LSDby are in the formula
       term.obj <- as.terms.object(linear.transformation, alldiffs.obj)
       lintrans.fac <- rownames(attr(term.obj, which = "factor"))
-      if (!all(lintrans.fac %in% colnam))
+      if (!is.null(lintrans.fac) && !all(lintrans.fac %in% colnam))
         stop("Some factors in the linear.transformation are not in the predictions component of the alldiffs object\n")
-      if (!all(LSDby %in% lintrans.fac))
+      if (!is.null(lintrans.fac) && !all(LSDby %in% lintrans.fac))
         warning("Some factors in the LSDby are not in the linear.transformation submodel")
       
       #Form projector on predictions for submodel
@@ -2456,24 +2527,26 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
       if (length(Q) > 1)
         for (k in 2:length(Q))
           Q.submod <- Q.submod + Q[[k]]
-      Q.submod <- projector(Q.submod)
+      Q.submod <- dae::projector(Q.submod)
       
       #Check classify variables
       vars <- fac.getinTerm(classify, rmfunction = TRUE)
       if (!all(vars %in% colnam))
         stop("Not all of the variables in the classify are in the predictions component of the alldiffs object\n")
       #Process the classify to ensure there is a separate term for covariates
+      tmp <- alldiffs.obj$predictions
       facs <- covs <- list()
       for (var in vars)
       {
-        if (is.numeric(alldiffs.obj$predictions[[var]]))
+        if (is.numeric(tmp[[var]]))
           covs <- c(covs, list(var))
         else
           facs <- c(facs, list(var))
       }
       if (length(facs) > 0)
       {
-        full.mod <- fac.formTerm(facs)
+        tmp$fac.comb <- fac.combine(as.list(tmp[unlist(facs)]))
+        full.mod <- "fac.comb"
         if (length(covs) > 0)
         {
           covs <- paste(unlist(covs), collapse = " + ")
@@ -2488,13 +2561,13 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
       full.mod <- as.formula(paste0("~ ", full.mod))
 
       #Check that submodel is a subspace of the classify space
-      Q <- pstructure(full.mod, grandMean = TRUE, data = alldiffs.obj$predictions)$Q
+      Q <- dae::pstructure(full.mod, grandMean = TRUE, data = tmp)$Q
       Q.class <- Q[[1]]
       if (length(Q) > 1)
         for (k in 2:length(Q))
           Q.class <- Q.class + Q[[k]]
-      Q.class <- projector(Q.class)
-      
+      Q.class <- dae::projector(Q.class)
+
       if (any(abs(Q.submod %*% Q.class - Q.submod) > 1e-08))
         stop("Model space for ", linear.transformation, ", with ", degfree(Q.submod), 
              " DF, is not a subspace of the space for the classify ", classify, 
@@ -2503,16 +2576,21 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
       #Form predictions projected onto submodel
       lintrans <- alldiffs.obj$predictions
       lintrans$predicted.value <- as.vector(Q.submod %*% lintrans$predicted.value)
+      zeroes <- abs(lintrans$predicted.value) < zero.tolerance
+      if (any(zeroes))
+        lintrans$predicted.value[zeroes] <- 0
       
       # Calculate standard errors and the variance matrix for differences between predictions
       if (!is.null(alldiffs.obj$vcov))
       {
         lintrans.vcov <- Q.submod %*% alldiffs.obj$vcov %*% Q.submod
+        lintrans.vcov <- setToZero(lintrans.vcov, zero.tolerance = zero.tolerance)
         lintrans$standard.error <- as.vector(sqrt(diag(lintrans.vcov)))
         n <- nrow(lintrans.vcov)
         lintrans.sed <- matrix(rep(diag(lintrans.vcov), each = n), nrow = n) + 
           matrix(rep(diag(lintrans.vcov), times = n), nrow = n) - 
           2 * lintrans.vcov
+        lintrans.sed <- setToZero(lintrans.sed, zero.tolerance = zero.tolerance)
         lintrans.sed <- sqrt(lintrans.sed)  
       } else
       {
@@ -2558,6 +2636,8 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
       lintrans$Combination <- factor(lintrans$Combination, levels = lintrans$Combination)
       lintrans$predicted.value <- as.vector(linear.transformation %*% 
                                               alldiffs.obj$predictions$predicted.value)
+      lintrans$predicted.value <- setToZero(lintrans$predicted.value, 
+                                            zero.tolerance = zero.tolerance)
       lintrans$est.status <- "Estimable"
       lintrans$est.status[is.na(lintrans$predicted.value)] <- "Aliased"
       
@@ -2565,10 +2645,12 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
       if (!is.null(alldiffs.obj$vcov))
       {
         lintrans.vcov <- linear.transformation %*% alldiffs.obj$vcov %*% t(linear.transformation)
+        lintrans.vcov <- setToZero(lintrans.vcov, zero.tolerance = zero.tolerance)
         lintrans$standard.error <- as.vector(sqrt(diag(lintrans.vcov)))
         n <- nrow(lintrans.vcov)
         lintrans.sed <- matrix(rep(diag(lintrans.vcov), each = n), nrow = n) + 
           matrix(rep(diag(lintrans.vcov), times = n), nrow = n) - 2 * lintrans.vcov
+        lintrans.sed <- setToZero(lintrans.sed, zero.tolerance = zero.tolerance)
         lintrans.sed <- sqrt(lintrans.sed)  
       } else
       {
@@ -2604,7 +2686,7 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
                                          accuracy.threshold = accuracy.threshold,
                                          LSDtype = LSDtype, LSDsupplied = LSDsupplied, 
                                          LSDby = LSDby, LSDstatistic = LSDstat,
-                                         LSDaccuracy = LSDacc, ...)
+                                         LSDaccuracy = LSDacc, zero.tolerance = zero.tolerance, ...)
  
     #Outut tables according to table.opt
     if (!("none" %in% table.opt))

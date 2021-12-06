@@ -136,7 +136,7 @@ export(addBacktransforms,
        variofaces.asreml)
 exportClasses(alldiffs, asrtests, predictions.frame)
 import(dae, ggplot2)
-importFrom("stats", "as.formula", "fitted", "fitted.values", "formula", "median", 
+importFrom("stats", "as.formula",  "fitted", "fitted.values", "formula", "median", 
                     "model.matrix", "na.omit", "pchisq", "pf", "predict", "pt", "qnorm", "qt", 
                     "quantile", "resid", "rnorm","simulate", "terms", "terms.formula", 
                     "update.formula")
@@ -170,6 +170,7 @@ S3method(getTestEntry, asrtests)
 S3method(getTestPvalue, asrtests)
 S3method(infoCriteria, asreml) 
 S3method(infoCriteria, list) 
+S3method(isFixedCorrelOK, asreml) 
 S3method(iterate, asrtests) 
 S3method(linTransform, alldiffs)
 S3method(newfit, asreml) 

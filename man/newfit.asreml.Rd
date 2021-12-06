@@ -18,9 +18,9 @@
 \usage{
 \method{newfit}{asreml}(asreml.obj, fixed., random., sparse., 
        residual., rcov., update = TRUE, trace = FALSE, 
-       allow.unconverged = TRUE, keep.order = TRUE, 
-       set.terms = NULL, ignore.suffices = TRUE, bounds = "P", 
-       initial.values = NA, ...)}
+       allow.unconverged = TRUE, allow.fixedcorrelation = TRUE,
+       keep.order = TRUE, set.terms = NULL, ignore.suffices = TRUE, 
+       bounds = "P", initial.values = NA, ...)}
 \arguments{
  \item{asreml.obj}{A valid \code{asreml} object with with 
                    a component named \code{call} (from a previous 
@@ -28,7 +28,10 @@
  \item{fixed.}{A character or formula specifying changes to the fixed 
                formula. This is a two-sided formula 
                where "." is substituted for existing components in the 
-               fixed component of \code{asreml.obj$call}.}
+               fixed component of \code{asreml.obj$call}. If changes are 
+               specified, the fixed terms will be reordered so that 
+               single-variable terms come first, followed by two-variable 
+               terms and so on.}
  \item{random.}{A character or formula specifying changes to the random 
                 formula. This is a one-sided formula 
                 where "." is substituted for existing components in the 
@@ -62,16 +65,24 @@
               functions are invoked; if FALSE then no output is displayed.}
  \item{allow.unconverged}{A \code{logical} indicating whether to accept a new model 
                       even when it does not converge. If \code{FALSE} and the fit does not 
-                      converge, the supplied \code{asreml} object is returned.}
+                      converge, the supplied \code{asreml.obj} is returned.}
+ \item{allow.fixedcorrelation}{A \code{logical} indicating whether to accept a new model 
+              even when it contains correlations in the model whose values have been 
+              designated as fixed, bound or singular. If \code{FALSE} and the new model 
+              contains correlations whose values have not been able to be estimated, 
+              the supplied \code{asreml.obj} is returned. The fit in the supplied 
+              the \code{asreml.obj} will also be tested and a warning issued if 
+              both fixed correlations are found in it and 
+              \code{allow.fixedcorrelation} is \code{FALSE}.}
  \item{keep.order}{A logical value indicating whether the terms should keep 
                their positions. If \code{FALSE} the terms are reordered so 
                that main effects come first, followed by the interactions, 
                all second-order, all third-order and so on. Effects of a 
                given order are kept in the order specified.}
  \item{set.terms}{A character vector specifying the terms that are to have 
-                  bounds and/or initial values set prior to fitting.
+               bounds and/or initial values set prior to fitting.
                The names must match those in the \code{vparameters} component of the 
-               \code{asreml.obj} component in the \code{\link{asrtests.object}}.}
+               new \code{asreml.obj}.}
  \item{ignore.suffices}{A logical vector specifying whether the suffices of the 
                     \code{asreml}-assigned names of the variance terms (i.e. the 
                     information to the right of an "!", other than "R!") is to 
