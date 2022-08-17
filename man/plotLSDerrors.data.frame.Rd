@@ -1,21 +1,24 @@
-\name{plotLSDs.data.frame}
-\alias{plotLSDs.data.frame}
-\title{Plots a heat map of computed LSD-values for pairwise differences between predictions.}
-\description{Produces a heat-map plot of the computed  LSD values for pairwise differences between 
-             predictions that are stored in in a \code{data.frame}. The \code{data.frame} includes 
-             two factors whose levels specify, for each LSD value, which combinations of factor 
-             levels are being compared.}
-\usage{\method{plotLSDs}{data.frame}(object, LSD = "LSDs", x, y, alpha = 0.05, 
-         triangles = "both", gridspacing = 0, 
-         title = NULL, axis.labels = NULL, axis.text.size = 12, 
-         colours = RColorBrewer::brewer.pal(3, "Set2"), 
-         ggplotFuncs = NULL, printPlot = TRUE, ...)}
+\name{plotLSDerrors.data.frame}
+\alias{plotLSDerrors.data.frame}
+\title{Plots a map of the supplied errors that occur in using the computed LSD values for pairwise differences between predictions.}
+\description{Produces a plot of the errors that have been supplied in a \code{data.frame}. 
+             The \code{data.frame} includes two factors whose levels specify, 
+             for each LSD result, which combinations of factor levels are being compared. The function
+             \code{\link{plotLSDerrors.alldiffs}} produces such \code{data.frame}s.}
+\usage{\method{plotLSDerrors}{data.frame}(object, LSDresults = "LSDresults", x, y, 
+              alpha = 0.05, triangles = "both", 
+              gridspacing = 0, title = NULL, 
+              axis.labels = NULL, axis.text.size = 12, 
+              colours = c("white","blue","red","grey"), 
+              ggplotFuncs = NULL, printPlot = TRUE, ...)}
 \arguments{
- \item{object}{A \code{data.frame} containing the three columns specified by \code{LSD}, \code{x} 
-             and \code{y}.}
- \item{LSD}{A \code{character} giving the name of the column in \code{object} that contains
-             the LSD values to be plotted.}
- \item{x}{A \code{character} giving the name of the column in \code{object} that contains 
+ \item{object}{A \code{\link{data.frame}} containing the three columns specified by 
+             \code{LSDresults}, \code{x} and \code{y}.}
+ \item{LSDresults}{A \code{\link{character}} giving the name of the column in \code{object} 
+             that contains the LSDresults values to be plotted. The column should be a 
+             \code{\link{character}} or \code{\link{factor}} with values or levels that are a 
+             subset of \code{Ok},\code{FN}, \code{FP} and \code{na}.}
+ \item{x}{A \code{\link{character}} giving the name of the column in \code{object} that contains 
              the factor whose levels index the LSD values that are to be plotted in the same column.}
  \item{y}{A \code{character} giving the name of the column in \code{object} that contains 
              the labels of the LSD values that are to be plotted as the rows.}
@@ -48,8 +51,8 @@
  }
 \value{An object of class "\link{ggplot}", which can be plotted using \code{print} or otherwise manipulated.}
 \author{Chris Brien}
-\seealso{\code{\link{plotLSDs.alldiffs}}, \code{\link{plotLSDerrors.alldiffs}}, \code{\link{plotLSDerrors.data.frame}}, \cr
-          \code{\link{exploreLSDs}}, \code{ggplot}}
+\seealso{\code{\link{plotLSDs.data.frame}}, \code{\link{plotLSDs.alldiffs}}, 
+         \code{\link{exploreLSDs}}, \code{ggplot}}
 \examples{
 ##Subset WaterRunoff data to reduce time to execute
 data(WaterRunoff.dat)
@@ -96,13 +99,13 @@ if (requireNamespace("lmerTest", quietly = TRUE) &
 ## Plot LSD values for predictions obtained using asreml or lmerTest
 if (exists("TS.diffs"))
 {
-  LSD <- within(reshape2::melt(TS.diffs$p.differences), 
-              { 
-                Var1 <- factor(Var1, levels=dimnames(TS.diffs$p.differences)[[1]])
-                Var2 <- factor(Var2, levels=levels(Var1))
-              })
-  names(LSD) <- c("Rows","Columns","LSDs")
-  plotLSDs(LSD, x = "Rows", y = "Columns", gridspacing = rep(c(3,4), c(4,2)))
+  LSDresults <- within(reshape2::melt(TS.diffs$p.differences), 
+                      { 
+                        Var1 <- factor(Var1, levels=dimnames(TS.diffs$p.differences)[[1]])
+                        Var2 <- factor(Var2, levels=levels(Var1))
+                      })
+  names(LSDresults) <- c("Rows","Columns","LSDresults")
+  plotLSDerrors(LSDresults, x = "Rows", y = "Columns", gridspacing = rep(c(3,4), c(4,2)))
 }
 }
 \keyword{hplot}

@@ -115,13 +115,13 @@ if (requireNamespace("lmerTest", quietly = TRUE) &
 ## Plot p-values for predictions obtained using asreml or lmerTest
 if (exists("TS.diffs"))
 {
-  p <- within(reshape::melt(TS.diffs$p.differences), 
+  p <- within(reshape2::melt(TS.diffs$p.differences), 
               { 
-                X1 <- factor(X1, levels=dimnames(TS.diffs$p.differences)[[1]])
-                X2 <- factor(X2, levels=levels(X1))
+                Var1 <- factor(Var1, levels=dimnames(TS.diffs$p.differences)[[1]])
+                Var2 <- factor(Var2, levels=levels(Var1))
               })
-  names(p)[match("value", names(p))] <- "p"
-  plotPvalues(p, x = "X1", y = "X2", 
+  names(p) <- c("Rows","Columns","p")
+  plotPvalues(p, x = "Rows", y = "Columns", 
               gridspacing = rep(c(3,4), c(4,2)), show.sig = TRUE)
 }
 }
