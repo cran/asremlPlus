@@ -1,6 +1,34 @@
 \name{news}
 \title{News for Package asremlPlus}
-\section{asremlPlus Version 4.3.409 (2022-11-16)}{
+\section{asremlPlus Version 4.3.45 (2023-01-24)}{
+  \itemize{
+  \item{Modify system tests to cater for for M1Mac numerical accuracy.}
+  \item{Fix bug in which the setting of IClikelihood was not being passed to infoCriteria calls in chooseSpatialModelOnIC.asrtests, resulting in always reporting the \code{REML} likelihood.}
+  \item{Change that \code{spatial.IC} component of the \code{list} returned by chooseSpatialModelOnIC.asrtests to contains the information criteria for each spatial model that is fitted. Also, rename the components \code{best} and \code{best.AIC} to \code{best.spatial.mod} and \code{best.spatial.IC}.}
+  \item{Fix bug in reporting the likelihood when a TPNCSS model does not fit.}
+  \item{Add function addSpatialModel.asrtests that adds a spatial model to a supplied model without asessing the fit of the model.}
+}}
+\section{asremlPlus Version 4.3.44 (2022-12-31)}{
+  \itemize{
+  \item{Add arguments \code{nestorder}, \code{degree} and \code{difforder} to functions addSpatialModelOnIC.asrtests and  makeTPSPlineXZMats.data.frame, as well as argument \code{nestorder} to chooseSpatialModelOnIC.asrtests. Add the option \code{TPLV} to the argument \code{trySpatial} from chooseSpatialModelOnIC.asrtests to allow a linear spatial model with first-order penalty to be fitted.}
+  \item{Fix bug in testing for fixed correlations that meant they were not always detected.}
+  \item{Fix error in changeModelsonIC.asrtests in the action when the model is \code{Unswapped} - it was being reported as  \code{Changed random}.}  
+  \item{Stop crashing of changeTerms.asrtests and ChangeModelOnIC.asrtests when rmboundary.asrtests unable to remove singular terms.}
+}}
+\section{asremlPlus Version 4.3.43 (2022-11-30)}{
+  \itemize{
+  \item{Fix bugs in choosing the best spatial model in chooseSpatialModelOnIC.asrtests. Add components \code{best.spatial} and \code{best.spatial.AIC} to the value returned by chooseSpatialModelOnIC.asrtests.}
+  \item{Add linear-row-by-linear-column-covariates interaction to the model fitted for TPNCSS option of addSpatialModelOnIC.asrtests and chooseSpatialModelOnIC.asrtests.}
+}}
+\section{asremlPlus Version 4.3.42 (2022-11-23)}{
+  \itemize{
+  \item{Add functions makeTPSPlineZMats.data.frame, addSpatialModelOnIC.asrtests and chooseSpatialModelOnIC.asrtests.}
+}}
+\section{asremlPlus Version 4.3.41 (2022-11-16)}{
+  \itemize{
+  \item{Revise test for fixed correlation so that allow.fixedcorrelation recognises any correlation term, rather than being restricted to ar1.}
+}}
+\section{asremlPlus Version 4.3.40 (2022-11-16)}{
   \itemize{
   \item{Compress pdf files and resubmit to CRAN.}
 }}

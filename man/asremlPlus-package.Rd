@@ -18,6 +18,9 @@
 \tabular{ll}{
 (i) Data \cr\cr
 
+\code{\link{Oats.dat}} 
+      \tab  Data for an experiment to investigate nitrogen response of \cr
+      \tab 3 oats varieties. \cr
 \code{\link{Wheat.dat}} 
       \tab  Data for an experiment to investigate 25 varieties of \cr
       \tab  wheat. \cr
@@ -94,8 +97,14 @@
 \cr
 (iii) Model modification \cr\cr
 
+\code{\link{addSpatialModel.asrtests}}
+      \tab Adds, to a supplied model, a spatial model that accounts for \cr
+      \tab local spatial variation.      \cr
+\code{\link{addSpatialModelOnIC.asrtests}}
+      \tab Uses information criteria to decide whether to add a spatial \cr
+      \tab model to account for local spatial variation. \cr
 \code{\link{changeTerms.asrtests}}
-      \tab  Adds and drops the specified sets of terms from one \cr
+      \tab Adds and drops the specified sets of terms from one \cr
       \tab or both of the fixed  or random model and/or replaces the \cr
       \tab residual (rcov) model with a new model. \cr
 \code{\link{iterate.asrtests}} 
@@ -136,6 +145,9 @@
        \tab in a \code{data.frame}, taking into account the marginality  \cr 
        \tab relations of terms and recording the tests used in a \cr
        \tab \code{data.frame}. \cr
+\code{\link{chooseSpatialModelOnIC.asrtests}}
+       \tab Uses information criteria to choose the best fitting \cr 
+       \tab spatial model for accounting for local spatial variation. \cr
 \code{\link{getTestPvalue.asrtests}}
        \tab Gets the p-value for a test recorded in the test.summary \cr
        \tab data.frame of an \code{\link{asrtests.object}}.  \cr
