@@ -1,8 +1,27 @@
 \name{news}
 \title{News for Package asremlPlus}
+\section{asremlPlus Version 4.3.49 (2023-03-3)}{
+  \itemize{
+  \item{Add the argument \code{useIntervals} to plotLSDerror.alldiffs.}
+  \item{Fix a bug in plotLSDerrors that resulted in not being able to determine which LSDs in the LSD component apply to the pairwise comparisons. It resulted in all comparisons being shown as \code{n.a.}.}
+}}
+\section{asremlPlus Version 4.3.48 (2023-02-18)}{
+  \itemize{
+  \item{Rename makeTPSPlineXZMats.data.frame to makeTPPSplineMats.data.frame.}
+}}
+\section{asremlPlus Version 4.3.47 (2023-02-17)}{
+  \itemize{
+  \item{Tidy up code for trySpatial = "none".}
+  \item{Revise makeTPSPlineXZMats.data.frame to cover \code{asreml.opt} set to \code{grp}.}
+  \item{Fix bug in plotLSDerrors when LSDs have beeen computed for  \code{LSDtype} set to \code{factor.combinations.}}
+}}
+\section{asremlPlus Version 4.3.46 (2023-02-05)}{
+  \itemize{
+  \item{Fix bug in testing whether an ar1 fit has been achieved in addSpatialModel.asrtests and chooseSpatialModelOnIC.asrtests.}
+}}
 \section{asremlPlus Version 4.3.45 (2023-01-24)}{
   \itemize{
-  \item{Modify system tests to cater for for M1Mac numerical accuracy.}
+  \item{Modify system tests to cater for M1Mac numerical accuracy.}
   \item{Fix bug in which the setting of IClikelihood was not being passed to infoCriteria calls in chooseSpatialModelOnIC.asrtests, resulting in always reporting the \code{REML} likelihood.}
   \item{Change that \code{spatial.IC} component of the \code{list} returned by chooseSpatialModelOnIC.asrtests to contains the information criteria for each spatial model that is fitted. Also, rename the components \code{best} and \code{best.AIC} to \code{best.spatial.mod} and \code{best.spatial.IC}.}
   \item{Fix bug in reporting the likelihood when a TPNCSS model does not fit.}
