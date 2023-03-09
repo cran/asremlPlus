@@ -1,6 +1,6 @@
 Package: asremlPlus
-Version: 4.3.49
-Date: 2023-03-3
+Version: 4.3.50
+Date: 2023-03-9
 Title: Augments 'ASReml-R' in Fitting Mixed Models and Packages
         Generally in Exploring Prediction Differences
 Authors@R: person("Chris","Brien", role = c("aut","cre"),
@@ -35,8 +35,8 @@ Description: Assists in automating the selection of terms to include in mixed mo
 License: MIT + file LICENSE
 URL: http://chris.brien.name
 NeedsCompilation: no
-Packaged: 2023-03-03 05:19:50 UTC; briencj
+Packaged: 2023-03-09 09:04:42 UTC; briencj
 Author: Chris Brien [aut, cre] (<https://orcid.org/0000-0003-0581-1817>)
 Maintainer: Chris Brien <chris.brien@adelaide.edu.au>
 Repository: CRAN
-Date/Publication: 2023-03-03 17:40:02 UTC
+Date/Publication: 2023-03-09 13:40:02 UTC
