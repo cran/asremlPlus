@@ -1423,8 +1423,8 @@ recalcLSD.alldiffs <- function(alldiffs.obj,
   if (length(tempcall)) 
     if ("meanLSD.type" %in% names(tempcall))
       stop("meanLSD.type has been deprecated - use LSDtype")
-  if (any(c("transform.power", "offset", "scale")  %in% names(tempcall)))
-    stop(cat("Including transform.power, offset or scale in the call is invalid \n",
+  if (any(c("transform.power", "offset", "scale", "transform.function")  %in% names(tempcall)))
+    stop(cat("Including transform.power, offset, scale or transform.function in the call is invalid \n",
              "- they are obtained from the backtransform component\n"))
   
   AvLSD.options <- c("overall", "factor.combinations", "per.prediction", "supplied")
@@ -1442,12 +1442,15 @@ recalcLSD.alldiffs <- function(alldiffs.obj,
   #determine transform arguments
   if (is.null(alldiffs.obj$backtransforms))
   {
-    transform.power = 1; offset <- 0; scale <- 1
+    transform.power <- 1; offset <- 0; scale <- 1; transform.function <- "identity"
   } else
   {
     transform.power = attr(alldiffs.obj$backtransforms, which = "transform.power")
     offset = attr(alldiffs.obj$backtransforms, which = "offset")
     scale = attr(alldiffs.obj$backtransforms, which = "scale")
+    transform.function = attr(alldiffs.obj$backtransforms, which = "transform.function")
+    if (is.null(transform.function))
+      transform.function <- identity
   }
 
   #Check that a valid object of class alldiffs
@@ -1466,6 +1469,7 @@ recalcLSD.alldiffs <- function(alldiffs.obj,
                                  transform.power = transform.power, 
                                  offset = offset, 
                                  scale = scale, 
+                                 transform.function = transform.function, 
                                  tdf = attr(alldiffs.obj, which = "tdf"), alpha = alpha,
                                  LSDtype = avLSD, LSDsupplied = LSDsupplied, 
                                  LSDby = LSDby, LSDstatistic = LSDstat, 
@@ -1642,8 +1646,8 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
   tempcall <- list(...)
   if ("meanLSD.type" %in% names(tempcall))
     stop("meanLSD.type has been deprecated - use LSDtype")
-  if (any(c("transform.power", "offset", "scale")  %in% names(tempcall)))
-    stop(cat("Including transform.power, offset or scale in the call is invalid \n",
+  if (any(c("transform.power", "offset", "scale", "transform.function")  %in% names(tempcall)))
+    stop(cat("Including transform.power, offset, scale or transform.function in the call is invalid \n",
              "- they are obtained from the backtransform component\n"))
   if (any(c("LSDtype", "LSDby", "LSDstatistic", "LSDaccuracy", 
             "avsed.tolerance", "accuracy.threshold", "alpha") %in% names(tempcall)))
@@ -1653,12 +1657,15 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
   #determine transform arguments
   if (is.null(alldiffs.obj$backtransforms))
   {
-    transform.power = 1; offset <- 0; scale <- 1
+    transform.power <- 1; offset <- 0; scale <- 1; transform.function <- "identity"
   } else
   {
-    transform.power = attr(alldiffs.obj$backtransforms, which = "transform.power")
-    offset = attr(alldiffs.obj$backtransforms, which = "offset")
-    scale = attr(alldiffs.obj$backtransforms, which = "scale")
+    transform.power <- attr(alldiffs.obj$backtransforms, which = "transform.power")
+    offset <- attr(alldiffs.obj$backtransforms, which = "offset")
+    scale <- attr(alldiffs.obj$backtransforms, which = "scale")
+    transform.function <- attr(alldiffs.obj$backtransforms, which = "transform.function")
+    if (is.null(transform.function))
+      transform.function <- "identity"
   }
   
   #Check that a valid object of class alldiffs
@@ -1687,7 +1694,7 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
     stop("avsed.tolerance should be between 0 and 1")
   int.options <- c("none", "Confidence", "StandardError", "halfLeastSignificant")
   int.opt <- int.options[check.arg.values(error.intervals, int.options)]
-  
+
   denom.df <- attr(alldiffs.obj, which = "tdf")
   preds.hd <- attr(alldiffs.obj$predictions, which = "heading")
   
@@ -1698,6 +1705,14 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
     cols <- pmatch(c("lower.", "upper."), names(alldiffs.obj$predictions))
     cols <- cols[!is.na(cols)]
     alldiffs.obj$predictions <- alldiffs.obj$predictions[, -cols]
+  }
+  
+  if (int.opt == "halfLeastSignificant" && is.null(alldiffs.obj$sed))
+  {
+    if (is.null(alldiffs.obj$vcov))
+      stop("cannot compute LSDs because there is no sed or vcov component")
+    else #compute sed component
+      alldiffs.obj <- makeSED(alldiffs.obj)
   }
   
   #Deal with LSD component
@@ -1725,17 +1740,17 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
   LSDby.diff <- attr(alldiffs.obj, which = "LSDby")
   avLSD.same <- TRUE
   LSDby.same <- TRUE
-  if (!(is.null(avLSD.diff) & is.null(avLSD)))
+  if (!(is.null(avLSD.diff) && is.null(avLSD)))
   {
-    if (!is.null(avLSD.diff) & !is.null(avLSD))
+    if (!is.null(avLSD.diff) && !is.null(avLSD))
     {
       avLSD.same <- avLSD.diff == avLSD
       if (avLSD.same & avLSD == "factor.combinations")
       {
-        if (is.null(LSDby.diff) & is.null(LSDby))
+        if (is.null(LSDby.diff) && is.null(LSDby))
           stop("LSDby not set for LSDtype set to factor.combinations")
         else 
-          if (!is.null(LSDby.diff) & !is.null(LSDby))
+          if (!is.null(LSDby.diff) && !is.null(LSDby))
           {
             LSDby.same <- all(LSDby.diff == LSDby)
           } else
@@ -1747,7 +1762,7 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
   if (!is.null(alldiffs.obj$sed))
   {
     #If no LSD component or not match, call recalcLSDs
-    if (!is.null(alldiffs.obj$LSD) | !avLSD.same | !LSDby.same)
+    if (!is.null(alldiffs.obj$LSD) || !avLSD.same || !LSDby.same)
       alldiffs.obj <- recalcLSD(alldiffs.obj, 
                                 LSDtype = avLSD, LSDsupplied = LSDsupplied, 
                                 LSDby = LSDby, LSDstatistic = LSDstat, LSDaccuracy = LSDacc,
@@ -1776,8 +1791,7 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
     sed.range <- abs(alldiffs.obj$LSD$minLSD - alldiffs.obj$LSD$maxLSD) /  alldiffs.obj$LSD$meanLSD
     sed.range[is.nan(sed.range)] <- 0
   }
-  
-  
+
   #Add lower and upper uncertainty limits
   if (int.opt != "none")
   { 
@@ -1985,7 +1999,20 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
   #Add backtransforms if there has been a transformation
   alldiffs.obj <- addBacktransforms.alldiffs(alldiffs.obj = alldiffs.obj, 
                                              transform.power = transform.power, 
-                                             offset = offset, scale = scale)
+                                             offset = offset, scale = scale, 
+                                             transform.function = transform.function)
+  return(alldiffs.obj)
+}
+
+makeSED <- function(alldiffs.obj)
+{ 
+  alldiffs.obj$sed <- alldiffs.obj$vcov
+  n <- nrow(alldiffs.obj$sed)
+  dvcov <- diag(alldiffs.obj$sed)
+  alldiffs.obj$sed <- matrix(rep(dvcov, each = n), nrow = n) + 
+    matrix(rep(dvcov, times = n), nrow = n) - 2 * alldiffs.obj$sed
+  alldiffs.obj$sed <- sqrt(alldiffs.obj$sed)
+  diag(alldiffs.obj$sed) <- NA_real_
   return(alldiffs.obj)
 }
 
@@ -2007,6 +2034,7 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
                                         x.num = NULL, x.fac = NULL, level.length = NA, 
                                         pairwise = TRUE, alpha = 0.05,
                                         transform.power = 1, offset = 0, scale = 1, 
+                                        transform.function = "identity", 
                                         inestimable.rm = TRUE, 
                                         sortFactor = NULL, sortParallelToCombo = NULL, 
                                         sortNestingFactor = NULL, sortOrder = NULL, 
@@ -2044,6 +2072,9 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
     transform.power = attr(backtransforms, which = "transform.power")
     offset = attr(backtransforms, which = "offset")
     scale = attr(backtransforms, which = "scale")
+    transform.function = attr(backtransforms, which = "transform.function")
+    if (is.null(transform.function))
+      transform.function <- "identity"
   }
   
   #Change asreml4 names to asreml3 names
@@ -2121,16 +2152,8 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
   
   #Deal with case when have vcov, but not sed
   if (pairwise && !is.null(alldiffs.obj$vcov) && is.null(alldiffs.obj$sed))
-  {
-    alldiffs.obj$sed <- alldiffs.obj$vcov
-    n <- nrow(alldiffs.obj$sed)
-    dvcov <- diag(alldiffs.obj$sed)
-    alldiffs.obj$sed <- matrix(rep(dvcov, each = n), nrow = n) + 
-      matrix(rep(dvcov, times = n), nrow = n) - 2 * alldiffs.obj$sed
-    alldiffs.obj$sed <- sqrt(alldiffs.obj$sed)
-    diag(alldiffs.obj$sed) <- NA_real_
-  }
-  
+      alldiffs.obj <- makeSED(alldiffs.obj)
+
   #Check that differences are consistent with predictions
   pred.diff <- outer(predictions$predicted.value, predictions$predicted.value, "-")
   if (any(na.omit(abs(pred.diff-alldiffs.obj$differences)) > .Machine$double.eps ^ 0.5))
@@ -2317,7 +2340,8 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
   #Add backtransforms if there has been a transformation
   alldiffs.obj <- addBacktransforms.alldiffs(alldiffs.obj, 
                                              transform.power = transform.power, 
-                                             offset = offset, scale = scale)
+                                             offset = offset, scale = scale, 
+                                             transform.function = transform.function)
   
   #Sort if sortFactor set
   if (!is.null(sortFactor))
@@ -2335,8 +2359,9 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
 
 #addBackTransforms adds or recalculates the backtransforms component of an alldiffs.object
 #It is invalid to use ... to pass transform.power, offset and scale to it
-"addBacktransforms.alldiffs" <- function(alldiffs.obj, transform.power = 1, 
-                                         offset = 0, scale = 1, ...)
+"addBacktransforms.alldiffs" <- function(alldiffs.obj, 
+                                         transform.power = 1, offset = 0, scale = 1, 
+                                         transform.function = "identity", ...)
 {  
   #Check that a valid object of class alldiffs
   validalldifs <- validAlldiffs(alldiffs.obj)  
@@ -2344,8 +2369,29 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
     stop(validalldifs)
   alldiffs.obj <- renameDiffsAttr(alldiffs.obj)
   
-  #Add backtransforms if there has been a transformation
-  if (nrow(alldiffs.obj$predictions) > 0 && (transform.power != 1 || offset != 0 || scale != 1))
+  #check the transform.function
+  link.opts <- c("identity", "log", "inverse", "sqrt", "logit", "probit", "cloglog")
+  transfunc <- link.opts[check.arg.values(transform.function, link.opts)]
+  
+  trans <- transform.power != 1 | offset != 0 | scale != 1
+  if (transfunc != "identity" && trans)
+    stop("Cannot have both transform.function and one or more of transform.power, ",
+         "offset and scale not equal to their defaults")
+  
+  #'### Save approx.se of backtransformed predictions, if these are available or have been saved
+  approx.se <- NULL
+  if ("approx.se" %in% names(alldiffs.obj$predictions))
+    approx.se <- alldiffs.obj$predictions$approx.se
+  else 
+  {
+    backtransfunc <- attr(alldiffs.obj$backtransforms, which = "transform.function")
+    if (is.null(backtransfunc)) backtransfunc <- "identity"
+    if (!is.null(alldiffs.obj$backtransforms) && transfunc == backtransfunc)
+        approx.se <- alldiffs.obj$backtransforms$standard.error
+  }
+
+  #Add backtransforms if there has been a transformation 
+  if (nrow(alldiffs.obj$predictions) > 0 && (trans || transfunc != "identity"))
   { 
     denom.df <- attr(alldiffs.obj, which = "tdf")
     if (is.null(denom.df))
@@ -2365,8 +2411,8 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
     err.int <- TRUE
     if (is.na(kpl) || is.na(kpu))
       err.int <- FALSE
-    #Backtransform predictions and intervals for power transformation
-    if (transform.power == 0)
+    #Backtransform predictions and intervals for power transformation or transformation function
+    if (transform.power == 0 || transfunc == "log")
     { 
       backtransforms$backtransformed.predictions <- 
                                  exp(backtransforms$backtransformed.predictions)
@@ -2376,8 +2422,17 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
         backtransforms[[kpu]] <- exp(backtransforms[[kpu]])
       }
     } else
-      if (transform.power != 1)
+    { 
+      if (transform.power != 1 || transfunc %in% c("inverse", "sqrt"))
       { 
+        tpower <- transform.power
+        if (transfunc == "inverse")
+          tpower <- -1
+        else
+        {
+          if (transfunc == "sqrt")
+            tpower <- 0.5
+        }
         backtransforms$backtransformed.predictions <- 
           backtransforms$backtransformed.predictions^(1/transform.power)
         if (err.int)
@@ -2385,7 +2440,56 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
           backtransforms[[kpl]] <- backtransforms[[kpl]]^(1/transform.power)
           backtransforms[[kpu]] <- backtransforms[[kpu]]^(1/transform.power)
         }  
-      } 
+      } else
+      {
+        if (transfunc == "logit")
+        { 
+          backtransforms <- within(backtransforms, 
+                                   {
+                                     backtransformed.predictions <-exp(backtransformed.predictions)
+                                     backtransformed.predictions <- backtransformed.predictions / 
+                                       (1+backtransformed.predictions)
+                                   })
+          if (err.int)
+          {
+            backtransforms[[kpl]] <- exp(backtransforms[[kpl]])
+            backtransforms[[kpl]] <- backtransforms[[kpl]]/(1 + backtransforms[[kpl]])
+            backtransforms[[kpu]] <- exp(backtransforms[[kpu]])/(1 - backtransforms[[kpu]])
+            backtransforms[[kpu]] <- backtransforms[[kpu]]/(1 + backtransforms[[kpu]])
+          }  
+        } else
+        {
+          if (transfunc == "cloglog")
+          { 
+            backtransforms <- within(backtransforms, 
+                                     {
+                                       backtransformed.predictions <-
+                                         1 - exp(-exp(backtransformed.predictions))
+                                     })
+            if (err.int)
+            {
+              backtransforms[[kpl]] <- 1 - exp(-exp(backtransforms[[kpl]]))
+              backtransforms[[kpu]] <- 1 - exp(-exp(backtransforms[[kpu]]))
+            }  
+          } else
+          {  
+            if (transfunc == "probit")
+            { 
+              backtransforms <- within(backtransforms, 
+                                       {
+                                         backtransformed.predictions <-
+                                           pnorm(backtransformed.predictions)
+                                       })
+              if (err.int)
+              {
+                backtransforms[[kpl]] <- pnorm(backtransforms[[kpl]])
+                backtransforms[[kpu]] <- pnorm(backtransforms[[kpu]])
+              } 
+            } 
+          }
+        }
+      }
+    }
     #Backtransform for offset and scale
     if (offset !=0 || scale != 1)
     { 
@@ -2397,17 +2501,58 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
         backtransforms[[kpu]] <- (backtransforms[[kpu]] - offset)/scale
       }
     }
-    #Set standard.error to missing if a power transformation has been used
-    if (transform.power != 1)
+    #Set standard.error to missing if a power transformation or transform.function other than identity has been used
+    if (transfunc != "identity")
     {
-      ks <- match("standard.error", names(backtransforms))
-      backtransforms[[ks]] <- NA
+      #deal with backtransformed columns inserted by asreml
+      if ("transformed.value" %in% names(alldiffs.obj$predictions))  
+      {
+        if (!(all((backtransforms$backtransformed.predictions - backtransforms$transformed.value) 
+                           < .Machine$double.eps ^ 0.5)))
+        {
+          warning("The column transformed value inserted by asreml is not the same as the column ",
+                  "backtransformed prediction obtained using the inverse transform.function")
+          ks <- match("standard.error", names(backtransforms))
+          backtransforms[[ks]] <- NA
+        } else #have duplicate columns and approx.se
+        {
+          #remove columns from predictions and back transforms
+          #         if ("approx.se" %in% names(backtransforms))
+          if (!is.null(approx.se))
+            backtransforms$standard.error <- backtransforms$approx.se
+          komit <-na.omit(-match(c("transformed.value", "approx.se"), 
+                                 names(backtransforms)))
+          if (length(komit) > 0)
+            backtransforms <- backtransforms[, komit]
+          komit <-na.omit(-match(c("transformed.value", "approx.se"), 
+                                 names(alldiffs.obj$predictions)))
+          if (length(komit) > 0)
+            alldiffs.obj$predictions <- alldiffs.obj$predictions[, komit]
+        }          
+      } else
+      {  
+        if ("standard.error" %in% names(backtransforms))
+        {
+          if (!is.null(approx.se))
+            backtransforms$standard.error <- approx.se
+          else
+            backtransforms$standard.error <- NA
+        }
+      }
     } else
     {
-      if (scale != 1)
-      {
-        ks <- match("standard.error", names(backtransforms))
-        backtransforms[[ks]] <- backtransforms[[ks]] / scale
+      if (trans) #there has been a transformation
+      { 
+        if (transform.power != 1)
+        {
+          ks <- match("standard.error", names(backtransforms))
+          backtransforms[[ks]] <- NA
+        }
+        if (scale != 1)
+        {
+          ks <- match("standard.error", names(backtransforms))
+          backtransforms[[ks]] <- backtransforms[[ks]] / scale
+        }
       }
     }
     #Set attributes of backtransform component
@@ -2421,6 +2566,7 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
     attr(backtransforms, which = "transform.power") <- transform.power
     attr(backtransforms, which = "offset") <- offset
     attr(backtransforms, which = "scale") <- scale
+    attr(backtransforms, which = "transform.function") <- transfunc
     alldiffs.obj$backtransforms <- backtransforms
   }
   return(alldiffs.obj)
@@ -2432,8 +2578,8 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
                                      decreasing = FALSE, ...)
 {
   tempcall <- list(...)
-  if (any(c("transform.power", "offset", "scale")  %in% names(tempcall)))
-    stop(cat("Including transform.power, offset or scale in the call is invalid \n",
+  if (any(c("transform.power", "offset", "scale", "transform.function")  %in% names(tempcall)))
+    stop(cat("Including transform.power, offset, scale or transform.function in the call is invalid \n",
              "- they are obtained from the backtransform component\n"))
 
   #Check for meanLSD.type and, if found, rename to LSDtype
@@ -2442,12 +2588,15 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
   #determine transform arguments
   if (is.null(alldiffs.obj$backtransforms))
   {
-    transform.power = 1; offset <- 0; scale <- 1
+    transform.power <- 1; offset <- 0; scale <- 1; transform.function <- "identity"
   } else
   {
-    transform.power = attr(alldiffs.obj$backtransforms, which = "transform.power")
-    offset = attr(alldiffs.obj$backtransforms, which = "offset")
-    scale = attr(alldiffs.obj$backtransforms, which = "scale")
+    transform.power <- attr(alldiffs.obj$backtransforms, which = "transform.power")
+    offset <- attr(alldiffs.obj$backtransforms, which = "offset")
+    scale <- attr(alldiffs.obj$backtransforms, which = "scale")
+    transform.function <- attr(alldiffs.obj$backtransforms, which = "transform.function")
+    if (is.null(transform.function))
+      transform.function <- "identity"
   }
   
   kattr <- getAllAttr.alldiffs(alldiffs.obj)
@@ -2461,6 +2610,7 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
                                  transform.power = transform.power, 
                                  offset = offset, 
                                  scale = scale,
+                                 transform.function = transform.function, 
                                  response = attr(alldiffs.obj, which = "response"), 
                                  response.title = attr(alldiffs.obj, 
                                                        which = "response.title"),
@@ -2580,12 +2730,15 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
     preds.attr <- attributes(alldiffs.obj$predictions)
     
     #get transform attributes from backtransforms
-    transform.power = 1; offset <- 0; scale <- 1
+    transform.power <- 1; offset <- 0; scale <- 1; transform.function <- "identity"
     if (!is.null(alldiffs.obj$backtransforms))
     {
       transform.power = attr(alldiffs.obj$backtransforms, which = "transform.power")
       offset = attr(alldiffs.obj$backtransforms, which = "offset")
       scale = attr(alldiffs.obj$backtransforms, which = "scale")
+      transform.function = attr(alldiffs.obj$backtransforms, which = "transform.function")
+      if (is.null(transform.function))
+        transform.function <- identity
     } 
     
     #Project predictions on submodel, if required
@@ -2698,7 +2851,8 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
                               term = term, classify = classify, 
                               tdf = denom.df, 
                               transform.power = transform.power, 
-                              offset = offset, 
+                              offset = offset, scale = scale, 
+                              transform.function = "identity", 
                               x.num = x.num, x.fac = x.fac,
                               level.length = level.length, 
                               pairwise = pairwise, 
@@ -2754,7 +2908,8 @@ redoErrorIntervals.alldiffs <- function(alldiffs.obj, error.intervals = "Confide
                               term = classify, classify = "Combination", 
                               tdf = denom.df, 
                               transform.power = transform.power, 
-                              offset = offset, 
+                              offset = offset, scale = scale, 
+                              transform.function = transform.function, 
                               x.num = x.num, x.fac = x.fac,
                               level.length = level.length, 
                               pairwise = pairwise, 

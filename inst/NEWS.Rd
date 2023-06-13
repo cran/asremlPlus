@@ -1,5 +1,33 @@
 \name{news}
 \title{News for Package asremlPlus}
+\section{asremlPlus Version 4.3.55 (2023-06-13)}{
+  \itemize{
+  \item{Remove bloated system-generated testthat-problems.rds file so that the tarball to be submitted is less than 5 Mb.}
+}}
+\section{asremlPlus Version 4.3.54 (2023-06-12)}{
+  \itemize{
+  \item{Fix problem with deprecated function setvarianceterms.asreml when submitted to CRAN.}
+}}
+\section{asremlPlus Version 4.3.53 (2023-06-12)}{
+  \itemize{
+  \item{Add new vignette \code{WheatSpatialModels} that illustrates the fitting of models for local spatial variation.}
+  \item{Generalize correlation spatial models to allow the independent specification of any asreml variance model for rows and columns. Improve the fitting of spatial correlation models, including changing the default correlation model to \code{ar1} and postpone removing bundary terms until after all components of the correlarion model have been fitted.}
+  \item{Revised the spatial modelling to resolve several bugs associated with them when the residual specifies heterogeneous variance using eith \code{idh} or \code{dsum}.}
+  \item{Repurpose \code{row.factor} and \code{col.factor} arguments of \code{addSpatialModel.asrtests}, \code{addSpatialModelOnIC.asrtests} and \code{chooseSpatialModelOnIC.asrtests} to specify the row and column factors for correlation model where required and add the arguments \code{dropRowterm} and \code{dropColterm} to specify the main effect terms to be dropped in fitting spline models.}
+  \item{Modified changeTerms.asrtests and changeModelOnIC.asrtests so that the \code{bounds} and \code{initial values} of terms specified using \code{set.terms} without changing any terms in the model.}
+  \item{Fix problem detected during CRAN submission that found setvarianceterms.asreml was apparently an unregistered exported generic.}
+}}
+\section{asremlPlus Version 4.3.52 (2023-05-18)}{
+  \itemize{
+  \item{Fix bug in identifying residual terms for ASReml-R v. 4.x.}
+  \item{Fix bug in rmboundary.asrtests when removing a bound term results in no random terms.}
+}}
+\section{asremlPlus Version 4.3.51 (2023-04-03)}{
+  \itemize{
+  \item{Fix bug in fitting P-splines when difforder is one.}
+  \item{Change infoCriteria to use the deviance in calculating information criteria for \code{family} set to asr_binomial or asr_poisson.}
+  \item{Add the argument \code{transform.function} to addBacktransforms.alldiffs, allDifferences.data.frame, predictPlus.asreml and predictPresent.asreml so that \code{predictions} and \code{error.intervals} on the scale of the \code{transform.function} can be backtransformed.}
+}}
 \section{asremlPlus Version 4.3.50 (2023-03-9)}{
   \itemize{
   \item{Add \code{classify} argument to as.predictions.frame, checking that variables in the  \code{classify} are in the \code{predictions.frame} and conversion of any variables in the \code{classify} that are not factor to factors.}

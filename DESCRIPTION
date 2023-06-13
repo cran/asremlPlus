@@ -1,6 +1,6 @@
 Package: asremlPlus
-Version: 4.3.50
-Date: 2023-03-9
+Version: 4.3.55
+Date: 2023-06-13
 Title: Augments 'ASReml-R' in Fitting Mixed Models and Packages
         Generally in Exploring Prediction Differences
 Authors@R: person("Chris","Brien", role = c("aut","cre"),
@@ -8,8 +8,8 @@ Authors@R: person("Chris","Brien", role = c("aut","cre"),
          email = "chris.brien@adelaide.edu.au")
 Depends: R (>= 3.5.0)
 Imports: dae, doParallel, dplyr,ggplot2, foreach, grDevices, graphics,
-        methods, parallel, reshape2, RColorBrewer, rlang, stats,
-        stringr, sticky, utils
+        methods, parallel, qqplotr, reshape2, RColorBrewer, rlang,
+        stats, stringr, sticky, utils
 Suggests: testthat, lattice, emmeans, lmerTest, pbkrtest, R.rsp
 Enhances: asreml
 VignetteBuilder: R.rsp
@@ -35,8 +35,8 @@ Description: Assists in automating the selection of terms to include in mixed mo
 License: MIT + file LICENSE
 URL: http://chris.brien.name
 NeedsCompilation: no
-Packaged: 2023-03-09 09:04:42 UTC; briencj
+Packaged: 2023-06-13 07:41:04 UTC; briencj
 Author: Chris Brien [aut, cre] (<https://orcid.org/0000-0003-0581-1817>)
 Maintainer: Chris Brien <chris.brien@adelaide.edu.au>
 Repository: CRAN
-Date/Publication: 2023-03-09 13:40:02 UTC
+Date/Publication: 2023-06-13 08:20:05 UTC

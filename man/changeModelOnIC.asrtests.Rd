@@ -7,7 +7,8 @@
        modifications. The function \code{\link{changeTerms}} is 
        used to change the model. Thus, the model can be modified using a 
        combination of adding and removing sets of terms from one or both of the fixed 
-       or random models and replacing the residual model. The model will be unchanged 
+       or random models, replacing the residual model and changing the bounds and/or initial 
+       values of some terms. The model will be unchanged 
        if terms specified in \code{dropFixed} or \code{dropRandom} are not in the fitted 
        model.
 
@@ -112,9 +113,11 @@
               according to Kenward and Roger (1997) for fixed terms in the dense 
               part of the model.}
  \item{set.terms}{A \code{character} vector specifying the terms that are to have 
-               bounds and/or initial values set prior to fitting.
+               bounds and/or initial values set prior to fitting the new model.
                The names must match those in the \code{vparameters} component of the 
-               \code{asreml.obj} component in the new \code{\link{asrtests.object}}.}
+               \code{asreml.obj} component in the new \code{\link{asrtests.object}}. 
+               The terms in the model do not need to change from those in the 
+               model in the supplied \code{asrtests.obj}.}
  \item{ignore.suffices}{A logical vector specifying whether the suffices of the 
                     \code{asreml}-assigned names of the variance terms (i.e. the 
                     information to the right of an "!", other than "R!") is to 
@@ -135,12 +138,19 @@
                     If any of the bounds are equal to NA then they are 
                     left unchanged for those terms.}
  \item{which.IC}{A \code{character} specifying the information criterion to be used in 
-                   selecting the best model. Possible values are \code{AIC} and 
-                   \code{BIC}. The values of the criterion for supplied model must 
-                   exceed that for changed model for the changed model to be returned.}
+              selecting the best model. Possible values are \code{AIC} and 
+              \code{BIC}. The values of the criterion for supplied model must 
+              exceed that for changed model for the changed model to be returned.}
  \item{IClikelihood}{A \code{character} specifying whether Restricted Maximum Likelihood 
                    (\code{REML}) or the full likelihood (\code{full}) are to be used in 
-                   calculating the information criteria.}
+                   calculating the information criteria for \code{family} set to 
+                   \code{asr_gaussian}. For \code{family} set to \code{asr_binomial} or 
+                   \code{asr_poisson} and with \code{dispersion} set to 1, the 
+                   \code{deviance} is extracted from \code{object} and used to calculate 
+                   the AIC and BIC (as suggested by Damian Collins); the setting of 
+                   \code{IClikelihood} is ignored and the log-likelihood set to \code{NA}. 
+                   The information criteria are not valid for other settings of 
+                   \code{family} and \code{dispersion}.}
  \item{fixedDF}{A \code{numeric} giving the number of estimated fixed parameters. If
                     \code{NULL} then this is determined from the information in 
                     \code{asreml.obj}.}
