@@ -1,8 +1,8 @@
 #devtools::test("asremlPlus")
 context("model_selection")
 
-cat("#### Test variofaces using Atieno with asreml4\n")
-test_that("Variofaces_asreml4", {
+cat("#### Test variofaces using Atieno with asreml42\n")
+test_that("Variofaces_asreml42", {
   skip_if_not_installed("asreml")
   skip_on_cran()
   library(dae)

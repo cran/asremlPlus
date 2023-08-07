@@ -1,11 +1,12 @@
 #devtools::test("asremlPlus")
 context("prediction_presentation")
+asr41.lib <- "D:\\Analyses\\R ASReml4.1" 
 
-cat("#### Test for Intercept prediction on Oats with asreml4\n")
+cat("#### Test for Intercept prediction on Oats with asreml41\n")
 test_that("predict_Intercept4", {
   skip_if_not_installed("asreml")
   skip_on_cran()
-  library(asreml)
+  library(asreml, lib.loc = asr41.lib)
   library(asremlPlus)
   library(dae)
   data(Oats.dat)
@@ -34,11 +35,11 @@ test_that("predict_Intercept4", {
 })
 
 
-cat("#### Test for predictPlus.asreml4\n")
-test_that("predictPlus.asreml4", {
+cat("#### Test for predictPlus.asreml41\n")
+test_that("predictPlus.asreml41", {
   skip_if_not_installed("asreml")
   skip_on_cran()
-  library(asreml)
+  library(asreml, lib.loc = asr41.lib)
   library(asremlPlus)
   library(dae)
   data(WaterRunoff.dat)
@@ -80,11 +81,11 @@ test_that("predictPlus.asreml4", {
   
 })
 
-cat("#### Test for plotPredictions.asreml4\n")
-test_that("plotPredictions.asreml4", {
+cat("#### Test for plotPredictions.asreml41\n")
+test_that("plotPredictions.asreml41", {
   skip_if_not_installed("asreml")
   skip_on_cran()
-  library(asreml)
+  library(asreml, lib.loc = asr41.lib)
   library(asremlPlus)
   library(ggplot2)
   library(dae)
@@ -136,12 +137,12 @@ test_that("plotPredictions.asreml4", {
   testthat::expect_silent("dummy")
 })
 
-cat("#### Test for predictPresent.asreml4\n")
-test_that("predictPresent.asreml4", {
+cat("#### Test for predictPresent.asreml41\n")
+test_that("predictPresent.asreml41", {
   skip_if_not_installed("asreml")
   skip_on_cran()
   library(dae)
-  library(asreml)
+  library(asreml, lib.loc = asr41.lib)
   library(asremlPlus)
   data(WaterRunoff.dat)
   #### Get the observed combinations of the factors and variables in classify
@@ -230,11 +231,11 @@ test_that("predictPresent.asreml4", {
 
 
 #### This test is not relevant to asreml3 because its saving of sed and vcov are different
-cat("#### Test for error when no predictions.asreml4\n")
-test_that("noPredictions.asreml4", {
+cat("#### Test for error when no predictions.asreml41\n")
+test_that("noPredictions.asreml41", {
   skip_if_not_installed("asreml")
   skip_on_cran()
-  library(asreml)
+  library(asreml, lib.loc = asr41.lib)
   library(asremlPlus)
   data(gw.dat)
   current.asr <- do.call(asreml, 
@@ -262,11 +263,11 @@ test_that("noPredictions.asreml4", {
                          fixed = TRUE)
 })
 
-cat("#### Test for plotPvalues.asreml4\n")
-test_that("plotPvalues.asreml4", {
+cat("#### Test for plotPvalues.asreml41\n")
+test_that("plotPvalues.asreml41", {
   skip_if_not_installed("asreml")
   skip_on_cran()
-  library(asreml)
+  library(asreml, lib.loc = asr41.lib)
   library(asremlPlus)
   library(dae)
   library(reshape2)
@@ -345,11 +346,11 @@ test_that("plotPvalues.asreml4", {
                                     names(pupdata$pvalues)))
 })
 
-cat("#### Test for plotPvalues.asreml4\n")
-test_that("plotPvalues.asreml4", {
+cat("#### Test for plotPvalues.asreml41\n")
+test_that("plotPvalues.asreml41", {
   skip_if_not_installed("asreml")
   skip_on_cran()
-  library(asreml)
+  library(asreml, lib.loc = asr41.lib)
   library(asremlPlus)
   library(dae)
   LeafSucculence.diff <- readRDS("./data/LeafSucculence.diff")
@@ -375,11 +376,11 @@ test_that("plotPvalues.asreml4", {
   
 })
 
-cat("#### Test for factor combinations asreml4\n")
-test_that("factor.combinations.asreml4", {
+cat("#### Test for factor combinations asreml41\n")
+test_that("factor.combinations.asreml41", {
   skip_if_not_installed("asreml")
   skip_on_cran()
-  library(asreml)
+  library(asreml, lib.loc = asr41.lib)
   library(asremlPlus)
   library(dae)
   LeafSucculence.diff <- readRDS("./data/LeafSucculence.diff")
@@ -402,7 +403,7 @@ cat("#### Test for recalcLSD.alldiffs4\n")
 test_that("recalcLSD.alldiffs4", {
   skip_if_not_installed("asreml")
   skip_on_cran()
-  library(asreml)
+  library(asreml, lib.loc = asr41.lib)
   library(asremlPlus)
   library(dae)
   data(WaterRunoff.dat)
@@ -431,7 +432,7 @@ cat("#### Test for LSDby4\n")
 test_that("LSDby4", {
   skip_if_not_installed("asreml")
   skip_on_cran()
-  library(asreml)
+  library(asreml, lib.loc = asr41.lib)
   library(asremlPlus)
   library(dae)
   #example 9-1 from Montgomery 5 edn

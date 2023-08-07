@@ -1,10 +1,11 @@
 #devtools::test("asremlPlus")
 context("predictions_alldiffs")
+asr41.lib <- "D:\\Analyses\\R ASReml4.1" 
 
-cat("#### Test for predictions.frame on Oats with asreml4\n")
-test_that("PredictionsFrame_asreml4", {
+cat("#### Test for predictions.frame on Oats with asreml41\n")
+test_that("PredictionsFrame_asreml41", {
   skip_on_cran()
-  library(asreml)
+  library(asreml, lib.loc = asr41.lib)
   library(asremlPlus)
   library(dae)
   data(Oats.dat)

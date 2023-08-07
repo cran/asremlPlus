@@ -1,10 +1,11 @@
+asr41.lib <- "D:\\Analyses\\R ASReml4.1" 
 
-cat("#### Test estimateV at, fa, rr functions for MET data with asreml4\n")
-test_that("MET_estimateV_asreml4", {
+cat("#### Test estimateV at, fa, rr functions for MET data with asreml41\n")
+test_that("MET_estimateV_asreml41", {
   skip_if_not_installed("asreml")
   skip_on_cran()
   library(dae)
-  library(asreml)
+  library(asreml, lib.loc = asr41.lib)
   library(asremlPlus)
   
   data(MET)

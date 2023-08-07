@@ -1,12 +1,13 @@
 #devtools::test("asremlPlus")
 context("model_selection")
+asr41.lib <- "D:\\Analyses\\R ASReml4.1" 
 
-cat("#### Test for REMLRT with asreml4\n")
-test_that("REMLRT_asreml4", {
+cat("#### Test for REMLRT with asreml41\n")
+test_that("REMLRT_asreml41", {
   skip_if_not_installed("asreml")
   skip_on_cran()
   library(dae)
-  library(asreml)
+  library(asreml, lib.loc = asr41.lib)
   library(asremlPlus)
   ## use asremlPlus to analyse the wheat (barley) example from section 8.6 of the asreml manual (Butler et al. 2010)
   data(Wheat.dat)
@@ -57,11 +58,11 @@ test_that("REMLRT_asreml4", {
   testthat::expect_lt(abs(info$loglik - m3.asr$loglik), 130)
 })
 
-cat("#### Test for wheat76 example with asreml4\n")
-test_that("Wheat_asreml4", {
+cat("#### Test for wheat76 example with asreml41\n")
+test_that("Wheat_asreml41", {
   skip_if_not_installed("asreml")
   skip_on_cran()
-  library(asreml)
+  library(asreml, lib.loc = asr41.lib)
   library(asremlPlus)
   ## Fit several models to the wheat data and caclulate their ICs
   data(Wheat.dat)
@@ -107,12 +108,12 @@ test_that("Wheat_asreml4", {
 
 })
 
-cat("#### Test for IC with wheat94 using asreml4\n")
-test_that("IC_wheat94_asreml4", {
+cat("#### Test for IC with wheat94 using asreml41\n")
+test_that("IC_wheat94_asreml41", {
   skip_if_not_installed("asreml")
   skip_on_cran()
   library(dae)
-  library(asreml)
+  library(asreml, lib.loc = asr41.lib)
   library(asremlPlus)
   ## use asremlPlus to analyse the wheat (barley) example from section 8.6 of the asreml manual (Butler et al. 2010)
   data(wheat94.dat)
@@ -264,11 +265,11 @@ test_that("IC_wheat94_asreml4", {
   
 })
 
-cat("#### Test for IC with GLM on budworm using asreml4\n")
-test_that("IC_budworm_asreml4", {
+cat("#### Test for IC with GLM on budworm using asreml41\n")
+test_that("IC_budworm_asreml41", {
   skip_if_not_installed("asreml")
   skip_on_cran()
-  library(asreml)
+  library(asreml, lib.loc = asr41.lib)
   library(asremlPlus)
   ##  1. the data - the MASS budworm data from function dose.p
   ##     in 'grouped' binomial format
@@ -310,12 +311,12 @@ test_that("IC_budworm_asreml4", {
   testthat::expect_true(abs(with(info, AIC[1] - AIC[2]) - 8.226968) < 1e-05)
 })
 
-cat("#### Test for getFormulae with wheat94 using asreml4\n")
-test_that("Formulae_wheat94_asreml4", {
+cat("#### Test for getFormulae with wheat94 using asreml41\n")
+test_that("Formulae_wheat94_asreml41", {
   skip_if_not_installed("asreml")
   skip_on_cran()
   library(dae)
-  library(asreml)
+  library(asreml, lib.loc = asr41.lib)
   library(asremlPlus)
   ## use asremlPlus to analyse the wheat (barley) example from section 8.6 of the asreml manual (Butler et al. 2010)
   data(wheat94.dat)

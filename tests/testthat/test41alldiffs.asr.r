@@ -1,11 +1,12 @@
 #devtools::test("asremlPlus")
 context("prediction_alldiffs")
+asr41.lib <- "D:\\Analyses\\R ASReml4.1" 
 
-cat("#### Test for allDifferences.data.frame sort.alldiffs on Oats with asreml4\n")
-test_that("allDifferences_asreml4", {
+cat("#### Test for allDifferences.data.frame sort.alldiffs on Oats with asreml41\n")
+test_that("allDifferences_asreml41", {
   skip_if_not_installed("asreml")
   skip_on_cran()
-  library(asreml)
+  library(asreml, lib.loc = asr41.lib)
   library(asremlPlus)
   library(dae)
   data(Oats.dat)
@@ -96,8 +97,8 @@ test_that("allDifferences_asreml4", {
  })
 
 
-cat("#### Test for LSDs and halfLSIs on system data with asreml4\n")
-test_that("LSD_LSI_SystemData_asreml4", {
+cat("#### Test for LSDs and halfLSIs on system data with asreml41\n")
+test_that("LSD_LSI_SystemData_asreml41", {
   skip_if_not_installed("asreml")
   skip_on_cran()
   library(asremlPlus)
@@ -266,11 +267,11 @@ test_that("LSD_LSI_SystemData_asreml4", {
 })
 
 
-cat("#### Test for LSD on Oats with asreml4\n")
-test_that("LSD_asreml4", {
+cat("#### Test for LSD on Oats with asreml41\n")
+test_that("LSD_asreml41", {
   skip_if_not_installed("asreml")
   skip_on_cran()
-  library(asreml)
+  library(asreml, lib.loc = asr41.lib)
   library(asremlPlus)
   library(dae)
   data(Oats.dat)
@@ -420,11 +421,11 @@ test_that("LSD_asreml4", {
   
 })
 
-cat("#### Test for sort.alldiffs on Smarthouse with asreml4\n")
+cat("#### Test for sort.alldiffs on Smarthouse with asreml41\n")
 test_that("sort.alldiffs4", {
   skip_if_not_installed("asreml")
   skip_on_cran()
-  library(asreml)
+  library(asreml, lib.loc = asr41.lib)
   library(asremlPlus)
   library(dae)
   data(Smarthouse.dat)
@@ -524,11 +525,11 @@ test_that("sort.alldiffs4", {
                                           sortFactor = "Genotype"))
 })
 
-cat("#### Test for LSD with sort.alldiffs on Smarthouse with asreml4\n")
+cat("#### Test for LSD with sort.alldiffs on Smarthouse with asreml41\n")
 test_that("LSDsort.alldiffs4", {
   skip_if_not_installed("asreml")
   skip_on_cran()
-  library(asreml)
+  library(asreml, lib.loc = asr41.lib)
   library(asremlPlus)
   library(dae)
   data(Smarthouse.dat)
@@ -614,11 +615,11 @@ test_that("LSDsort.alldiffs4", {
   
 })
 
-cat("#### Test for LSDsupplied on Oats with asreml4\n")
+cat("#### Test for LSDsupplied on Oats with asreml41\n")
 test_that("sort.alldiffs4", {
   skip_if_not_installed("asreml")
   skip_on_cran()
-  library(asreml)
+  library(asreml, lib.loc = asr41.lib)
   library(asremlPlus)
   library(dae)
   data(Oats.dat)
@@ -688,11 +689,11 @@ test_that("sort.alldiffs4", {
   
   })
 
-cat("#### Test for LSD on WaterRunoff with asreml4\n")
+cat("#### Test for LSD on WaterRunoff with asreml41\n")
 test_that("LSDWater4", {
   skip_if_not_installed("asreml")
   skip_on_cran()
-  library(asreml)
+  library(asreml, lib.loc = asr41.lib)
   library(asremlPlus)
   library(dae)
   data(WaterRunoff.dat)
@@ -1042,11 +1043,11 @@ test_that("LSDWater4", {
   
 })
 
-cat("#### Test for exploreLSDs on WaterRunoff with asreml4\n")
+cat("#### Test for exploreLSDs on WaterRunoff with asreml41\n")
 test_that("exploreLSDWater4", {
   skip_if_not_installed("asreml")
   skip_on_cran()
-  library(asreml)
+  library(asreml, lib.loc = asr41.lib)
   library(asremlPlus)
   library(dae)
   data(WaterRunoff.dat)
@@ -1181,11 +1182,11 @@ test_that("exploreLSDWater4", {
     
 })
 
-cat("#### Test for exploreLSDs on Oats with asreml4\n")
+cat("#### Test for exploreLSDs on Oats with asreml41\n")
 test_that("exploreLSDOatsr4", {
   skip_if_not_installed("asreml")
   skip_on_cran()
-  library(asreml)
+  library(asreml, lib.loc = asr41.lib)
   library(asremlPlus)
   library(dae)
   data(Oats.dat)
@@ -1265,11 +1266,11 @@ test_that("exploreLSDOatsr4", {
                               abs(na.omit(LSDs$LSDs$LSDs) - 17.11869) < 1e-05))
 })  
 
-cat("#### Test for sort.alldiffs on WaterRunoff with asreml4\n")
+cat("#### Test for sort.alldiffs on WaterRunoff with asreml41\n")
 test_that("sort.alldiffsWater4", {
   skip_if_not_installed("asreml")
   skip_on_cran()
-  library(asreml)
+  library(asreml, lib.loc = asr41.lib)
   library(asremlPlus)
   library(dae)
   data(WaterRunoff.dat)
@@ -1379,11 +1380,11 @@ test_that("sort.alldiffsWater4", {
   
 })
 
-cat("#### Test for sort.alldiffs on Oats with asreml4\n")
+cat("#### Test for sort.alldiffs on Oats with asreml41\n")
 test_that("sort.alldiffs4", {
   skip_if_not_installed("asreml")
   skip_on_cran()
-  library(asreml)
+  library(asreml, lib.loc = asr41.lib)
   library(asremlPlus)
   library(dae)
   data(Oats.dat)
@@ -1483,11 +1484,11 @@ test_that("sort.alldiffs4", {
   
 })
 
-cat("#### Test for subset.alldiffs on Smarthouse with asreml4\n")
+cat("#### Test for subset.alldiffs on Smarthouse with asreml41\n")
 test_that("subset.alldiffs4", {
   skip_if_not_installed("asreml")
   skip_on_cran()
-  library(asreml)
+  library(asreml, lib.loc = asr41.lib)
   library(asremlPlus)
   library(dae)
   data(Smarthouse.dat)
@@ -1559,11 +1560,11 @@ test_that("subset.alldiffs4", {
   testthat::expect_equal(length(attributes(diffs.subs)),11)
 })
 
-cat("#### Test for facCombine.alldiffs on Ladybird with asreml4\n")
+cat("#### Test for facCombine.alldiffs on Ladybird with asreml41\n")
 test_that("facCombine.alldiffs4", {
   skip_if_not_installed("asreml")
   skip_on_cran()
-  library(asreml)
+  library(asreml, lib.loc = asr41.lib)
   library(asremlPlus)
   library(dae)
   data("Ladybird.dat")
@@ -1706,11 +1707,11 @@ test_that("facCombine.alldiffs4", {
   
 })
 
-cat("#### Test for facRecast.alldiffs on Ladybird with asreml4\n")
+cat("#### Test for facRecast.alldiffs on Ladybird with asreml41\n")
 test_that("facRecast.alldiffs4", {
   skip_if_not_installed("asreml")
   skip_on_cran()
-  library(asreml)
+  library(asreml, lib.loc = asr41.lib)
   library(asremlPlus)
   library(dae)
   data("Ladybird.dat")
@@ -1756,11 +1757,11 @@ test_that("facRecast.alldiffs4", {
   
 })
 
-cat("#### Test for linear.transformation on Oats with asreml4\n")
-test_that("linear.transform_Oats_asreml4", {
+cat("#### Test for linear.transformation on Oats with asreml41\n")
+test_that("linear.transform_Oats_asreml41", {
   skip_if_not_installed("asreml")
   skip_on_cran()
-  library(asreml)
+  library(asreml, lib.loc = asr41.lib)
   library(asremlPlus)
   library(dae)
   data(Oats.dat)
@@ -1825,11 +1826,11 @@ test_that("linear.transform_Oats_asreml4", {
                               preds$std.error[1]) > 0.01)
 })
   
-cat("#### Test for linear.transformation on WaterRunoff with asreml4\n")
-test_that("linear.transform_WaterRunoff_asreml4", {
+cat("#### Test for linear.transformation on WaterRunoff with asreml41\n")
+test_that("linear.transform_WaterRunoff_asreml41", {
   skip_if_not_installed("asreml")
   skip_on_cran()
-  library(asreml)
+  library(asreml, lib.loc = asr41.lib)
   library(asremlPlus)
   library(dae)
   #Test example in manual
@@ -1999,11 +2000,11 @@ test_that("linear.transform_WaterRunoff_asreml4", {
                                   save$lRGR_sm_32_42$backtransforms[1, c(2,4:5)]) < 1e-04))
 })
 
-cat("#### Test for addBacktransforms on WaterRunoff with asreml4\n")
-test_that("addBacktransforms_WaterRunoff_asreml4", {
+cat("#### Test for addBacktransforms on WaterRunoff with asreml41\n")
+test_that("addBacktransforms_WaterRunoff_asreml41", {
   skip_if_not_installed("asreml")
   skip_on_cran()
-  library(asreml)
+  library(asreml, lib.loc = asr41.lib)
   library(asremlPlus)
   library(dae)
   data(WaterRunoff.dat)
@@ -2020,7 +2021,7 @@ test_that("addBacktransforms_WaterRunoff_asreml4", {
                           wald.tab = current.asrt$wald.tab, 
                           present = c("Sources", "Type", "Species"))
   
-  ## Plot p-values for predictions obtained using asreml4
+  ## Plot p-values for predictions obtained using asreml411
   if (exists("TS.diffs"))
   {
     ##Add the backtransforms component for predictions obtained using asreml or lmerTest  
@@ -2045,8 +2046,8 @@ test_that("addBacktransforms_WaterRunoff_asreml4", {
 })
 
 
-cat("#### Test for ratioTansforms on system data with asreml4\n")
-test_that("ratioTransforms_SystemData_asreml4", {
+cat("#### Test for ratioTansforms on system data with asreml41\n")
+test_that("ratioTransforms_SystemData_asreml41", {
   skip_if_not_installed("asreml")
   skip_on_cran()
   library(asremlPlus)
@@ -2120,11 +2121,11 @@ test_that("ratioTransforms_SystemData_asreml4", {
 })
 
 
-cat("#### Test for ratioTansforms on the Oats data with asreml4\n")
-test_that("ratioTransforms_SystemData_asreml4", {
+cat("#### Test for ratioTansforms on the Oats data with asreml41\n")
+test_that("ratioTransforms_SystemData_asreml41", {
   skip_if_not_installed("asreml")
   skip_on_cran()
-  library(asreml)
+  library(asreml, lib.loc = asr41.lib)
   library(asremlPlus)
   data("Oats.dat")
   
@@ -2275,11 +2276,11 @@ test_that("ratioTransforms_SystemData_asreml4", {
   
 })
 
-cat("#### Test for alldiffs with GLM on budworm using asreml4\n")
-test_that("GLMdiffs_budworm_asreml4", {
+cat("#### Test for alldiffs with GLM on budworm using asreml411\n")
+test_that("GLMdiffs_budworm_asreml41", {
   skip_if_not_installed("asreml")
   skip_on_cran()
-  library(asreml)
+  library(asreml, lib.loc = asr41.lib)
   library(asremlPlus)
   ## devtools::load_all(".") #Needed to prevent a stack overflow error.
   

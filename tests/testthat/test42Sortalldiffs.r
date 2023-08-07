@@ -1,8 +1,8 @@
 #devtools::test("asremlPlus")
 context("prediction_presentation")
 
-cat("#### Test for sort.alldiffs on Smarthouse with asreml4\n")
-test_that("sort.alldiffs4", {
+cat("#### Test for sort.alldiffs on Smarthouse with asreml42\n")
+test_that("sort.alldiffs42", {
   skip_if_not_installed("asreml")
   skip_on_cran()
   library(asreml)
@@ -92,8 +92,8 @@ test_that("sort.alldiffs4", {
 })
 
 
-cat("#### Test for sort.predictions.frame on WaterRunoff with asreml4\n")
-test_that("sort.predictions.frame4", {
+cat("#### Test for sort.predictions.frame on WaterRunoff with asreml42\n")
+test_that("sort.predictions.frame42", {
   skip_if_not_installed("asreml")
   skip_on_cran()
   library(asreml)
@@ -148,8 +148,8 @@ test_that("sort.predictions.frame4", {
  testthat::expect_true(all(t$predicted.value.x == t$predicted.value.y))
 })
   
-cat("#### Test for sort.alldiffs on Oats with asreml4\n")
-test_that("sort.alldiffs4", {
+cat("#### Test for sort.alldiffs on Oats with asreml42\n")
+test_that("sort.alldiffs42", {
   skip_if_not_installed("asreml")
   skip_on_cran()
   library(asreml)
@@ -259,8 +259,8 @@ test_that("sort.alldiffs4", {
 })
 
 
-cat("#### Test for sort in standard order for classify on Oats with asreml4\n")
-test_that("classify.sort4", {
+cat("#### Test for sort in standard order for classify on Oats with asreml42\n")
+test_that("classify.sort42", {
   skip_if_not_installed("asreml")
   skip_on_cran()
   library(asreml)
