@@ -8,7 +8,9 @@
        measured on a potentially irregular grid of rows and columns of the units. The data may 
        be arranged in sections, for each of which there is a grid and for which the model is to 
        be fitted separately. Also, the rows and columns of a grid are not necessarily one 
-       observational unit wide. 
+       observational unit wide. For \code{TPPS} models for which the order of differencing the 
+       penalty matrix is two, the improvement in the fit from rotating the eigenvectors of the 
+       penalty matrix can be investigated.
        
        No hypothesis testing or comparison of information criteria is made. To only change 
        the terms based on a comparison  of information criteria use 
@@ -29,16 +31,17 @@
                 row.covar = "cRow", col.covar = "cCol", 
                 row.factor = "Row", col.factor = "Col", 
                 corr.funcs = c("ar1", "ar1"), 
-                row.corrFitfirst = TRUE, 
+                row.corrFitfirst = TRUE, allow.corrsJointFit = TRUE, 
                 dropRowterm = NULL, dropColterm = NULL, 
                 nsegs = NULL, nestorder = c(1,1), 
                 degree = c(3,3), difforder = c(2,2), 
+                usRandLinCoeffs = TRUE, 
                 rotateX = FALSE, ngridangles = c(18, 18), 
                 which.rotacriterion = "AIC", nrotacores = 1, 
                 asreml.option = "mbf", tpps4mbf.obj = NULL, 
                 allow.unconverged = FALSE, allow.fixedcorrelation = FALSE,
                 checkboundaryonly = FALSE, update = FALSE, 
-                IClikelihood = "full", ...)
+                maxit = 30, IClikelihood = "full", ...)
 }
 \arguments{
  \item{asrtests.obj}{An \code{\link{asrtests.object}} containing the components 
@@ -49,13 +52,26 @@
  \item{sections}{A single \code{character} string that specifies the name of the column 
                in the \code{\link{data.frame}} that contains the \code{\link{factor}} 
                that identifies different sections of the data to which separate spatial 
-               models are to be fitted. Note that, if there are other terms that 
-               involve \code{sections} in the random formula, there should be separate 
-               terms for each level of \code{sections}. For example, in a blocked 
-               experiment involving multiple sites, there should be a separate term for 
-               the Blocks at each Site i.e. terms of the form at(Site, i):Block, or 
-               equivalent, for each site. Otherwise, the combined term (e.g. Site:Block) 
-               will affect the fitting of the local spatial model for a site.}
+               models are to be fitted. Note that, for other terms that involve 
+               \code{sections} in the random formula, there should be separate terms for 
+               each level of \code{sections}. For example, in a blocked experiment 
+               involving multiple sites, there should be a sum of separate term for 
+               the Blocks at each Site i.e. a formula that contains terms like 
+               at(Site, i):Block for each site and these are separated by \code{'+'}. 
+               Otherwise, the combined term (e.g. Site:Block) will impact on the 
+               fitting of the local spatial models for the different Sites. 
+               Similarly, if considerations other than the fitting of spatial models 
+               do not require a residual variance structure e.g. heterogeneous residual 
+               variances depending on treatments, there should be separate units terms 
+               for each of the \code{sections}. This will allow the fitting of a nugget 
+               variance for each  of the \code{sections}. To achieve, this use the sum 
+               of \code{dsum} terms for each of the sections, each term being of the form 
+               \code{dsum(~ units | Section, levels = list(i))} where \code{i} is a level 
+               of \code{Section}. It is important to specify separate terms, rather than 
+               compound terms obtained by specifying multiple \code{levels} in the 
+               \code{list} or leaving \code{levels} out altogether. Separate terms are 
+               needed so that terms for individual \code{sections} can be manipulated 
+               independently.}
  \item{row.covar}{A single \code{character} string nominating a \code{\link{numeric}} 
                that contains the values of a centred covariate indexing the rows of a 
                grid. The \code{\link{numeric}} must be a column in the 
@@ -83,11 +99,16 @@
                the two-dimensional model is fitted as a random term. If a correlation 
                or variance model is not to be investigated for one of the dimensions, 
                specify \code{""} for that dimension.}
- \item{row.corrFitfirst}{If \code{TRUE} then, in fitting the model for 
-                \code{spatial.model} set to \code{corr}, the row correlation or 
-               variance function is fitted first, followed by the addition of the 
+ \item{row.corrFitfirst}{A \code{\link{logical}}. If \code{TRUE} then, in fitting the 
+               model for \code{spatial.model} set to \code{corr}, the row correlation  
+               or variance function is fitted first, followed by the addition of the 
                column correlation or variance function. If \code{FALSE}, the order 
                of fitting is reversed.}
+ \item{allow.corrsJointFit}{A \code{\link{logical}} which, if \code{TRUE}, will allow 
+               the simultaneous fitting of correlation functions for the two dimensions 
+               of the grid when separate fits have failed to fit any correlation 
+               functions. This argument is available for when a joint fit 
+               hangs the system.}
  \item{dropRowterm}{A single \code{character} string nominating a \code{\link{factor}} 
                in the \code{\link{data.frame}} that has as many \code{levels} as there 
                are unique values in \code{row.covar}. This argument is applicable for 
@@ -124,6 +145,14 @@
  \item{difforder}{A \code{\link{numeric}} of length 2. The order of differencing for 
               column and row dimensions, respectively, in fitting a P-spline 
               (\code{TPSS}).}
+ \item{usRandLinCoeffs}{A \code{\link{logical}} which, if \code{TRUE}, will attempt to  
+               fit an unstructured variance model to the constant and linear terms in 
+               the interactions for constant and linear terms in one grid dimension 
+               interacting with smoooth terms in the second grid dimension. The 
+               unstructured variance model can only be fitted if both the constant and 
+               linear interaction terms have been retained in the fitted model. 
+               This argument can be used to omit the attempt to fit an unstructured 
+               variance model when the attempt results in a stystem error.}
  \item{rotateX}{A \code{\link{logical}} indicating whether to rotate the eigenvectors of the 
               penalty matrix, as described by Piepho, Boer and Williams (2022), when 
               fitting a P-spline (\code{TPSS}). Setting \code{rotateX} to \code{TRUE} 
@@ -134,11 +163,11 @@
               rotation. Rotation of the eigenvectors is only relevant for 
               \code{difforder} values greater than 1 and has only been implemented for 
               \code{difforder} equal to 2.}
- \item{ngridangles}{A \code{\link{numeric}} of length 2. The numbers of angles between 0 
-              and 90 degrees for row and column dimensions to be used in determining the 
-              optimal pair of angles for rotating the eignevectors of the penalty matrix 
-              of a P-spline (\code{TPSS}). Specifying factors of 90 will result in 
-              integer-valued angles. The number of grid points, and hence 
+ \item{ngridangles}{A \code{\link{numeric}} of length 2. The numbers of angles between 
+              0 and 90 degrees for each of the row and column dimensions to be used in 
+              determining the optimal pair of angles for rotating the eignevectors of 
+              the penalty matrix of a P-spline (\code{TPSS}). Specifying factors of 90 
+              will result in integer-valued angles. The number of grid points, and hence 
               re-analyses will be the product of the values of (\code{ngridangles} + 1).}
  \item{which.rotacriterion}{A single \code{character} string nominating which of the 
               criteria, out of the \code{deviance}, the \code{likelihood}, the 
@@ -202,6 +231,8 @@
               variance parameter values as starting values when fitting the new model, 
               the only modifications being (i) to add the terms for the spatial models 
               and (ii) those specified via \code{\dots}.}
+ \item{maxit}{A \code{\link{numeric}} specifying the maximum number of iterations that 
+              \code{asreml} should perform in fitting a model.}
  \item{IClikelihood}{A \code{character} that controls both the occurence and the type 
                     of likelihood for information criterion in the \code{test.summary} 
                     of the new \code{\link{asrtests.object}}. If \code{none}, none are 
@@ -216,15 +247,15 @@
 \details{
 The model to which the spatial models is to be added is supplied in the \code{asrtests.obj}. It should not include terms that will be included in the local spatial model. All spatial model terms are fitted as fixed or random. Consequently, the residual model does not have to be iid. The improvement in the fit resulting from the addition of a spatial model to the supplied model is evaluated. Note that the data must be in the order that correponds to the \code{residual} argument with a variable to the right of another variable changes levels in the data frame faster than those of the other variable e.g. \code{Row:Column} implies that all levels for \code{Column} in consecutive rows of the \code{data.frame} with a single \code{Row} level. 
 
-For the \code{corr} spatial model, the default model is an autocorrelation model of order one (\code{ar1}) for each dimension. However, any of the single dimension correlation/variance models from \code{asreml} can be specified for each dimension, as can no correlation model for a dimension; the models for the two dimensions can differ. A series of models are tried, without removing boundary or singular terms, beginning with the addition of row correlation and followed by the addition of column correlation or, if the \code{row.corrFitfirst} is set to \code{FALSE}, the reverse order. If the fitting of the first-fitted correlation did not result in a model change because the fitting did not converge or correlations were fixed, but the fit of the second correlation was successful, then adding the first correlation will be retried. If one of the metric correlation functions is specified (e.g. \code{exp}), then the \code{row.covar} or \code{col.covar} will be used in the spatial model. However, because the correlations are fitted separately for the two dimensions, the \code{row.factor} and \code{col.factor} are needed for all models and is used for a dimension that does not involve a correlation/variance function for the fit being performed. Also, the correlation models are fitted as \code{random} terms and so the correlation model will include a variance parameter for the grid even when \code{ar1} is used to specify the correlation model, i.e. the model fitted is a variance model and there is no difference between \code{ar1} and \code{ar1v} in fitting the model. The variance parameter for this term represents the spatial variance and the fit necessarily includes a nugget term, this being the residual variance. The nuggest term can be removed by fixing the residual variance to one using \code{\link{setvarianceterms.call}}, provided heterogeneous residual variances have not been specified. Once the fitting of the correlation model has been completed, the \code{rmboundary} function will be executed with the \code{checkboundaryonly} value suppied in the \code{addSpatialModel.asrtests} call.
+For the \code{corr} spatial model, the default model is an autocorrelation model of order one (\code{ar1}) for each dimension. However, any of the single dimension correlation/variance models from \code{asreml} can be specified for each dimension, as can no correlation model for a dimension; the models for the two dimensions can differ. Using a forward selection procedure, a series of models are tried, without removing boundary or singular terms, beginning with the addition of row correlation and followed by the addition of column correlation or, if the \code{row.corrFitfirst} is set to \code{FALSE}, the reverse order. If the fitting of the first-fitted correlation did not result in a model change because the fitting did not converge or correlations were fixed, but the fit of the second correlation was successful, then adding the first correlation will be retried. If one of the metric correlation functions is specified (e.g. \code{exp}), then the \code{row.covar} or \code{col.covar} will be used in the spatial model. However, because the correlations are fitted separately for the two dimensions, the \code{row.factor} and \code{col.factor} are needed for all models and is used for a dimension that does not involve a correlation/variance function for the fit being performed. Also, the correlation models are fitted as \code{random} terms and so the correlation model will include a variance parameter for the grid even when \code{ar1} is used to specify the correlation model, i.e. the model fitted is a variance model and there is no difference between \code{ar1} and \code{ar1v} in fitting the model. The variance parameter for this term represents the spatial variance and the fit necessarily includes a nugget term, this being the residual variance. If any correlation is retained in the model, for a section if \code{sections} is not \code{NULL}, then the need for a nuggest term is assessed by fixing the corresponding residual variance to one, unless there are multiple residual variances and these are not related to the \code{sections}. Once the fitting of the correlation model has been completed, the \code{rmboundary} function will be executed with the \code{checkboundaryonly} value supplied in the \code{addSpatialModel.asrtests} call. Finally, checking for bound and singular random terms associated with the correlation model and residual terms will be carried out when there are correlation terms in the model and \code{checkboundaryonly} has been set to \code{FALSE}; as many as possible will be removed from the fitted model, in some cases by fixing variance terms to one.
 
-The tensor-product natural-cubic-smoothing-spline (\code{TPNCSS}) spatial models are as decribed by Verbyla et al. (2018). The tensor-product penalized-spline (\code{TPPS}) models are as described by (Piepho, Boer and Williams, 2022). For the \code{TPPS} model, the degree of the polynomial and the order of differencing can be varied. The defaults of 3 and 2, respectively, fit a cubic spline with second order differencing, which is similar to those of Rodriguez-Alvarez et al. (2018). Setting both the degree and order of differencing to 1 will fit a type of linear variance model. The fixed terms for the spline models are \code{row.covar + col.covar + row.covar:col.covar} and the random terms are \code{spl(row.covar) + spl(col.covar) + dev(row.covar) + dev(col.covar) + spl(row.covar):col.covar +}\cr \code{row.covar:spl(col.covar) + spl(row.covar):spl(col.covar)}, except that \code{spl(row.covar) + spl(col.covar)} is not included in \code{TPPS} models. The supplied model should not include any of these terms. However, any fixed or random main-effect Row or Column term that has been included as an initial model for comparison with a spatial model can be removed prior to fitting the spatial model using \code{dropRowterm} or \code{dropColterm}.  For \code{TPPS} with second-order differencing, the model matrices used to fit the random terms \code{spl(row.covar):col.covar} and \code{row.covar:spl(col.covar)} are transformed using the spectral decomposition of their penalty matrices, and unstructured variance models across the columns of the linear component of each of them will be tried.
+The tensor-product natural-cubic-smoothing-spline (\code{TPNCSS}) spatial models are as decribed by Verbyla et al. (2018). The tensor-product penalized-spline (\code{TPPS}) models are as described by (Piepho, Boer and Williams, 2022). For the \code{TPPS} model, the degree of the polynomial and the order of differencing can be varied. The defaults of 3 and 2, respectively, fit a cubic spline with second order differencing, which is similar to those of Rodriguez-Alvarez et al. (2018). Setting both the degree and order of differencing to 1 will fit a type of linear variance model. The fixed terms for the spline models are \code{row.covar + col.covar + row.covar:col.covar} and the random terms are \code{spl(row.covar) + spl(col.covar) + dev(row.covar) + dev(col.covar) + spl(row.covar):col.covar +}\cr \code{row.covar:spl(col.covar) + spl(row.covar):spl(col.covar)}, except that \code{spl(row.covar) + spl(col.covar)} is not included in \code{TPPS} models. The supplied model should not include any of these terms. However, any fixed or random main-effect Row or Column term that has been included as an initial model for comparison with a spatial model can be removed prior to fitting the spatial model using \code{dropRowterm} or \code{dropColterm}.  For \code{TPPS} with second-order differencing, the model matrices used to fit the random terms \code{spl(row.covar):col.covar} and \code{row.covar:spl(col.covar)} are transformed using the spectral decomposition of their penalty matrices, and unstructured variance models across the columns of the linear component of each of them will be tried.  For \code{TPPS} with second-order differencing, it is also possible to investigate the rotation of the penalty matrix eigenvectors for the random terms \code{spl(row.covar):col.covar} and \code{row.covar:spl(col.covar)} (for more information see Piepho, Boer and Williams, 2022). The investigation takes the form of a search over a grid of rotation angles for a reduced model; the fit of the full model wuth rotation will be returned.
 
-The \code{TPPCS} and \code{TPP1LS} models are fitted using functions from the \code{R} package \code{TPSbits} authored by Sue Welham (2022). There are two methods for supplying the spline basis information produced by \code{tpsmmb} to \code{asreml}. The \code{grp} method adds it to the \code{data.frame} supplied in the \code{data} argument of the \code{asreml} call. The \code{mbf} method creates smaller \code{\link{data.frame}s} with the spline basis information in the same environment as the internal function that calls the spline-fitting function. For \code{TPPS} with second-order differencing, it is also possible to investigate the rotation of the penalty matrix eigenvectors for the random terms \code{spl(row.covar):col.covar} and \code{row.covar:spl(col.covar)} (for more information see Piepho, Boer and Williams, 2022).  If it is desired to use in a later session, an \code{asreml} function, or \code{asrtests} function that calls \code{asreml}, (e.g. \code{predict.asreml}, \code{\link{predictPlus.asreml}}, or \code{\link{changeTerms.asrtests}}) on an \code{asreml.object} created using \code{mbf} terms, then the \code{mbf} \code{\link{data.frame}s} will need to be recreated using \code{\link{makeTPPSplineMats.data.frame}} in the new session, supplying, if there has been rotation of the penalty matrix eigenvectors, the \code{theta} values that are returned as the attribute \code{theta.opt} of the \code{asreml.obj}. 
+The \code{TPPCS} and \code{TPP1LS} models are fitted using functions from the \code{R} package \code{TPSbits} authored by Sue Welham (2022). There are two methods for supplying the spline basis information produced by \code{tpsmmb} to \code{asreml}. The \code{grp} method adds it to the \code{data.frame} supplied in the \code{data} argument of the \code{asreml} call. The \code{mbf} method creates smaller \code{\link{data.frame}s} with the spline basis information in the same environment as the internal function that calls the spline-fitting function. If it is desired to use in a later session, an \code{asreml} function, or \code{asrtests} function that calls \code{asreml}, (e.g. \code{predict.asreml}, \code{\link{predictPlus.asreml}}, or \code{\link{changeTerms.asrtests}}) on an \code{asreml.object} created using \code{mbf} terms, then the \code{mbf} \code{\link{data.frame}s} will need to be recreated using \code{\link{makeTPPSplineMats.data.frame}} in the new session, supplying, if there has been rotation of the penalty matrix eigenvectors, the \code{theta} values that are returned as the attribute \code{theta.opt} of the \code{asreml.obj}. 
 
 All models utlize the function \code{\link{changeTerms.asrtests}} to fit the spatial model. Arguments from \code{tpsmmb} and \code{\link{changeTerms.asrtests}} can be supplied in calls to \code{addSpatialModel.asrtests} and will be passed on to the relevant function through the ellipses argument (\ldots).
 
-The data for experiment can be divided \code{sections} and the same spatial model fitted separately to each. The fit over all of the sections is assessed.
+The data for experiment can be divided \code{sections} and the same spatial model fitted separately to each. The fit over all of the sections is assessed. For more detail see \code{sections} above.
 
 Each combination of a row.coords and a col.coords does not have to specify a single observation; 
 for example, to fit a local spatial model to the main units of a split-unit design, 

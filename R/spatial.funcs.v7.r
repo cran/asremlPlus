@@ -30,21 +30,66 @@ calc.nsect <- function(dat, sections)
   return(nsect)
 }
 
+checkSections4RanResTerms <- function(asrtests.obj, sections = NULL, asr4)
+{
+  #Check that separate residual terms have been fitted for multiple sections 
+  if (!is.null(sections))
+  {
+    ran <- getFormulae(asrtests.obj$asreml.obj)$random
+    if (!is.null(ran))
+    { 
+      ran <- getTerms.formula(ran)
+      ran <- ran[ran != sections] #Remove sections term, if present
+      if (!any((grepl("idh\\(", ran) | grepl("at\\(", ran)) & grepl(sections, ran)))
+        warning(paste0("There are no 'idh' or 'at' terms for ", sections, 
+                       " in the supplied random model; the fitting may be improved ",
+                       "if separate random block terms are specified for each section"))
+    }
+    if (asr4)
+    {  
+      res <- getFormulae(asrtests.obj$asreml.obj)$residual
+      if (!is.null(res))
+      { 
+        res <- getTerms.formula(res)
+        if (!any((grepl("idh\\(", res) | grepl("dsum\\(", res)) & grepl(sections, res)))
+          warning(paste0("There are no 'idh' or 'dsum' terms involving ", sections, 
+                         " in the supplied residual model; the fitting may be improved ",
+                         "if separate units terms are specified for each section"))
+      }
+    }  
+    else
+    {
+      res <- getFormulae(asrtests.obj$asreml.obj)$rcov
+      if (!is.null(res))
+      { 
+        res <- getTerms.formula(res)
+        if (!any((grepl("idh\\(", res) | grepl("at\\(", res)) & grepl(sections, res)))
+          warning(paste0("There are no 'idh' or 'at' terms for ", sections, 
+                         " in the supplied rcov model; the fitting may be improved ",
+                         "if separate units terms are specified for each section"))
+      }
+    }
+  }
+
+  invisible()
+}
+
 addSpatialModel.asrtests <- function(asrtests.obj, spatial.model = "TPPS", 
                                      sections = NULL, 
                                      row.covar = "cRow", col.covar = "cCol", 
                                      row.factor = "Row", col.factor = "Col", 
                                      corr.funcs = c("ar1", "ar1"), 
-                                     row.corrFitfirst = TRUE, 
+                                     row.corrFitfirst = TRUE, allow.corrsJointFit = TRUE, 
                                      dropRowterm = NULL, dropColterm = NULL, 
                                      nsegs = NULL, nestorder = c(1, 1), 
                                      degree = c(3,3), difforder = c(2,2), 
+                                     usRandLinCoeffs = TRUE, 
                                      rotateX = FALSE, ngridangles = c(18, 18), 
                                      which.rotacriterion = "AIC", nrotacores = 1, 
                                      asreml.option = "mbf", tpps4mbf.obj = NULL,  
                                      allow.unconverged = FALSE, allow.fixedcorrelation = FALSE,
                                      checkboundaryonly = FALSE, update = FALSE, 
-                                     IClikelihood = "full", ...)
+                                     maxit = 30, IClikelihood = "full", ...)
 {    
   #Deal with arguments for tpsmmb and changeModelOnIC
   inargs <- list(...)
@@ -56,7 +101,10 @@ addSpatialModel.asrtests <- function(asrtests.obj, spatial.model = "TPPS",
   validasrt <- validAsrtests(asrtests.obj)  
   if (is.character(validasrt))
     stop(validasrt)
-  
+ 
+  #Check if have separate section random and residual terms
+  checkSections4RanResTerms(asrtests.obj, sections = sections, asr4 = asr4)
+   
   #Check IClikelihood options
   options <- c("REML", "full")
   ic.lik <- options[check.arg.values(IClikelihood, options)]
@@ -79,11 +127,12 @@ addSpatialModel.asrtests <- function(asrtests.obj, spatial.model = "TPPS",
                                row.factor = row.factor, col.factor = col.factor, 
                                corr.funcs = corr.funcs, 
                                row.corrFitfirst = row.corrFitfirst, 
+                               allow.corrsJointFit = allow.corrsJointFit, 
                                allow.unconverged = allow.unconverged, 
                                allow.fixedcorrelation = allow.fixedcorrelation,
                                checkboundaryonly = checkboundaryonly, 
                                update = update, chooseOnIC = FALSE, 
-                               IClikelihood = ic.lik, ...)
+                               maxit = maxit, IClikelihood = ic.lik, ...)
   #Fit a local spatial model involving TPNCSS
   if ("TPNCSS" %in% spatial.mod)
     spatial.asrt <- fitTPNCSSMod(asrtests.obj, sections = sections, 
@@ -93,7 +142,7 @@ addSpatialModel.asrtests <- function(asrtests.obj, spatial.model = "TPPS",
                                  allow.fixedcorrelation = allow.fixedcorrelation,
                                  checkboundaryonly = checkboundaryonly, 
                                  update = update, chooseOnIC = FALSE, 
-                                 IClikelihood = "full", ...)
+                                 maxit = maxit, IClikelihood = "full", ...)
   
   #Fit a residual spatial model involving TPPS
   if ("TPPS" %in% spatial.mod)
@@ -102,6 +151,7 @@ addSpatialModel.asrtests <- function(asrtests.obj, spatial.model = "TPPS",
                                dropRowterm = dropRowterm, dropColterm = dropColterm, 
                                nsegs = nsegs, nestorder = nestorder, 
                                degree = degree, difforder = difforder, 
+                               usRandLinCoeffs = usRandLinCoeffs, 
                                rotateX = rotateX, ngridangles = ngridangles, 
                                which.rotacriterion = which.rotacriterion, 
                                nrotacores = nrotacores, 
@@ -111,7 +161,7 @@ addSpatialModel.asrtests <- function(asrtests.obj, spatial.model = "TPPS",
                                allow.fixedcorrelation = allow.fixedcorrelation,
                                checkboundaryonly = checkboundaryonly, 
                                update = update, chooseOnIC = FALSE, 
-                               IClikelihood = ic.lik, ...)
+                               maxit = maxit, IClikelihood = ic.lik, ...)
   
   return(spatial.asrt)  
 }
@@ -121,17 +171,18 @@ addSpatialModelOnIC.asrtests <- function(asrtests.obj, spatial.model = "TPPS",
                                          row.covar = "cRow", col.covar = "cCol", 
                                          row.factor = "Row", col.factor = "Col", 
                                          corr.funcs = c("ar1", "ar1"), 
-                                         row.corrFitfirst = TRUE, 
+                                         row.corrFitfirst = TRUE, allow.corrsJointFit = TRUE, 
                                          dropRowterm = NULL, dropColterm = NULL, 
                                          nsegs = NULL, nestorder = c(1, 1), 
                                          degree = c(3,3), difforder = c(2,2), 
+                                         usRandLinCoeffs = TRUE, 
                                          rotateX = FALSE, ngridangles = c(18, 18), 
                                          which.rotacriterion = "AIC", 
                                          nrotacores = 1, 
                                          asreml.option = "mbf", tpps4mbf.obj = NULL,  
                                          allow.unconverged = FALSE, allow.fixedcorrelation = FALSE,
                                          checkboundaryonly = FALSE, update = FALSE, 
-                                         IClikelihood = "full", which.IC = "AIC", 
+                                         maxit = 30, IClikelihood = "full", which.IC = "AIC", 
                                          ...)
 {    
   #Deal with arguments for tpsmmb and changeModelOnIC
@@ -144,6 +195,9 @@ addSpatialModelOnIC.asrtests <- function(asrtests.obj, spatial.model = "TPPS",
   validasrt <- validAsrtests(asrtests.obj)  
   if (is.character(validasrt))
     stop(validasrt)
+  
+  #Check if have separate section random and residual terms
+  checkSections4RanResTerms(asrtests.obj, sections = sections, asr4 = asr4)
   
   #Check nsegs
   if (length(nsegs) > 2)
@@ -174,11 +228,12 @@ addSpatialModelOnIC.asrtests <- function(asrtests.obj, spatial.model = "TPPS",
                                row.factor = row.factor, col.factor = col.factor, 
                                corr.funcs = corr.funcs, 
                                row.corrFitfirst = row.corrFitfirst, 
+                               allow.corrsJointFit = allow.corrsJointFit, 
                                allow.unconverged = allow.unconverged, 
                                allow.fixedcorrelation = allow.fixedcorrelation,
                                checkboundaryonly = checkboundaryonly, 
                                update = update, chooseOnIC = TRUE, 
-                               IClikelihood = ic.lik, which.IC = ic.type, 
+                               maxit = maxit, IClikelihood = ic.lik, which.IC = ic.type, 
                                ...)
   #Fit a local spatial model involving TPNCSS
   if ("TPNCSS" %in% spatial.mod)
@@ -189,9 +244,9 @@ addSpatialModelOnIC.asrtests <- function(asrtests.obj, spatial.model = "TPPS",
                                  allow.fixedcorrelation = allow.fixedcorrelation,
                                  checkboundaryonly = checkboundaryonly, 
                                  update = update, chooseOnIC = TRUE, 
-                                 IClikelihood = ic.lik, which.IC = ic.type, 
+                                 maxit = maxit, IClikelihood = ic.lik, which.IC = ic.type, 
                                  ...)
-  
+
   #Fit a residual spatial model involving TPPS
   if ("TPPS" %in% spatial.mod)
     spatial.asrt <- fitTPPSMod(asrtests.obj, sections = sections, 
@@ -199,6 +254,7 @@ addSpatialModelOnIC.asrtests <- function(asrtests.obj, spatial.model = "TPPS",
                                dropRowterm = dropRowterm, dropColterm = dropColterm, 
                                nsegs = nsegs, nestorder = nestorder, 
                                degree = degree, difforder = difforder, 
+                               usRandLinCoeffs = usRandLinCoeffs, 
                                rotateX = rotateX, ngridangles = ngridangles, 
                                asreml.opt = asreml.opt, 
                                tpps4mbf.obj = tpps4mbf.obj,
@@ -208,55 +264,19 @@ addSpatialModelOnIC.asrtests <- function(asrtests.obj, spatial.model = "TPPS",
                                nrotacores = nrotacores, 
                                checkboundaryonly = checkboundaryonly, 
                                update = update, chooseOnIC = TRUE, 
-                               IClikelihood = ic.lik, which.IC = ic.type, 
+                               maxit = maxit, IClikelihood = ic.lik, which.IC = ic.type, 
                                ...)
   return(spatial.asrt)  
 }
 
 #This function calculates the IC statistics for a fitted spatial model, 
-#irrespective of whether the finally fitted model was the better than the nospatial model
-calcSpatialICs <- function(spatial.asrt, spatial.mod, corr.funcs = c("ar1", "ar1"), 
+#irrespective of whether the finally fitted model was better than the nonspatial model
+calcSpatialICs <- function(spatial.asrt, spatial.mod, IClikelihood = "full", 
                            spatial.IC)
 {
-  tests.cols <- c("DF","denDF","AIC","BIC")
-  tests <- spatial.asrt$test.summary
-  if (spatial.mod == "corr")
-  { 
-    corr.funcs <- corr.funcs[corr.funcs != ""]
-    tests.sp <- do.call(rbind,
-                        lapply(c(corr.funcs), 
-                               function(func, tests) 
-                                 tests[grepl(paste0(" ", func), tests$terms), ], 
-                               tests = tests))
-    tests.sp <- unique(tests.sp)
-    if (nrow(tests.sp > 0))
-      tests.sp <- tests.sp[tests.sp$action == "Swapped", ]
-    #Take into account a test for a nugget term so that have IC statistics for the best fitting corr model
-    if (spatial.mod == "corr" && any(grepl("Try fixed residual variance", tests$terms) & 
-                                     grepl("Swapped", tests$action)))
-    {  
-      tests.unit <- as.data.frame(tests[grepl("Try fixed residual variance", tests$terms) & 
-                                          grepl("Swapped", tests$action), ])
-      tests.sp <- rbind(tests.sp, tests.unit)
-    }
-  }
-  else #get tensor spline tests 
-    tests.sp <- tests[grepl("tensor", tests$terms) & grepl("spline", tests$terms) &  grepl("wapped", tests$action), ]
-  
-  #Form spatial.IC, calculating ICs and loglik
-  if (nrow(tests.sp) < 1 || !any(grepl("wapped", tests.sp$action))) #spatial not fitted
-  {
-    tests.sp <- as.data.frame(matrix(rep(NA, 5), nrow = 1))
-    names(tests.sp) <- c(tests.cols, "loglik")
-  } else
-  {
-    tests.sp <- as.data.frame(tests.sp[ ,tests.cols])
-    tests.sp$loglik <- 0
-  }
-  names(tests.sp)[1:2] <- c("fixedDF","varDF")
-  tests.sp <- as.data.frame(t(as.matrix(colSums(rbind(spatial.IC[1,],tests.sp)), nrow = 1)))
+  tests.sp <- infoCriteria(spatial.asrt$asreml.obj, IClikelihood = IClikelihood)
+  tests.sp <- tests.sp[-match("NBound", names(tests.sp))]
   rownames(tests.sp) <- spatial.mod
-  tests.sp$loglik <- with(tests.sp, -0.5 * (AIC - 2 * (fixedDF + varDF)))
   spatial.IC <- rbind(spatial.IC,tests.sp)
   return(spatial.IC)
 }
@@ -266,18 +286,20 @@ chooseSpatialModelOnIC.asrtests <- function(asrtests.obj, trySpatial = "all",
                                             row.covar = "cRow", col.covar = "cCol", 
                                             row.factor = "Row", col.factor = "Col", 
                                             corr.funcs = c("ar1", "ar1"), 
-                                            row.corrFitfirst = TRUE, 
+                                            row.corrFitfirst = TRUE, allow.corrsJointFit = TRUE, 
                                             dropRowterm = NULL, dropColterm = NULL, 
                                             nsegs = NULL, nestorder = c(1, 1), 
+                                            usRandLinCoeffs = TRUE, 
                                             rotateX = FALSE, ngridangles = c(18, 18), 
                                             which.rotacriterion = "AIC", nrotacores = 1, 
                                             asreml.option = "mbf", tpps4mbf.obj = NULL, 
                                             allow.unconverged = FALSE, allow.fixedcorrelation = FALSE,
                                             checkboundaryonly = FALSE, update = FALSE, 
-                                            IClikelihood = "full", which.IC = "AIC", 
+                                            maxit = 30, IClikelihood = "full", which.IC = "AIC", 
                                             return.asrts = "best", ...)
 {    
   #Deal with arguments for tpsmmb and changeModelOnIC
+
   inargs <- list(...)
   checkEllipsisArgs(c("changeModelOnIC", "asreml"), inargs)
   checkEllipsisArgs("tpsmmb", inargs, pkg = "asremlPlus")
@@ -287,6 +309,9 @@ chooseSpatialModelOnIC.asrtests <- function(asrtests.obj, trySpatial = "all",
   validasrt <- validAsrtests(asrtests.obj)  
   if (is.character(validasrt))
     stop(validasrt)
+  
+  #Check if have separate section random and residual terms
+  checkSections4RanResTerms(asrtests.obj, sections = sections, asr4 = asr4)
   
   trySpatial <- checkTrySpatial(trySpatial)
   
@@ -334,14 +359,15 @@ chooseSpatialModelOnIC.asrtests <- function(asrtests.obj, trySpatial = "all",
                                             row.factor = row.factor, col.factor = col.factor, 
                                             corr.funcs = corr.funcs, 
                                             row.corrFitfirst = row.corrFitfirst, 
+                                            allow.corrsJointFit = allow.corrsJointFit, 
                                             allow.unconverged = allow.unconverged, 
                                             allow.fixedcorrelation = allow.fixedcorrelation,
                                             checkboundaryonly = checkboundaryonly, 
                                             update = update, chooseOnIC = TRUE, 
-                                            IClikelihood = ic.lik, which.IC = ic.type, 
+                                            maxit = maxit, IClikelihood = ic.lik, which.IC = ic.type, 
                                             ...)
       spatial.IC <- calcSpatialICs(spatial.asrt = spatial.asrts[["corr"]], spatial.mod = "corr", 
-                                   corr.funcs = corr.funcs, spatial.IC = spatial.IC)
+                                   IClikelihood = ic.lik, spatial.IC = spatial.IC)
     }
     
     #Fit a local spatial model involving TPNCSS
@@ -354,10 +380,10 @@ chooseSpatialModelOnIC.asrtests <- function(asrtests.obj, trySpatial = "all",
                                                 allow.fixedcorrelation = allow.fixedcorrelation,
                                                 checkboundaryonly = checkboundaryonly, 
                                                 update = update, chooseOnIC = TRUE, 
-                                                IClikelihood = ic.lik, which.IC = ic.type, 
+                                                maxit = maxit, IClikelihood = ic.lik, which.IC = ic.type, 
                                                 ...)
       spatial.IC <- calcSpatialICs(spatial.asrt = spatial.asrts[["TPNCSS"]] , spatial.mod = "TPNCSS", 
-                                   spatial.IC = spatial.IC)
+                                   IClikelihood = ic.lik, spatial.IC = spatial.IC)
     }
     
     #Fit a residual spatial model involving TPPCS
@@ -369,6 +395,7 @@ chooseSpatialModelOnIC.asrtests <- function(asrtests.obj, trySpatial = "all",
                                              nsegs = nsegs, nestorder = nestorder, 
                                              degree = c(3,3), difforder = c(2,2), 
                                              rotateX = rotateX, ngridangles = ngridangles, 
+                                             usRandLinCoeffs = usRandLinCoeffs, 
                                              which.rotacriterion = which.rotacriterion, 
                                              nrotacores = nrotacores, 
                                              asreml.opt = asreml.opt, 
@@ -377,10 +404,10 @@ chooseSpatialModelOnIC.asrtests <- function(asrtests.obj, trySpatial = "all",
                                              allow.fixedcorrelation = allow.fixedcorrelation,
                                              checkboundaryonly = checkboundaryonly, 
                                              update = update, chooseOnIC = TRUE, 
-                                             IClikelihood = ic.lik, which.IC = ic.type, 
+                                             maxit = maxit, IClikelihood = ic.lik, which.IC = ic.type, 
                                              ...)
       spatial.IC <- calcSpatialICs(spatial.asrt = spatial.asrts[["TPPCS"]] , spatial.mod = "TPPCS", 
-                                   spatial.IC = spatial.IC)
+                                   IClikelihood = ic.lik, spatial.IC = spatial.IC)
     }
     
     #Fit a residual spatial model involving TPP1LS
@@ -391,6 +418,7 @@ chooseSpatialModelOnIC.asrtests <- function(asrtests.obj, trySpatial = "all",
                                               dropRowterm = dropRowterm, dropColterm = dropColterm, 
                                               nsegs = nsegs, nestorder = nestorder, 
                                               degree = c(1,1), difforder = c(1,1), 
+                                              usRandLinCoeffs = FALSE, 
                                               rotateX = FALSE, ngridangles = c(0, 0), 
                                               which.rotacriterion = which.rotacriterion, 
                                               nrotacores = nrotacores, 
@@ -400,10 +428,10 @@ chooseSpatialModelOnIC.asrtests <- function(asrtests.obj, trySpatial = "all",
                                               allow.fixedcorrelation = allow.fixedcorrelation,
                                               checkboundaryonly = checkboundaryonly, 
                                               update = update, chooseOnIC = TRUE, 
-                                              IClikelihood = ic.lik, which.IC = ic.type, 
+                                              maxit = maxit, IClikelihood = ic.lik, which.IC = ic.type, 
                                               ...)
       spatial.IC <- calcSpatialICs(spatial.asrt = spatial.asrts[["TPP1LS"]] , spatial.mod = "TPP1LS", 
-                                   spatial.IC = spatial.IC)
+                                   IClikelihood = ic.lik, spatial.IC = spatial.IC)
     }
     
     #Find min AIC and, if multiple mins, select in specified order
@@ -429,6 +457,216 @@ chooseSpatialModelOnIC.asrtests <- function(asrtests.obj, trySpatial = "all",
               best.spatial.IC = spatial.comp[min.asrt]))
 }
 
+getVpars <- function(asreml.obj, asr4.2)
+{
+  if (asr4.2)
+  { 
+    vpc <- asreml.obj$vparameters.con
+    vpt <- asreml.obj$vparameters.type
+  } else
+  {
+    vpc <- vpc.char(asreml.obj)
+    vpt <- vpt.char(asreml.obj)
+  }
+  return(list(vpc = vpc, vpt = vpt))
+}
+
+#Function to identify residual and correlation model terms that are currently fitted
+getSectionVpars <- function( asreml.obj, sections, stub, corr.facs, which = c("res", "ran"), 
+                             asr4.2)
+{
+  vpar <- getVpars(asreml.obj, asr4.2 = asr4.2)
+  vpc <- vpar$vpc
+  vpt <- vpar$vpt
+
+  #Get the resdiual term
+  if ("res" %in% which)
+  {
+    #Get residual variance term using vpc and vpt
+    vpc.res <- vpc[grepl("!R$", names(vpc))]
+    vpt.res <- vpt[names(vpc.res)]
+    vpt.res <- vpt.res[vpt.res == "V"]
+    vpc.res <- vpc.res[names(vpt.res)]
+    if (length(vpc.res) > 1) 
+    { 
+      if (!is.null(sections) && 
+          #Check all residual variances include the sections name 
+          all(sapply(names(vpc.res), 
+                     function(vp) 
+                     {
+                       vp <- strsplit(vp, "\\_")[[1]][1]
+                       vp <- vp == sections
+                     })))
+      { 
+        kres.term <- grepl(sections, names(vpc.res)) & grepl(stub, names(vpc.res))
+        vpc.res <- vpc.res[kres.term]
+      } else
+      { 
+        warning("There are multiple residual terms, but at least some of these do not involve ",sections,
+                "; consequeently the model cannot accommodate nugget variances.")
+        vpc.res <- NULL
+      }
+    }
+    
+    if (length(vpc.res) != 1)
+      warning("Could not find a residual term for ", sections, " ", stub) 
+  } else
+    vpc.res <- NULL
+  
+  #Get the random correlation terms (if sections, from all sections)
+  if ("ran" %in%  which)
+  { 
+    vpc.ran <- vpc[!grepl("!R$", names(vpc))]
+    if (length(vpc.ran) > 0)
+      vpc.ran <- vpc.ran[sapply(names(vpc.ran),
+                                function(term, corr.facs)
+                                {
+                                  term <- fac.getinTerm(rmTermDescription(term), asr4.2 = asr4.2)
+                                  ran.corr <- 
+                                    {
+                                      if (length(term) == length(corr.facs))
+                                        all(sapply(corr.facs,
+                                                   {
+                                                     function(fac, term)
+                                                       any(grepl(fac, term))
+                                                   }, term = term))
+                                      else
+                                        FALSE
+                                    }
+                                  return(ran.corr)
+                                }, corr.facs = c(sections, corr.facs))]
+    if (length(vpc.ran) == 0)
+      vpc.ran <- NULL
+  } else
+    vpc.ran <- NULL
+  return(list(ran = vpc.ran, res = vpc.res))
+}
+
+#Function to fix a single residual term or the residual variance for current level of section 
+fixResTerm <- function(corr.asrt, sections, stub, asr4, asr4.2, 
+                       fitfunc = "changeTerms", 
+                       vpc.res, initial.values = 1,
+                       maxit = 30, 
+                       allow.unconverged = allow.unconverged, 
+                       allow.fixedcorrelation = allow.fixedcorrelation,
+                       checkboundaryonly = TRUE, 
+                       update = update, 
+                       IClikelihood = IClikelihood, 
+                       which.IC = which.IC, ...)
+{
+  inargs <- list(...)
+  
+  bounds.excl <- c("S","B")
+  
+  #If already fixed, don't process
+  if (vpc.res != "F")
+  {
+    #A single residual variance
+    if (is.null(sections))
+    { 
+      resmod <- as.character(getFormulae(corr.asrt$asreml.obj)$residual)
+      if (length(resmod) == 0)
+        resmod <- NULL
+      else
+        resmod <- resmod[2]
+      
+      if (vpc.res %in% bounds.excl)
+        fitfunc <- "changeTerms"
+      lab <- "Try fixed residual variance"
+      if (fitfunc == "changeTerms")
+        lab <- "Force fixed residual variance"
+      corr.asrt <- do.call(fitfunc, 
+                           c(list(corr.asrt, 
+                                  newResidual = resmod, label = lab, 
+                                  set.terms = names(vpc.res), 
+                                  initial.values = initial.values, 
+                                  bounds = "F", ignore.suffices = FALSE, 
+                                  maxit = maxit, 
+                                  allow.unconverged = allow.unconverged, 
+                                  allow.fixedcorrelation = allow.fixedcorrelation,
+                                  checkboundaryonly = TRUE, 
+                                  update = update, 
+                                  IClikelihood = IClikelihood, 
+                                  which.IC = which.IC), 
+                             inargs))
+      
+      if (largeVparChange(corr.asrt$asreml.obj, 0.75))
+        corr.asrt <- iterate(corr.asrt)
+    } else #sections with multiple residuals - fix the one for this section
+    {
+      kres.term <- names(vpc.res)
+      lab <- paste("Try fixed", names(kres.term))
+      fitfunc <- "changeModelOnIC"
+      if (vpc.res %in% bounds.excl)
+      { 
+        fitfunc <- "changeTerms"
+        lab <- paste("Force fixed", kres.term)
+      }
+        corr.asrt <- do.call(fitfunc, 
+                             c(list(corr.asrt, 
+                                    label = lab, 
+                                    set.terms = kres.term, 
+                                    initial.values = initial.values, 
+                                    bounds = "F", ignore.suffices = FALSE, 
+                                    maxit = maxit, 
+                                    allow.unconverged = allow.unconverged, 
+                                    allow.fixedcorrelation = allow.fixedcorrelation,
+                                    checkboundaryonly = TRUE, 
+                                    update = update, 
+                                    IClikelihood = IClikelihood, 
+                                    which.IC = which.IC), 
+                               inargs))
+    }
+  }
+  return(corr.asrt)
+}
+
+rmRanTerm <- function(corr.asrt, vpbound, 
+                      maxit = 30, 
+                      allow.unconverged, allow.fixedcorrelation,
+                      checkboundaryonly, update,
+                      IClikelihood, which.IC, 
+                      inargs)
+{ 
+  for (bound in vpbound)
+  { 
+    #Find term in random model formula to delete
+    ran.terms <- getFormulae(corr.asrt$asreml.obj)$random
+    ran.terms <- getTerms.formula(ran.terms)
+    facs.bound <- fac.getinTerm(rmTermDescription(bound))
+    facs.bound <- gsub('\\\"', "'", facs.bound)
+    facs.bound <- gsub('\\(', "\\\\(", facs.bound)
+    facs.bound <- gsub('\\)', "\\\\)", facs.bound)
+    terms.bound <-  sapply(ran.terms,
+                           function(term, facs.bound)
+                           {
+                             all(sapply(facs.bound,
+                                        {
+                                          function(fac, term)
+                                            grepl(fac, term)
+                                        }, term = term))
+                           }, facs.bound = facs.bound)
+    terms.bound <- names(terms.bound)[terms.bound]
+    terms.bound <- paste(terms.bound, collapse = " + ")
+
+    #Remove a bound term
+    if (!is.null(terms.bound) && terms.bound != "")
+      corr.asrt <- do.call(changeTerms,
+                           c(list(corr.asrt,
+                                  dropRandom = terms.bound,
+                                  label = paste("Drop bound",terms.bound),
+                                  maxit = maxit, 
+                                  allow.unconverged = allow.unconverged,
+                                  allow.fixedcorrelation = allow.fixedcorrelation,
+                                  checkboundaryonly = FALSE,
+                                  update = update,
+                                  IClikelihood = IClikelihood,
+                                  which.IC = which.IC),
+                             inargs))
+  }
+  return(corr.asrt)
+}
+
 #This function assumes that row.factor and col.factor are in the data
 makeCorrSpec1D <- function(corr.funcs, dimension, 
                            row.covar, col.covar, row.factor, col.factor, 
@@ -448,22 +686,52 @@ makeCorrSpec1D <- function(corr.funcs, dimension,
   return(corr1D)
 }  
 
+chk4SingularCorrTerms <- function(asrtests.obj, corr.asrt, label, 
+                                  sections, stub, corr.facs, asr4, asr4.2)
+{
+  vpc.corr <- getSectionVpars(asrtests.obj$asreml.obj, 
+                              sections = sections, stub = stub, 
+                              corr.facs = corr.facs, 
+                              asr4.2 = asr4.2)
+  
+  
+  #Determine the correlation terms, if any
+  vpt.corr <- getVpars(asrtests.obj$asreml.obj, asr4.2)$vpt
+  vpt.ran <- vpt.corr[names(vpc.corr$ran)]
+  vpt.r <- vpt.ran[vpt.ran %in% c("R", "P", "C")]
+  vpc.r <- vpc.corr$ran[names(vpt.r)]
+  #Are there singular r terms
+  if (length(vpc.r) > 0 && any(unlist(vpc.r) %in% "S"))
+  {
+    entry <- getTestEntry(asrtests.obj, label = label)
+    entry$action <- "Unchanged - singular term(s)"
+    corr.asrt$test.summary <- rbind(corr.asrt$test.summary, entry) 
+  } else #no S terms
+    corr.asrt <- asrtests.obj
+  return(corr.asrt)
+}
+
 fitCorrMod <- function(asrtests.obj, sections = NULL,
                        row.covar = "cRow", col.covar = "cCol", 
                        row.factor = "Row", col.factor = "Col", 
                        corr.funcs = c("ar1", "ar1"), 
-                       row.corrFitfirst = TRUE, 
+                       row.corrFitfirst = TRUE, allow.corrsJointFit = TRUE, 
                        allow.unconverged = TRUE, allow.fixedcorrelation = TRUE,
                        checkboundaryonly = FALSE, update = TRUE, 
                        chooseOnIC = TRUE, 
-                       IClikelihood = "full", which.IC = "AIC", 
+                       maxit = 30, IClikelihood = "full", which.IC = "AIC", 
                        ...)
 {
+  inargs <- list(...)
+
   asr4 <- isASRemlVersionLoaded(4, notloaded.fault = TRUE)
   asr4.2 <- isASReml4_2Loaded(4.2, notloaded.fault = TRUE)
   if (!asr4)
     stop(paste("Fitting spatial models using correlation/variance models", 
                "has not been implemented for asreml version less than 4.0"))
+  
+  bounds.excl <- c("B", "S")
+  all.bounds.excl <- c(bounds.excl, "F")
   
   #Check that named columns are in the data
   dat.in <- asrtests.obj$asreml.obj$call$data
@@ -471,6 +739,10 @@ fitCorrMod <- function(asrtests.obj, sections = NULL,
     dat.in <- eval(dat.in)
   
   #Check the correlation functions and set them up
+  id.funcs <- c("", "id", "idv")
+  cor.funcs <- c("ar1", "ar2", "ar3", "sar","sar2",
+                 "ma1", "ma2", "arma", "cor", "corb", "corg")
+  cor.funcs <- c(cor.funcs, sapply(cor.funcs, function(f) paste0(f, c("v","h"))))
   met.funcs <- c("exp", "gau", "lvr")
   met.funcs <- c(met.funcs, sapply(met.funcs, function(f) paste0(f, c("v","h"))))
   unimpl.funcs <- c("iexp", "igau", "ieuc", "sph", "cir", "aexp", "agau", "mtrn")
@@ -478,7 +750,7 @@ fitCorrMod <- function(asrtests.obj, sections = NULL,
   if (any(unimpl.funcs %in% corr.funcs))
     stop("Some of the following corr.funcs ar not implemented for spatial modelling: ", 
          paste(unimpl.funcs[unimpl.funcs %in% corr.funcs], collapse = ","))
-  if (all(corr.funcs %in% c("", "id", "idv")))
+  if (all(corr.funcs %in% id.funcs))
     stop("Both correlation functions are id or equivalent")
 
   #Check the grid covars and factors
@@ -503,10 +775,11 @@ fitCorrMod <- function(asrtests.obj, sections = NULL,
                              row.factor = row.factor, col.factor = col.factor, 
                              met.funcs = met.funcs, unimpl.funcs = unimpl.funcs)
   
-  #Remove units if in model
+  #Remove units if in random model
   if (grepl("units", as.character(getFormulae(asrtests.obj$asreml.obj)$random)[2]))
     asrtests.obj <- changeTerms(asrtests.obj, 
-                                dropRandom = "units", label = "Remove units term", 
+                                dropRandom = "units", label = "Remove random units term", 
+                                maxit = maxit, 
                                 allow.unconverged = allow.unconverged, 
                                 allow.fixedcorrelation = allow.fixedcorrelation,
                                 checkboundaryonly = TRUE, 
@@ -516,7 +789,7 @@ fitCorrMod <- function(asrtests.obj, sections = NULL,
   #Check if correlations already included in a term 
   t <- mapply(function(func, corr, asr)
   { 
-    if (!(func %in% c("", "id", "idv")) && 
+    if (!(func %in% id.funcs) && 
         any(sapply(as.character(getFormulae(asr)), 
                    function(mod, corr) grepl(corr, mod, fixed = TRUE), 
                    corr = corr)))
@@ -538,14 +811,22 @@ fitCorrMod <- function(asrtests.obj, sections = NULL,
   }
   
   #Loop over the sections
+  nuggsOK <- TRUE
   corr.asrt <- asrtests.obj
   for (i in 1:nsect)
   {
+    if (chooseOnIC)
+      fitfunc <- "changeModelOnIC"
+    else
+      fitfunc <- "changeTerms"
+    
     if (nsect > 1)
       stub <- levels(dat.in[[sections]])[i]
+    else
+      stub <- NULL
     corr.term <- FALSE
     #Check have a corr func
-    if (any(rfuncs[1] == c("", "id", "idv")))
+    if (any(rfuncs[1] == id.funcs))
       result1 <- "Unswapped"
     else
     { 
@@ -554,35 +835,32 @@ fitCorrMod <- function(asrtests.obj, sections = NULL,
       lab1 <- paste0("Try ", rterms[1])
       if (nsect > 1)
       {  
-        ran.term1 <- paste0("at(", sections, ", ",i, "):", ran.term1)
+        ran.term1 <- paste0("at(", sections, ", '",stub, "'):", ran.term1)
         lab1 <- paste0(lab1, " for ", sections, " ",stub)
       }
-      if (chooseOnIC)
-        corr.asrt <- changeModelOnIC(corr.asrt, 
-                                     addRandom = ran.term1, label = lab1, 
-                                     allow.unconverged = allow.unconverged, 
-                                     allow.fixedcorrelation = allow.fixedcorrelation,
-                                     checkboundaryonly = TRUE, 
-                                     update = update, 
-                                     IClikelihood = IClikelihood, 
-                                     which.IC = which.IC, 
-                                     ...)
-      else
-        corr.asrt <- changeTerms(corr.asrt, 
+      tmp.asrt <- do.call(fitfunc, 
+                          c(list(corr.asrt, 
                                  addRandom = ran.term1, label = lab1, 
                                  allow.unconverged = allow.unconverged, 
                                  allow.fixedcorrelation = allow.fixedcorrelation,
+                                 maxit = maxit, 
                                  checkboundaryonly = TRUE, 
                                  update = update, 
-                                 IClikelihood = IClikelihood, ...)
-      
+                                 IClikelihood = IClikelihood, 
+                                 which.IC = which.IC), 
+                            inargs))
+      #Check for singular (S) correlation model terms and only change model if none
+      corr.asrt <- chk4SingularCorrTerms(tmp.asrt, corr.asrt,  label = lab1, 
+                                         sections = sections, stub = stub, 
+                                         corr.facs = facs, 
+                                         asr4 = asr4, asr4.2 = asr4.2)
       if (largeVparChange(corr.asrt$asreml.obj, 0.75))
         corr.asrt <- iterate(corr.asrt)
       result1 <- getTestEntry(corr.asrt, label = lab1)$action
     }
     
     #Try 2nd correl in current section
-    if (!any(rfuncs[2] == c("", "id", "idv")))
+    if (!any(rfuncs[2] == id.funcs))
     {  
       lab <- paste0("Try ", rterms[2])
       if (nsect > 1)
@@ -596,58 +874,52 @@ fitCorrMod <- function(asrtests.obj, sections = NULL,
                                        asreml.obj = corr.asrt$asreml.obj)
         ran.term <- paste0(rterms[1], ":", rterms[2])
         if (nsect > 1)
-          ran.term <- paste0("at(", sections, ", ",i, "):", ran.term)
-        
-        if (chooseOnIC)
-          corr.asrt <- changeModelOnIC(corr.asrt, 
-                                       addRandom = ran.term, 
-                                       dropRandom = last.term, label = lab, 
-                                       allow.unconverged = allow.unconverged, 
-                                       allow.fixedcorrelation = allow.fixedcorrelation,
-                                       checkboundaryonly = TRUE, 
-                                       update = update, 
-                                       IClikelihood = IClikelihood, 
-                                       which.IC = which.IC, 
-                                       ...)
-        else
-          corr.asrt <- changeTerms(corr.asrt, 
+          ran.term <- paste0("at(", sections, ", '",stub, "'):", ran.term)
+        tmp.asrt <- do.call(fitfunc, 
+                            c(list(corr.asrt, 
                                    addRandom = ran.term, 
                                    dropRandom = last.term, label = lab, 
+                                   maxit = maxit, 
                                    allow.unconverged = allow.unconverged, 
                                    allow.fixedcorrelation = allow.fixedcorrelation,
-                                   checkboundaryonly = TRUE, 
+                                   checkboundaryonly = checkboundaryonly, 
                                    update = update, 
-                                   IClikelihood = IClikelihood, ...)
+                                   IClikelihood = IClikelihood, 
+                                   which.IC = which.IC),
+                              inargs))
+        #Check for singular (S) correlation model terms and only change model if none
+        corr.asrt <- chk4SingularCorrTerms(tmp.asrt, corr.asrt,  label = lab, 
+                                           sections = sections, stub = stub, 
+                                           corr.facs = facs, 
+                                           asr4 = asr4, asr4.2 = asr4.2)
         
         if (largeVparChange(corr.asrt$asreml.obj, 0.75))
           corr.asrt <- iterate(corr.asrt)
         if (!(grepl("Unswapped", getTestEntry(corr.asrt, label = lab)$action)) && 
             !(grepl("Unchanged", getTestEntry(corr.asrt, label = lab)$action)))
           last.term <- ran.term
-      } else #no first fac ar1
+      } else #no first fac corr
       { 
         ran.term <- paste0(facs[1], ":", rterms[2])
         if (nsect > 1)
-          ran.term <- paste0("at(", sections, ", ",i, "):", ran.term)
-        if (chooseOnIC)
-          corr.asrt <- changeModelOnIC(corr.asrt, 
-                                       addRandom = ran.term, label = lab, 
-                                       allow.unconverged = allow.unconverged, 
-                                       allow.fixedcorrelation = allow.fixedcorrelation,
-                                       checkboundaryonly = TRUE, 
-                                       update = update, 
-                                       IClikelihood = IClikelihood, 
-                                       which.IC = which.IC, 
-                                       ...)
-        else
-          corr.asrt <- changeTerms(corr.asrt, 
+          ran.term <- paste0("at(", sections, ", '",stub, "'):", ran.term)
+        tmp.asrt <- do.call(fitfunc, 
+                            c(list(corr.asrt, 
                                    addRandom = ran.term, label = lab, 
+                                   maxit = maxit, 
                                    allow.unconverged = allow.unconverged, 
                                    allow.fixedcorrelation = allow.fixedcorrelation,
-                                   checkboundaryonly = TRUE, 
+                                   checkboundaryonly = checkboundaryonly, 
                                    update = update, 
-                                   IClikelihood = IClikelihood, ...)
-
+                                   IClikelihood = IClikelihood, 
+                                   which.IC = which.IC), 
+                              inargs))
+        #Check for singular (S) correlation model terms and only change model if none
+        corr.asrt <- chk4SingularCorrTerms(tmp.asrt, corr.asrt, label = lab, 
+                                           sections = sections, stub = stub, 
+                                           corr.facs = facs, 
+                                           asr4 = asr4, asr4.2 = asr4.2)
+        
         if (largeVparChange(corr.asrt$asreml.obj, 0.75))
           corr.asrt <- iterate(corr.asrt)
         result <- getTestEntry(corr.asrt, label = lab)$action
@@ -667,98 +939,379 @@ fitCorrMod <- function(asrtests.obj, sections = NULL,
           {
             ran.term1 <- paste0(rterms[1], ":", rterms[2])
             if (nsect > 1)
-              ran.term1 <- paste0("at(", sections, ", ",i, "):", ran.term1)
-            if (chooseOnIC)
-              corr.asrt <- changeModelOnIC(corr.asrt, 
-                                           dropRandom = last.term,
-                                           addRandom = ran.term1, label = lab1, 
-                                           allow.unconverged = allow.unconverged, 
-                                           allow.fixedcorrelation = allow.fixedcorrelation,
-                                           checkboundaryonly = TRUE, 
-                                           update = update, 
-                                           IClikelihood = IClikelihood, 
-                                           which.IC = which.IC, 
-                                           ...)
-            else
-              corr.asrt <- changeTerms(corr.asrt, 
+              ran.term1 <- paste0("at(", sections, ", '",stub, "'):", ran.term1)
+            tmp.asrt <- do.call(fitfunc, 
+                                c(list(corr.asrt, 
                                        dropRandom = last.term,
                                        addRandom = ran.term1, label = lab1, 
+                                       maxit = maxit, 
                                        allow.unconverged = allow.unconverged, 
                                        allow.fixedcorrelation = allow.fixedcorrelation,
-                                       checkboundaryonly = TRUE, 
+                                       checkboundaryonly = FALSE, 
                                        update = update, 
-                                       IClikelihood = IClikelihood, ...)
+                                       IClikelihood = IClikelihood, 
+                                       which.IC = which.IC), 
+                                  inargs))
+            #Check for singular (S) correlation model terms and only change model if none
+            corr.asrt <- chk4SingularCorrTerms(tmp.asrt, corr.asrt, label = lab1, 
+                                               sections = sections, stub = stub, 
+                                               corr.facs = facs, 
+                                               asr4 = asr4, asr4.2 = asr4.2)
             
-            if (largeVparChange(corr.asrt$asreml.obj, 0.75))
-              corr.asrt <- iterate(corr.asrt)
             result1 <- getTestEntry(corr.asrt, label = lab1)$action
           }
         }
       }
-    }
-
-    #Test the nugget residual variance
-    if (chooseOnIC && corr.term)
-    {
       if (largeVparChange(corr.asrt$asreml.obj, 0.75))
         corr.asrt <- iterate(corr.asrt)
-      if (asr4)
+
+      #If no  correlation fitted and both rows and cols have corr funcs, try fitting them together
+      if (!corr.term && (!any(rfuncs %in% id.funcs)) && allow.corrsJointFit)
       {
-        if (asr4.2)
-        { 
-          vpc <- corr.asrt$asreml.obj$vparameters.con
-          vpt <- corr.asrt$asreml.obj$vparameters.type
-        } else
-        {
-          vpc <- vpc.char(corr.asrt$asreml.obj)
-          vpt <- vpt.char(corr.asrt$asreml.obj)
+        #Try first correl in current section
+        ran.term2 <- paste0(rterms[1], ":", rterms[2])
+        lab2 <- paste0("Try ", rterms[1], " and ", rterms[2])
+        if (nsect > 1)
+        {  
+          ran.term2 <- paste0("at(", sections, ", '",stub, "'):", ran.term2)
+          lab2 <- paste0(lab2, " for ", sections, " ",stub)
         }
-        vpc <- vpc[grepl("!R$", names(vpc))]
-        vpt <- vpt[names(vpc)]
-      }
-      if (length(vpc) == 1 && !(vpc %in% c("F", "B") && vpt == "V"))
-      {
-        lab <- "Try fixed residual variance"
-        resvar <- names(vpc)
-        resmod <- as.character(getFormulae(corr.asrt$asreml.obj)$residual)
-        if (length(resmod) == 0)
-          resmod <- NULL
-        else
-          resmod <- resmod[2]
-        if (chooseOnIC)
-          corr.asrt <- changeModelOnIC(corr.asrt, 
-                                       newResidual = resmod, label = lab, 
-                                       set.terms = resvar, initial.values = 1, 
-                                       bounds = "F", ignore.suffices = FALSE, 
-                                       allow.unconverged = allow.unconverged, 
-                                       allow.fixedcorrelation = allow.fixedcorrelation,
-                                       checkboundaryonly = TRUE, 
-                                       update = update, 
-                                       IClikelihood = IClikelihood, 
-                                       which.IC = which.IC, 
-                                       ...)
-        else
-          corr.asrt <- changeTerms(corr.asrt, 
-                                   newResidual = resmod, label = lab, 
-                                   set.terms = resvar, initial.values = 1, 
-                                   bounds = "F", ignore.suffices = FALSE, 
+        tmp.asrt <- do.call(fitfunc, 
+                            c(list(corr.asrt, 
+                                   addRandom = ran.term2, label = lab2, 
+                                   maxit = maxit, 
                                    allow.unconverged = allow.unconverged, 
                                    allow.fixedcorrelation = allow.fixedcorrelation,
                                    checkboundaryonly = TRUE, 
                                    update = update, 
                                    IClikelihood = IClikelihood, 
-                                   which.IC = which.IC, 
-                                   ...)
+                                   which.IC = which.IC), 
+                              inargs))
+        #Check for singular (S) correlation model terms and only change model if none
+        corr.asrt <- chk4SingularCorrTerms(tmp.asrt, corr.asrt, label = lab2, 
+                                           sections = sections, stub = stub, 
+                                           corr.facs = facs, 
+                                           asr4 = asr4, asr4.2 = asr4.2)
+        
+        if (largeVparChange(corr.asrt$asreml.obj, 0.75))
+          corr.asrt <- iterate(corr.asrt)
+        result2 <- getTestEntry(corr.asrt, label = lab2)$action
+        if (!grepl("Unswapped", result2) && !grepl("Unchanged", result2)) #two-factor corr fitted
+        { 
+          corr.term <- TRUE
+          last.term <- ran.term2
+        }
+      }
+    } #end of 2nd correl in current section
+    
+    if (largeVparChange(corr.asrt$asreml.obj, 0.75))
+      corr.asrt <- iterate(corr.asrt)
+
+    #Test for nugget variance, only if the residual model is a variance model related to sections
+    if (chooseOnIC && corr.term && nuggsOK)
+    {
+      #Get random and residual terms for correlation model for the current section
+      vpc.corr <- getSectionVpars(corr.asrt$asreml.obj, 
+                                  sections = sections, stub = stub, 
+                                  corr.facs = facs, 
+                                  asr4.2 = asr4.2)
+
+      #Determine the correlation terms, if any
+      vpt.corr <- getVpars(corr.asrt$asreml.obj, asr4.2)$vpt
+      vpt.ran <- vpt.corr[names(vpc.corr$ran)]
+      vpt.r <- vpt.ran[vpt.ran %in% c("R", "P", "C")]
+      vpc.r <- vpc.corr$ran[names(vpt.r)]
+      #Are there no r terms or all r terms are bound or there is no residual term
+      if (length(vpc.r) == 0 || all(vpc.r %in% all.bounds.excl) || is.null(vpc.corr$res))
+        nuggsOK <- FALSE
+      if (nuggsOK)
+      {
+        #Try fixing either the  single residual variance term or that for the current section 
+        tmp.asrt <- do.call(fixResTerm, 
+                            c(list(corr.asrt, sections = sections, stub = stub, 
+                                   asr4 = asr4, asr4.2 = asr4.2, 
+                                   fitfunc = "changeModelOnIC", vpc.res = vpc.corr$res, 
+                                   maxit = maxit, 
+                                   allow.unconverged = allow.unconverged, 
+                                   allow.fixedcorrelation = allow.fixedcorrelation,
+                                   checkboundaryonly = TRUE, 
+                                   update = update, 
+                                   IClikelihood = IClikelihood, 
+                                   which.IC = which.IC), 
+                              inargs))
+        lasttest <- tail(tmp.asrt$test.summary, 1)
+        if (grepl("fixed residual variance", lasttest$terms) && 
+            (grepl("Unswapped", lasttest$action) || grepl("Unchanged", lasttest$action)))
+          corr.asrt <- tmp.asrt
+        else
+        { 
+          new.vpc.corr <- getSectionVpars(tmp.asrt$asreml.obj, 
+                                          sections = sections, stub = stub, 
+                                          corr.facs = facs, 
+                                          asr4.2 = asr4.2)
+          #Change residual is fixed, and either (i) all random correlation model terms are unbound 
+          #   or (ii) none have changed
+          n.new <- length(new.vpc.corr$ran)
+          n.old <- length(vpc.corr$ran)
+          if (new.vpc.corr$res == "F" && 
+              (n.new > 0 && (!any(new.vpc.corr$ran %in% bounds.excl) || 
+                             (n.new == n.old && all(new.vpc.corr$ran == vpc.corr$ran)))))
+            corr.asrt <- tmp.asrt
+        }
         if (largeVparChange(corr.asrt$asreml.obj, 0.75))
           corr.asrt <- iterate(corr.asrt)
       }
-    }
-  }
+    } #end of nugget variance test
 
-  #Having made all model changes with checkboundaryonly = TRUE, update for checkboundaryonly set to FALSE
-  if (!checkboundaryonly)
-    corr.asrt <- rmboundary(corr.asrt, checkboundaryonly = checkboundaryonly, 
-                            update = update, IClikelihood = IClikelihood)
+    #Having made all model changes with checkboundaryonly = TRUE, update for checkboundaryonly set to FALSE
+    if (!checkboundaryonly)
+      corr.asrt <- rmboundary(corr.asrt, checkboundaryonly = checkboundaryonly, 
+                              update = update, IClikelihood = IClikelihood)
+    
+    #Determine if there is a correlation term
+    vpt.corr <- getVpars(corr.asrt$asreml.obj, asr4.2)$vpt
+    vpt.corr <- vpt.corr[vpt.corr %in% c("R", "P", "C")]
+    corr.term <- length(vpt.corr) > 0 
+
+    #Further atttempts to deal with bound random and residual terms when 
+    # (i) checkboundary only is FALSE and (ii) there are correlation terms
+    if (corr.term && !checkboundaryonly)
+    {
+      for (j in i:1)
+      {
+        if (nsect > 1)
+        {
+          stub <- levels(dat.in[[sections]])[j]
+        } else
+          stub <- NULL
+        #Get random and residual terms for the current section
+        vpc.ran <- getSectionVpars(corr.asrt$asreml.obj, which = "ran",
+                                   sections = sections, stub = stub, 
+                                   corr.facs = facs, 
+                                   asr4.2 = asr4.2)$ran
+        vpc.res <- getVpars(corr.asrt$asreml.obj, asr4.2)$vpc
+        vpc.res <- vpc.res[grepl("!R$", names(vpc.res))]
+        vpc.corr <- c(vpc.ran, vpc.res)
+        
+        if (any(unlist(vpc.corr) %in% all.bounds.excl))  #changed from bounds.excl
+        {
+          #Get vpc for this section
+          vpc.corr <- getSectionVpars(corr.asrt$asreml.obj, 
+                                      sections = sections, stub = stub, 
+                                      corr.facs = facs, 
+                                      asr4.2 = asr4.2)
+          #Only process if have bound residual and/or random corr model terms
+          if (any(unlist(vpc.corr) %in% all.bounds.excl))
+          {
+            #get bound random terms
+            vpc.bran <- vpc.corr$ran[vpc.corr$ran %in% all.bounds.excl]
+            if (length(vpc.bran) > 0)
+            { 
+              vpt.bran <- getVpars(corr.asrt$asreml.obj, asr4.2)$vpt[names(vpc.bran)]
+              #If any random correlations bound, remove corresponding term
+              if (any(vpt.bran %in% c("R", "P", "C")))
+              {
+                #Get bound corr vpars and remove
+                vpc.bC <- vpc.bran[vpt.bran %in% c("R", "P", "C")] 
+                corr.asrt <- rmRanTerm(corr.asrt, vpbound = names(vpc.bC), 
+                                       maxit = maxit, 
+                                       allow.unconverged = allow.unconverged,
+                                       allow.fixedcorrelation = allow.fixedcorrelation,
+                                       checkboundaryonly = FALSE,
+                                       update = update,
+                                       IClikelihood = IClikelihood,
+                                       which.IC = which.IC, 
+                                       inargs = inargs)
+                if (largeVparChange(corr.asrt$asreml.obj, 0.75))
+                  corr.asrt <- iterate(corr.asrt)
+                
+                #update constraints for corr.bound under the new model
+                vpc.corr <- getSectionVpars(corr.asrt$asreml.obj, 
+                                            sections = sections, stub = stub, 
+                                            corr.facs = facs, 
+                                            asr4.2 = asr4.2)
+              }
+            }
+            
+            #If Res is F or B and a ran variance is bound, remove bound ran term
+            if (!is.null(vpc.corr$res) && vpc.corr$res %in% all.bounds.excl)
+            {
+              vpc.ran <- vpc.corr$ran
+              vpt.ran <- getVpars(corr.asrt$asreml.obj, asr4.2)$vpt[names(vpc.ran)]
+              vpc.Vran <- vpc.ran[vpt.ran %in% c("V", "G")]
+              if (length(vpc.Vran) > 0 && any(vpc.Vran %in% bounds.excl))
+              {
+                #Get bound vars vpars
+                vpc.bV <- vpc.Vran[vpc.Vran %in% bounds.excl] 
+                if (length(vpc.bV) > 0)
+                { 
+                  #Remove the terms
+                  corr.asrt <- rmRanTerm(corr.asrt, vpbound = names(vpc.bV),
+                                         maxit = maxit, 
+                                         allow.unconverged = allow.unconverged,
+                                         allow.fixedcorrelation = allow.fixedcorrelation,
+                                         checkboundaryonly = FALSE,
+                                         update = update,
+                                         IClikelihood = IClikelihood,
+                                         which.IC = which.IC, 
+                                         inargs = inargs)
+                  
+                  if (largeVparChange(corr.asrt$asreml.obj, 0.75))
+                    corr.asrt <- iterate(corr.asrt)
+                  
+                  #update constraints for corr.bound under the new model
+                  vpc.corr <- getSectionVpars(corr.asrt$asreml.obj, 
+                                              sections = sections, stub = stub, 
+                                              corr.facs = facs, 
+                                              asr4.2 = asr4.2)
+                }              
+              }
+            }
+            
+            
+            if (length(vpc.corr$ran) > 0)
+            { 
+              vpt.ran <- getVpars(corr.asrt$asreml.obj, asr4.2)$vpt[names(vpc.corr$ran)]
+              vpc.Vran <- vpc.corr$ran[vpt.ran %in% c("V","G")]
+              vpc.bVran <- vpc.Vran[vpc.Vran %in% all.bounds.excl]
+            } else
+              vpc.bVran <- vpc.Vran <- vpt.ran <- NULL
+            if (xor(length(vpc.bVran) > 0, 
+                    length(vpc.corr$res) > 0 && (vpc.corr$res %in% c("B","S"))))
+            { 
+              if (vpc.corr$res %in% c("B","S"))
+              { 
+                #loop until the section residual variance is not in c("B","S") 
+                kloop <- 0
+                while (vpc.corr$res %in% c("B","S") && kloop < 3)
+                { 
+                  tmp.asrt <- do.call(fixResTerm, 
+                                      c(list(corr.asrt, sections = sections, stub = stub, 
+                                             asr4 = asr4, asr4.2 = asr4.2, 
+                                             fitfunc = "changeTerms", vpc.res = vpc.corr$res, 
+                                             maxit = maxit, 
+                                             allow.unconverged = allow.unconverged, 
+                                             allow.fixedcorrelation = TRUE,
+                                             checkboundaryonly = TRUE, 
+                                             update = update, 
+                                             IClikelihood = IClikelihood, 
+                                             which.IC = which.IC), 
+                                        inargs))
+                  lab <- "Force fixed residual variance"
+                  if (!is.null(sections))
+                    lab <- paste("Force fixed", names(vpc.corr$res))
+                  result <- getTestEntry(tmp.asrt, lab)$action
+                  #update the constraints under the new model
+                  vpc.corr <- getSectionVpars(tmp.asrt$asreml.obj, 
+                                              sections = sections, stub = stub, 
+                                              corr.facs = facs, 
+                                              asr4.2 = asr4.2)
+                  #Check if a corr has gone bound and, it is has, remove it
+                  vpc.bran <- vpc.corr$ran[vpc.corr$ran %in% all.bounds.excl]
+                  if (length(vpc.bran) > 0)
+                  { 
+                    vpt.bran <- getVpars(tmp.asrt$asreml.obj, asr4.2)$vpt[names(vpc.bran)]
+                    
+                    #If any random correlations bound, remove corresponding term
+                    if (any(vpt.bran %in% c("R", "P", "C")))
+                    {
+                      #Get bound corr vpars and remove
+                      vpc.bC <- vpc.bran[vpt.bran %in% c("R", "P", "C")] 
+                      corr.asrt <- rmRanTerm(corr.asrt, vpbound = names(vpc.bC),
+                                             maxit = maxit, 
+                                             allow.unconverged = allow.unconverged,
+                                             allow.fixedcorrelation = allow.fixedcorrelation,
+                                             checkboundaryonly = FALSE,
+                                             update = update,
+                                             IClikelihood = IClikelihood,
+                                             which.IC = which.IC, 
+                                             inargs = inargs)
+                    } 
+                  } else 
+                  { 
+                    if(grepl("Unchanged", result))
+                    {
+                      vpc.ran <- vpc.corr$ran[1]
+                      corr.asrt <- rmRanTerm(corr.asrt, vpbound = names(vpc.ran),
+                                             maxit = maxit, 
+                                             allow.unconverged = allow.unconverged,
+                                             allow.fixedcorrelation = allow.fixedcorrelation,
+                                             checkboundaryonly = FALSE,
+                                             update = update,
+                                             IClikelihood = IClikelihood,
+                                             which.IC = which.IC, 
+                                             inargs = inargs)
+                    } else
+                      corr.asrt <- tmp.asrt
+                  }
+                  
+                  #update the constraints under the new model
+                  vpc.corr <- getSectionVpars(corr.asrt$asreml.obj, 
+                                              sections = sections, stub = stub, 
+                                              corr.facs = facs, 
+                                              asr4.2 = asr4.2)
+                  kloop <- kloop + 1
+                } #end while loop
+              } else
+              {
+                for (bound in names(vpc.bVran))
+                {
+                  lab <- paste("Force fixed", bound)
+                  tmp.asrt <- do.call(changeTerms, 
+                                      c(list(corr.asrt, 
+                                             label = lab, 
+                                             set.terms = bound, initial.values = 1, 
+                                             bounds = "F", ignore.suffices = FALSE, 
+                                             maxit = maxit, 
+                                             allow.unconverged = allow.unconverged, 
+                                             allow.fixedcorrelation = allow.fixedcorrelation,
+                                             checkboundaryonly = TRUE, 
+                                             update = update, 
+                                             IClikelihood = IClikelihood, 
+                                             which.IC = which.IC), 
+                                        inargs))
+                  #Check for singular (S) correlation model terms and only change model if none
+                  corr.asrt <- chk4SingularCorrTerms(tmp.asrt, corr.asrt, label = lab,  
+                                                     sections = sections, stub = stub, 
+                                                     corr.facs = facs, 
+                                                     asr4 = asr4, asr4.2 = asr4.2)
+                  result <- getTestEntry(corr.asrt, label = lab)$action
+                  if (grepl("Unchanged", result))
+                  {
+                    corr.asrt <- rmRanTerm(corr.asrt, vpbound = bound,
+                                           maxit = maxit, 
+                                           allow.unconverged = allow.unconverged,
+                                           allow.fixedcorrelation = allow.fixedcorrelation,
+                                           checkboundaryonly = FALSE,
+                                           update = update,
+                                           IClikelihood = IClikelihood,
+                                           which.IC = which.IC, 
+                                           inargs = inargs)
+                  }
+                }   
+              }
+            } else #end xor(res, V ran bound)
+            {
+              #If both Res and Vran are in all.bounds.excl, remove the V ran terms
+              vpc.Vran <- vpc.corr$ran[vpt.ran %in% c("V","G")]
+              vpc.FBVran <- vpc.Vran[vpc.Vran %in% all.bounds.excl]
+              if (length(vpc.FBVran) > 0 && vpc.corr$res %in% c("B","S"))
+                corr.asrt <- rmRanTerm(corr.asrt, vpbound = names(vpc.FBVran),
+                                       maxit = maxit, 
+                                       allow.unconverged = allow.unconverged,
+                                       allow.fixedcorrelation = allow.fixedcorrelation,
+                                       checkboundaryonly = FALSE,
+                                       update = update,
+                                       IClikelihood = IClikelihood,
+                                       which.IC = which.IC, 
+                                       inargs = inargs)
+            } #end one variance bound section
+            #} #end one variance bound loop - don't iterate as can unfix a term
+          } #end vpars section
+        } #end dealing with bound vpars
+      } #end bounds within a sections
+    } #end checking bounds
+  } #end of sections loop
   
   return(corr.asrt)
 }
@@ -770,7 +1323,7 @@ fitTPNCSSMod <- function(asrtests.obj, sections = NULL,
                          allow.unconverged = TRUE, allow.fixedcorrelation = TRUE,
                          checkboundaryonly = FALSE, update = TRUE, 
                          chooseOnIC = TRUE, 
-                         IClikelihood = "full", which.IC = "AIC", 
+                         maxit = 30, IClikelihood = "full", which.IC = "AIC", 
                          ...)
 { 
   #Check that named columns are in the data
@@ -840,7 +1393,7 @@ fitTPNCSSMod <- function(asrtests.obj, sections = NULL,
                                    allow.fixedcorrelation = allow.fixedcorrelation,
                                    checkboundaryonly = checkboundaryonly, 
                                    update = update, 
-                                   IClikelihood = IClikelihood, 
+                                   maxit = maxit, IClikelihood = IClikelihood, 
                                    which.IC = which.IC, 
                                    ...)
     else
@@ -855,7 +1408,7 @@ fitTPNCSSMod <- function(asrtests.obj, sections = NULL,
                                allow.fixedcorrelation = allow.fixedcorrelation,
                                checkboundaryonly = checkboundaryonly, 
                                update = update, 
-                               IClikelihood = IClikelihood, ...)
+                               maxit = maxit, IClikelihood = IClikelihood, ...)
     
   }
   
@@ -866,7 +1419,7 @@ fitTPNCSSMod <- function(asrtests.obj, sections = NULL,
   return(tspl.asrt)
 }
 
-#Creates a list with the tpps bits for asreml.options = "grp"
+#Creates a list with the tpps bits for asreml.option = "grp"
 addPSdesign.mat <- function(dat, sections = NULL, nsect = 1, 
                             row.coords, col.coords, 
                             nsegs = NULL, nestorder = c(1, 1), 
@@ -1147,14 +1700,17 @@ fitTPSModSect <- function(tspl.asrt, data, mat, ksect, sect.fac,
                           nsegs = NULL, nestorder = c(1, 1), 
                           degree = c(3,3), difforder = c(2,2), 
                           rotateX = FALSE, ngridangles = c(18,18), 
+                          usRandLinCoeffs = TRUE, 
                           which.rotacriterion = "AIC", nrotacores = 1, 
                           asreml.opt = "mbf", stub = "xx", 
                           allow.unconverged = TRUE, allow.fixedcorrelation = TRUE,
                           chooseOnIC = TRUE, 
                           checkboundaryonly = FALSE, update = TRUE, 
-                          IClikelihood = "full", which.IC = "AIC", ...)
+                          maxit = 30, IClikelihood = "full", which.IC = "AIC", ...)
 {
   inargs <- list(...)
+  
+  asr4.2 <- isASReml4_2Loaded(4.2, notloaded.fault = TRUE)
   
   #Are dropRowterm and dropColterm already in the model?
   facs <- c(dropRowterm, dropColterm)
@@ -1209,6 +1765,7 @@ fitTPSModSect <- function(tspl.asrt, data, mat, ksect, sect.fac,
                              paste0("dev(",row.covar,")"), 
                              paste0("dev(",col.covar,")"))), 
                     collapse = " + ")
+
     #Fit the full P-spline model, without rotation
     if (rotateX)
       labunrot <- gsub("tensor", "unrotated tensor", lab)
@@ -1227,6 +1784,7 @@ fitTPSModSect <- function(tspl.asrt, data, mat, ksect, sect.fac,
                                        allow.fixedcorrelation = allow.fixedcorrelation,
                                        checkboundaryonly = checkboundaryonly, 
                                        update = update, 
+                                       maxit = maxit, 
                                        IClikelihood = IClikelihood, 
                                        which.IC = which.IC), 
                                   inargs))
@@ -1251,19 +1809,20 @@ fitTPSModSect <- function(tspl.asrt, data, mat, ksect, sect.fac,
                                       allow.fixedcorrelation = TRUE,
                                       checkboundaryonly = TRUE, 
                                       update = update, 
+                                      maxit = maxit, 
                                       IClikelihood = IClikelihood, 
                                       which.IC = which.IC))
       rot.asr <- rot.asrt$asreml.obj
       dev <- deviance.asr(rot.asr)
       
-      #FInd the optimal thetas
+      #Find the optimal thetas
       theta_opt <- rotate.penalty.U(rot.asr, data, sections = sections, ksect = ksect, 
                                     row.covar = row.covar, col.covar = col.covar,
                                     nsegs = nsegs, nestorder = nestorder,
                                     degree = degree, difforder = difforder,
                                     rotateX = rotateX, ngridangles = ngridangles, 
                                     which.rotacriterion = which.rotacriterion, 
-                                    nrotacores = nrotacores, 
+                                    nrotacores = nrotacores, maxit = maxit, 
                                     asreml.opt = "mbf", mbf.env = sys.frame(), 
                                     stub = stub)
       theta.opt <- theta_opt$theta.opt
@@ -1292,14 +1851,16 @@ fitTPSModSect <- function(tspl.asrt, data, mat, ksect, sect.fac,
       if (chooseOnIC)
       { 
         tspl.asrt <- updateOnIC.asrtests(tspl.asrt, data = dat, 
-                                         mbf = mbf.lis, maxit = 30, 
-                                         label = labrot, IClikelihood = IClikelihood, 
+                                         mbf = mbf.lis, maxit = maxit, 
+                                         label = labrot, 
+                                         maxit = maxit, 
+                                         IClikelihood = IClikelihood, 
                                          which.IC = which.IC)
         if (grepl("Unswapped", getTestEntry(tspl.asrt, label = labrot)$action))
           theta.opt <- c(0,0)
       } else
         tspl.asrt <- update.asrtests(tspl.asrt, data = mat$data.plus, 
-                                     mbf = mbf.lis, maxit = 30, 
+                                     mbf = mbf.lis, maxit = maxit, 
                                      label = labrot, IClikelihood = IClikelihood)
       #Check criteria
       # print(infoCriteria(list(old = tspl.asrt$asreml.obj, new = new.asr), IClikelihood = "full"))
@@ -1336,6 +1897,7 @@ fitTPSModSect <- function(tspl.asrt, data, mat, ksect, sect.fac,
                                        allow.fixedcorrelation = allow.fixedcorrelation,
                                        checkboundaryonly = checkboundaryonly, 
                                        update = update, 
+                                       maxit = maxit, 
                                        IClikelihood = IClikelihood, 
                                        which.IC = which.IC), 
                                   inargs))
@@ -1360,6 +1922,7 @@ fitTPSModSect <- function(tspl.asrt, data, mat, ksect, sect.fac,
                                       allow.fixedcorrelation = TRUE,
                                       checkboundaryonly = TRUE, 
                                       update = update, 
+                                      maxit = maxit, 
                                       IClikelihood = IClikelihood, 
                                       which.IC = which.IC))
       rot.asr <- rot.asrt$asreml.obj
@@ -1372,7 +1935,7 @@ fitTPSModSect <- function(tspl.asrt, data, mat, ksect, sect.fac,
                                     degree = degree, difforder = difforder,
                                     rotateX = rotateX, ngridangles = ngridangles, 
                                     which.rotacriterion = which.rotacriterion, 
-                                    nrotacores = nrotacores, 
+                                    nrotacores = nrotacores, maxit = maxit, 
                                     stub = stub, mbf.env = sys.frame())
       theta.opt <- theta_opt$theta.opt
       cat("\n\n#### Optimal thetas:", paste(round(theta.opt,1), collapse = ","), "\n\n")
@@ -1391,14 +1954,14 @@ fitTPSModSect <- function(tspl.asrt, data, mat, ksect, sect.fac,
       if (chooseOnIC)
       { 
         tspl.asrt <- updateOnIC.asrtests(tspl.asrt, data = mat$data.plus, 
-                                         grp = grp, maxit = 30, 
+                                         grp = grp, maxit = maxit, 
                                          label = labrot, IClikelihood = IClikelihood, 
                                          which.IC = which.IC)
         if (grepl("Unswapped", getTestEntry(tspl.asrt, label = labrot)$action))
           theta.opt <- c(0,0)
       } else
         tspl.asrt <- update.asrtests(tspl.asrt, data = mat$data.plus, 
-                                     grp = grp, maxit = 30, 
+                                     grp = grp, maxit = maxit, 
                                      label = labrot, IClikelihood = IClikelihood)
       #Check criteria
       # print(infoCriteria(list(old = tspl.asrt$asreml.obj, new = new.asr), IClikelihood = "full"))
@@ -1407,96 +1970,166 @@ fitTPSModSect <- function(tspl.asrt, data, mat, ksect, sect.fac,
     }
   }
   
-  #Prepare for fitting unstructured model to row and col marginal termsw
-  vpars <- names(tspl.asrt$asreml.obj$vparameters)
-  #repln <- as.data.frame(table(data[c(sections,row.covar,col.covar)]))
-  repln <- 1
-  
-  if (!is.null(sections))
-  {   
-    klev <- levels(data[[sections]])[ksect]
-    vpars <- vpars[grepl(klev, vpars)]
-    vpars <- gsub(paste0("'",klev,"'"), ksect, vpars)
-    repln <- length(levels(data[[sections]]))
-  }
-  
-  #If more than one col variable in the marginal random row term in this section, try unstructured model
-  rowmarg.vpar <- vpars[grepl("TP\\.C\\.", vpars)]
-  if (length(rowmarg.vpar) > 1)
-  {
-    drop.ran <-paste(rowmarg.vpar, collapse = " + ") 
-    add.ran <- paste0("str( ~ ", drop.ran, ", ~ us(", length(rowmarg.vpar), 
-                      "):id(", mat$dim['nbr']*repln,"))")
-    if (asreml.opt == "mbf")
-      tspl.asrt <- do.call(fitfunc, 
-                           args = c(list(tspl.asrt, 
-                                         addRandom = add.ran,
-                                         dropRandom = drop.ran, 
-                                         mbf = mbf.lis,
-                                         label = "Try us variance for random row terms", 
-                                         allow.unconverged = allow.unconverged, 
-                                         allow.fixedcorrelation = allow.fixedcorrelation,
-                                         checkboundaryonly = TRUE, 
-                                         update = update, 
-                                         IClikelihood = IClikelihood, 
-                                         which.IC = which.IC), 
-                                    inargs))
-    else
-      tspl.asrt <- do.call(fitfunc, 
-                           args = c(list(tspl.asrt, 
-                                         addRandom = add.ran,
-                                         dropRandom = drop.ran, 
-                                         group = grp,
-                                         label = "Try us variance for random row terms", 
-                                         allow.unconverged = allow.unconverged, 
-                                         allow.fixedcorrelation = allow.fixedcorrelation,
-                                         checkboundaryonly = TRUE, 
-                                         update = update, 
-                                         IClikelihood = IClikelihood, 
-                                         which.IC = which.IC), 
-                                    inargs))
-  }
-  
-  #If more than one row variable in the marginal random col term in this section, try unstructured model
-  colmarg.vpar <- vpars[grepl("TP\\.R\\.", vpars)]
-  if (length(colmarg.vpar) > 1)
-  {
-    drop.ran <-paste(colmarg.vpar, collapse = " + ") 
-    add.ran <- paste0("str( ~ ", drop.ran, ", ~ us(", length(colmarg.vpar), 
-                      "):id(", mat$dim['nbc']*repln,"))")
-    if (asreml.opt == "mbf")
-      tspl.asrt <- do.call(fitfunc, 
-                           args = c(list(tspl.asrt, 
-                                         addRandom = add.ran,
-                                         dropRandom = drop.ran, 
-                                         mbf = mbf.lis,
-                                         label = "Try us variance on random col terms", 
-                                         allow.unconverged = allow.unconverged, 
-                                         allow.fixedcorrelation = allow.fixedcorrelation,
-                                         checkboundaryonly = TRUE, 
-                                         update = FALSE, #to ensure clean refit
-                                         IClikelihood = IClikelihood, 
-                                         which.IC = which.IC), 
-                                    inargs))
-    else
-      tspl.asrt <- do.call(fitfunc, 
-                           args = c(list(tspl.asrt, 
-                                         addRandom = add.ran,
-                                         dropRandom = drop.ran, 
-                                         group = grp,
-                                         label = "Try us variance on random col terms", 
-                                         allow.unconverged = allow.unconverged, 
-                                         allow.fixedcorrelation = allow.fixedcorrelation,
-                                         checkboundaryonly = TRUE, 
-                                         update = update, 
-                                         IClikelihood = IClikelihood, 
-                                         which.IC = which.IC), 
-                                    inargs))
+  #Prepare for fitting unstructured model to row and col marginal terms
+  if (usRandLinCoeffs)
+  { 
+    vpars.all <- names(tspl.asrt$asreml.obj$vparameters)
+    repln <- 1
+    
+    #Do not allow singularities in this section of the code
+    # ksing <-   get("asr_options", envir = getFromNamespace(".asremlEnv", "asreml"))$ai.sing
+    # print(ksing)
+    # asreml::asreml.options(ai.sing = FALSE)
+    
+    if (!is.null(sections))
+    {   
+      klev <- levels(data[[sections]])[ksect]
+      vpars.all <- vpars.all[grepl(klev, vpars.all)]
+      if (!asr4.2)
+        vpars.all <- gsub(paste0("'",klev,"'"), ksect, vpars.all)
+      repln <- length(levels(data[[sections]]))
+    }
+    
+    #If more than one col variable in the marginal random row term in this section, try unstructured model
+    rowmarg.vpar <- vpars.all[grepl("TP\\.C\\.", vpars.all)]
+    nr <- length(rowmarg.vpar)
+    if (nr > 1)
+    {
+      us.func <- ifelse(nr > 2, "corgh", "corh")
+      drop.ran <-paste(rowmarg.vpar, collapse = " + ") 
+      add.ran <- paste0("str( ~ ", drop.ran, ", ~ ", 
+                        us.func, "(", length(rowmarg.vpar), "):id(", mat$dim['nbr']*repln,"))")
+      lab.r <- "Try column-parameters covariance for random row terms"
+      if (asreml.opt == "mbf")
+        tmp.asrt <- do.call(fitfunc, 
+                            args = c(list(tspl.asrt, 
+                                          addRandom = add.ran,
+                                          dropRandom = drop.ran, 
+                                          mbf = mbf.lis,
+                                          label = lab.r, 
+                                          allow.unconverged = allow.unconverged, 
+                                          allow.fixedcorrelation = allow.fixedcorrelation,
+                                          checkboundaryonly = TRUE, #remove using bespoke code
+                                          update = FALSE, #to ensure clean refit
+                                          maxit = maxit, 
+                                          IClikelihood = IClikelihood, 
+                                          which.IC = which.IC), 
+                                     inargs))
+      else
+        tmp.asrt <- do.call(fitfunc, 
+                            args = c(list(tspl.asrt, 
+                                          addRandom = add.ran,
+                                          dropRandom = drop.ran, 
+                                          group = grp,
+                                          label = lab.r, 
+                                          allow.unconverged = allow.unconverged, 
+                                          allow.fixedcorrelation = allow.fixedcorrelation,
+                                          checkboundaryonly = TRUE, #remove using bespoke code
+                                          update = FALSE, #to ensure clean refit
+                                          maxit = maxit, 
+                                          IClikelihood = IClikelihood, 
+                                          which.IC = which.IC), 
+                                     inargs))
+      #Check that no marginal random col parameters are bound and, if they are, remove all corh (corgh) parameters
+      result <- getTestEntry(tmp.asrt, label = lab.r)
+      if (!grepl("Unswapped", result$action) && !grepl("Unchanged", result$action))
+      {
+        vpars <- getVpars(tmp.asrt$asreml.obj, asr4.2 = asr4.2)
+        vpc <- vpars$vpc
+        names(vpc) <- gsub('\"', "\'", names(vpc))
+        vpc.col <- names(vpc)[grepl(gsub(" \\+ ", "+", drop.ran), names(vpc), fixed = TRUE)]
+        if (length(vpc.col) > 0)
+        {
+          vpc.bound <- vpc[vpc.col]
+          if (any(vpc.bound %in% c("B", "S")))
+          {
+            test.summary <- addtoTestSummary(tmp.asrt$test.summary, terms = drop.ran, 
+                                             DF = result$DF, denDF = NA, p = NA, 
+                                             AIC = result$AIC, BIC = result$BIC, 
+                                             action = "Unchanged - Boundary")
+            tspl.asrt$test.summary <- test.summary
+          } else
+            tspl.asrt <- tmp.asrt #no bound terms
+        } else
+          tspl.asrt <- tmp.asrt #no terms found
+      } else
+        tspl.asrt <- tmp.asrt #model remained unchanged
+    }
+    
+    #If more than one row variable in the marginal random col term in this section, try unstructured model
+    vpars.all <- vpars.all[vpars.all %in% names(tspl.asrt$asreml.obj$vparameters)]
+    colmarg.vpar <- vpars.all[grepl("TP\\.R\\.", vpars.all)]
+    nc <- length(colmarg.vpar)
+    lab.c <- "Try row-parameters covariance for random column terms"
+    if (length(colmarg.vpar) > 1)
+    {
+      us.func <- ifelse(nc > 2, "corgh", "corh")
+      drop.ran <-paste(colmarg.vpar, collapse = " + ") 
+      add.ran <- paste0("str( ~ ", drop.ran, 
+                        ", ~ ", us.func, "(", nc, "):id(", mat$dim['nbc']*repln,"))")
+      if (asreml.opt == "mbf")
+        tmp.asrt <- do.call(fitfunc, 
+                            args = c(list(tspl.asrt, 
+                                          addRandom = add.ran,
+                                          dropRandom = drop.ran, 
+                                          mbf = mbf.lis,
+                                          label = lab.c, 
+                                          allow.unconverged = allow.unconverged, 
+                                          allow.fixedcorrelation = allow.fixedcorrelation,
+                                          checkboundaryonly = TRUE, #remove using bespoke code
+                                          update = FALSE, #to ensure clean refit
+                                          maxit = maxit, 
+                                          IClikelihood = IClikelihood, 
+                                          which.IC = which.IC), 
+                                     inargs))
+      else
+        tmp.asrt <- do.call(fitfunc, 
+                            args = c(list(tspl.asrt, 
+                                          addRandom = add.ran,
+                                          dropRandom = drop.ran, 
+                                          group = grp,
+                                          label = lab.c, 
+                                          allow.unconverged = allow.unconverged, 
+                                          allow.fixedcorrelation = allow.fixedcorrelation,
+                                          checkboundaryonly = TRUE, #remove using bespoke code
+                                          update = FALSE, #to ensure clean refit
+                                          maxit = maxit, 
+                                          IClikelihood = IClikelihood, 
+                                          which.IC = which.IC), 
+                                     inargs))
+      #Check that no marginal random col parameters are bound and, if they are, remove all corh (corgh) parameters
+      result <- getTestEntry(tmp.asrt, label = lab.c)
+      if (!grepl("Unswapped", result$action) && !grepl("Unchanged", result$action))
+      {
+        vpars <- getVpars(tmp.asrt$asreml.obj, asr4.2 = asr4.2)
+        vpc <- vpars$vpc
+        names(vpc) <- gsub('\"', "\'", names(vpc))
+        vpc.col <- names(vpc)[grepl(gsub(" \\+ ", "+", drop.ran), names(vpc), fixed = TRUE)]
+        if (length(vpc.col) > 0)
+        {
+          vpc.bound <- vpc[vpc.col]
+          if (any(vpc.bound %in% c("B", "S")))
+          {
+            test.summary <- addtoTestSummary(tmp.asrt$test.summary, terms = drop.ran, 
+                                             DF = result$DF, denDF = NA, p = NA, 
+                                             AIC = result$AIC, BIC = result$BIC, 
+                                             action = "Unchanged - Boundary")
+            tspl.asrt$test.summary <- test.summary
+          } else
+            tspl.asrt <- tmp.asrt #no bound terms
+        } else
+          tspl.asrt <- tmp.asrt #no terms found
+      } else
+        tspl.asrt <- tmp.asrt #model remained unchanged
+      
+      #Reinstate prior setting of ai.sing
+      # asreml::asreml.options(ai.sing = ksing)
+    }
   }
   tspl.asrt <- rmboundary(tspl.asrt, checkboundaryonly = checkboundaryonly, 
                           update = update, IClikelihood = IClikelihood)
   attr(tspl.asrt$asreml.obj, which = "theta.opt") <- theta.opt
-  
+
   return(tspl.asrt)
 }
 
@@ -1508,12 +2141,14 @@ fitTPPSMod <- function(asrtests.obj, sections = NULL,
                        dropRowterm = NULL, dropColterm = NULL, 
                        nsegs = NULL, nestorder = c(1, 1), 
                        degree = c(3,3), difforder = c(2,2), 
+                       usRandLinCoeffs = TRUE, 
                        rotateX = FALSE, ngridangles = c(18,18),
                        which.rotacriterion = "AIC", nrotacores = 1, 
                        asreml.opt = "mbf", 
                        tpps4mbf.obj = NULL, 
                        allow.unconverged = TRUE, allow.fixedcorrelation = TRUE,
                        checkboundaryonly = FALSE, update = TRUE, 
+                       maxit = 30, 
                        chooseOnIC = TRUE, 
                        IClikelihood = "full", which.IC = "AIC",
                        ...)
@@ -1574,7 +2209,7 @@ fitTPPSMod <- function(asrtests.obj, sections = NULL,
 
   #Update the asreml.obj for the new data.frame
   asreml.obj  <- asrtests.obj$asreml.obj
-  asreml.obj <- asreml::update.asreml(asreml.obj, data = dat)
+  asreml.obj <- newfit(asreml.obj, data = dat)
   tspl.asrt <- as.asrtests(asreml.obj = asreml.obj, NULL, NULL, 
                            IClikelihood = "full", label = "Change to new data.frame with TPS bits")
 
@@ -1602,7 +2237,8 @@ fitTPPSMod <- function(asrtests.obj, sections = NULL,
                                sections = sections, 
                                row.covar = row.covar, col.covar = col.covar, 
                                nsegs = nsegs, nestorder = nestorder, 
-                               degree = degree, difforder = difforder,
+                               degree = degree, difforder = difforder, 
+                               usRandLinCoeffs = usRandLinCoeffs,
                                rotateX = rotateX, ngridangles = ngridangles, 
                                which.rotacriterion = which.rotacriterion, 
                                nrotacores = nrotacores, 
@@ -1611,6 +2247,7 @@ fitTPPSMod <- function(asrtests.obj, sections = NULL,
                                allow.fixedcorrelation = allow.fixedcorrelation,
                                checkboundaryonly = checkboundaryonly, 
                                update = update, 
+                               maxit = maxit, 
                                chooseOnIC = chooseOnIC, 
                                IClikelihood = IClikelihood, 
                                which.IC = which.IC, 
