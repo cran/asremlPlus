@@ -34,6 +34,105 @@ test_that("predict_Intercept_asreml42", {
 })
 
 
+cat("#### Test for NA on Oats with asreml42\n")
+test_that("predictPlus_NA_asreml42", {
+  skip_if_not_installed("asreml")
+  skip_on_cran()
+  library(asreml)
+  library(asremlPlus)
+  library(dae)
+  data(Oats.dat)
+  Oats.dat$Nitrogen[8] <- NA
+  Oats.dat$xNitrogen <- as.numfac(Oats.dat$Nitrogen)
+  
+  m1.asr <- asreml(Yield ~ Nitrogen*Variety, 
+                   random=~Blocks/Wplots,
+                   na.action = na.method(x = "include"),
+                   data=Oats.dat)
+  testthat::expect_equal(length(m1.asr$vparameters),3)
+
+  #Test for NA in classify with predictPlus (no NA level)
+  Trt.pred <- predictPlus(m1.asr, classify="(Variety:Nitrogen)", tables = "none")$predictions
+  testthat::expect_equal(nrow(Trt.pred), 12)
+  testthat::expect_true(abs( Trt.pred$predicted.value[3] - 109.07892) < 1e-04)
+  testthat::expect_true(abs( Trt.pred$standard.error[3] - 9.414492) < 1e-04)
+
+  m1.asr <- asreml(Yield ~ Nitrogen*Variety, 
+                   random=~Blocks/Wplots,
+                   na.action = na.method(x = "omit"),
+                   data=Oats.dat)
+  testthat::expect_equal(length(m1.asr$vparameters),3)
+  
+  #Test for NA in classify with predictPlus (after omit NA)
+  Trt.pred <- predictPlus(m1.asr, classify="(Variety:Nitrogen)", tables = "none")$predictions
+  testthat::expect_equal(nrow(Trt.pred), 12)
+  testthat::expect_true(abs( Trt.pred$predicted.value[3] - 109.07892) < 1e-04)
+  testthat::expect_true(abs( Trt.pred$standard.error[3] - 9.414492) < 1e-04)
+  
+  #Test for covariate
+  m1.asr <- asreml(Yield ~ xNitrogen*Variety, 
+                   random=~Blocks/Wplots,
+                   na.action = na.method(x = "include"),
+                   data=Oats.dat)
+  testthat::expect_equal(length(m1.asr$vparameters),3)
+  
+  #Test for NA in numeric classify with predictPlus (no NA level)
+  Trt.pred <- predictPlus(m1.asr, classify="Variety:xNitrogen", 
+                          levels = list(xNitrogen =  c(0, 0.2, 0.4, 0.6)),
+                          tables = "none")$predictions
+  testthat::expect_equal(nrow(Trt.pred), 12)
+  testthat::expect_true(abs( Trt.pred$predicted.value[3] - 105.99910) < 1e-04)
+  testthat::expect_true(abs( Trt.pred$standard.error[3] - 8.403037) < 1e-04)
+  
+  #Check if NA level included as a level in Nitrogen
+  Oats.dat$Nitrogen <- factor(Oats.dat$Nitrogen, exclude = NULL)
+  m1.asr <- asreml(Yield ~ Nitrogen*Variety, 
+                   random=~Blocks/Wplots,
+                   na.action = na.method(x = "include"),
+                   data=Oats.dat)
+  testthat::expect_equal(length(m1.asr$vparameters),3)
+  
+  #Test for NA in classify with predictPlus (with NA level)
+  Trt.pred <- predictPlus(m1.asr, classify="(Variety:Nitrogen)", tables = "none")$predictions
+  testthat::expect_equal(nrow(Trt.pred), 13)
+  testthat::expect_true(abs( Trt.pred$predicted.value[3] - 109.07892) < 1e-04)
+  testthat::expect_true(abs( Trt.pred$standard.error[3] - 9.414492) < 1e-04)
+  
+  #Test with NA for all values of a level equal to NA
+  Oats.dat$Nitrogen <- factor(Oats.dat$Nitrogen)
+  Oats.dat$Nitrogen[Oats.dat$Nitrogen == 0.4] <- NA
+  m1.asr <- asreml(Yield ~ Nitrogen*Variety, 
+                   random=~Blocks/Wplots,
+                   na.action = na.method(x = "include"),
+                   data=Oats.dat)
+  testthat::expect_equal(length(m1.asr$vparameters),3)
+  
+  #Test for NA of all values of one level of a factor in classify with predictPlus (no NA level)
+  Trt.pred <- predictPlus(m1.asr, classify="(Variety:Nitrogen)", tables = "none")$predictions
+  testthat::expect_true(abs( Trt.pred$predicted.value[3] - 118.50000) < 1e-04)
+  testthat::expect_true(all(abs( Trt.pred$standard.error - 9.106977) < 1e-04))
+  
+  #Test with NA for all values of a level equal to NA (na.method set to omit)
+  m1.asr <- asreml(Yield ~ Nitrogen*Variety, 
+                   random=~Blocks/Wplots,
+                   na.action = na.method(x = "omit"),
+                   data=Oats.dat)
+  testthat::expect_equal(length(m1.asr$vparameters),3)
+  
+  #Test for NA of all values of one level of a factor in classify with predictPlus (no NA level)
+  Trt.pred <- predictPlus(m1.asr, classify="(Variety:Nitrogen)", tables = "none")$predictions
+  testthat::expect_true(abs( Trt.pred$predicted.value[3] - 118.50000) < 1e-04)
+  testthat::expect_true(all(abs( Trt.pred$standard.error - 8.926103) < 1e-04))
+
+  #Test with NA for all values of a level equal to NA (na.method set to default)
+  testthat::expect_error( #from asreml because there are missing x values
+    m1.asr <- asreml(Yield ~ Nitrogen*Variety, 
+                     random=~Blocks/Wplots,
+                     data=Oats.dat), 
+    regexp = "missing values among Nitrogen,Variety,Blocks,Wplots,units.")
+})
+
+
 cat("#### Test for predictPlus.asreml42\n")
 test_that("predictPlus.asreml42", {
   skip_if_not_installed("asreml")
@@ -170,7 +269,8 @@ test_that("predictPresent.asreml42", {
                                                      transform.power = 0, 
                                                      present = c("Type","Species","Sources"), 
                                                      tables = "differences", 
-                                                     level.length = 6))
+                                                     level.length = 6),
+                         regexp = "predict.asreml has not returned the sed component for the predictions as requested")
   #Example that does not produce predictions because has Date but not xDay
   testthat::expect_error(diff.list <- predictPresent(terms = "Date:Sources:Species", 
                                                      asreml.obj = current.asrt$asreml.obj, 
@@ -181,7 +281,8 @@ test_that("predictPresent.asreml42", {
                                                      transform.power = 0, 
                                                      present = c("Type","Species","Sources","Date"), 
                                                      tables = "differences", 
-                                                     level.length = 6))
+                                                     level.length = 6),
+                         regexp = "predict.asreml has not returned the sed component for the predictions as requested")
   
   #### Get the observed combinations of the factors and variables in classify
   class.facs <- c("Sources","Species","Date","xDay")
@@ -190,7 +291,7 @@ test_that("predictPresent.asreml42", {
   levs <- as.list(levs[levs$Freq != 0, class.facs])
   levs$xDay <- as.numfac(levs$xDay)
   
-  # parallel and levels are arguments from predict.asreml
+  # parallel and levels are arguments from predict.asreml - plotted against xDay because Date is nonnumeric in nature
   diff.list <- predictPresent.asreml(asreml.obj = current.asrt$asreml.obj, 
                                      terms = "Date:Sources:Species:xDay",
                                      x.num = "xDay", x.fac = "Date", 
