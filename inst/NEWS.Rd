@@ -1,5 +1,31 @@
 \name{news}
 \title{News for Package asremlPlus}
+\section{asremlPlus Version 4.4.32 (2024-04-11}{
+  \itemize{
+  \item Update for CRAN submission.
+}}
+\section{asremlPlus Version 4.4.31 (2024-03-15}{
+  \itemize{
+  \item Revise warning message in R2adj.asreml for when generalized inverse fails.
+  \item Add fix for bug in as.asrtests that caused a C stack overflow error when trying to update the \code{wald.tab} component of an \code{asrtests.obj}.
+}}
+\section{asremlPlus Version 4.4.30 (2024-03-03}{
+  \itemize{
+  \item For chooseSpatialModelOnIC.asrtests, change the abbreviations for the two P-spline models from \code{TPPCS} and \code{TPP1LS} to \code{TPPSC2} and \code{TPPSL1}. If the call to chooseSpatialModelOnIC.asrtests includes the former  abbreviations, they will be converted to the new abbreviatons and all output will be labelled with the new abbreviations.
+  \item Revise the deocumentation of the P-spline details for addSpatialModel.asrtests, addSpatialModelOnIC.asrtests or chooseSpatialModelOnIC.asrtests.
+}}
+\section{asremlPlus Version 4.4.29 (2024-02-26}{
+  \itemize{
+  \item For R2adj.asreml, correct the check that terms to be included in the random model for calculating \code{R2.adj} are in the fitted model so that a warning is no longer issued when a term for inclusion differs from a fitted term only in the order of the factors/variables comprising the terms.  
+  \item Trap errors issued by \code{svd} function from base \code{R} in computing generalized inverses for R2adj.asreml. Instead, issue a warning and return \code{NA}. 
+}}
+\section{asremlPlus Version 4.4.28 (2024-02-13}{
+  \itemize{
+  \item Fix a bug in estimateV that meant that terms involving the asreml \code{at} function on other than the first variable in the term caused an error. 
+  \item Instead of producing an error when the number of columns in the design matrix does not equal the number of coefficients for the term, now add columns of zeros for missing design-matrix columns. An error may still occur when this does not work.
+  \item Add checks in estimateV.asreml and R2adj.asreml for when the design matrix for a term is not available. Rather than issue an error, \code{NA} is returned and an attribute \code{missing.termmatrix} added that contains a list of the problematic terms. Also added an error to variofaces.asreml and bootREMLRT for when this problem occurs.
+  \item Extend the the \code{include.which.fixed} and \code{include.which.random} arguments of R2adj.asreml to process correctly formulae to update the existing fixed and random formula  using a formula that includes the '.' and terms, typically a list of bracketed terms preceded by a '-' so that terms are removed from a formula.
+}}
 \section{asremlPlus Version 4.4.27 (2024-02-05}{
   \itemize{
   \item Spell check the manual. 

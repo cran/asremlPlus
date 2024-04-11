@@ -52,12 +52,12 @@ test_that("Wheat_spatial_asreml42", {
   corb.asrt <- addSpatialModelOnIC(current.asrt, spatial.model = "corr", 
                                    row.covar = "cRow", col.covar = "cColumn", 
                                    row.factor = "Row", col.factor = "Column", 
-                                   corr.funcs = c("corb", "corb"), corr.order = c(0,0),
+                                   corr.funcs = c("corb", "corb"), corr.orders = c(0,0),
                                    IClikelihood = "full")
   corb.asrt <- rmboundary(corb.asrt, IClikelihood = "full")
   inf <- infoCriteria(corb.asrt$asreml.obj, IClikelihood = "full")
-  testthat::expect_equal(inf$varDF, 6)
-  testthat::expect_true(abs(inf$AIC - 1666.35) < 0.1)
+  testthat::expect_equal(inf$varDF, 3)
+  testthat::expect_true(abs(inf$AIC - 1718.609 ) < 0.1)
   
   #Fit autocorrelation model
   spatialEach.asrts <- list()
@@ -74,7 +74,7 @@ test_that("Wheat_spatial_asreml42", {
                                                        IClikelihood = "full")
   spatialEach.asrts[["TPNCSS"]] <- rmboundary(spatialEach.asrts[["TPNCSS"]], IClikelihood = "full")
   
-  spatialEach.asrts[["TPPCS"]] <- addSpatialModelOnIC(current.asrt, spatial.model = "TPPS", 
+  spatialEach.asrts[["TPPSC2"]] <- addSpatialModelOnIC(current.asrt, spatial.model = "TPPS", 
                                                       row.covar = "cRow", col.covar = "cColumn", 
                                                       row.factor = "Row", col.factor = "Column", 
                                                       dropRandom = "Row + Column",
@@ -82,16 +82,16 @@ test_that("Wheat_spatial_asreml42", {
                                                       rotateX = TRUE, ngridangles = NULL, 
                                                       asreml.option = "grp", 
                                                       IClikelihood = "full")
-  spatialEach.asrts[["TPPCS"]] <- rmboundary(spatialEach.asrts[["TPPCS"]], IClikelihood = "full")
+  spatialEach.asrts[["TPPSC2"]] <- rmboundary(spatialEach.asrts[["TPPSC2"]], IClikelihood = "full")
   
-  spatialEach.asrts[["TPP1LS"]] <- addSpatialModelOnIC(current.asrt, spatial.model = "TPPS", 
+  spatialEach.asrts[["TPPSL1"]] <- addSpatialModelOnIC(current.asrt, spatial.model = "TPPS", 
                                                       row.covar = "cRow", col.covar = "cColumn", 
                                                       row.factor = "Row", col.factor = "Column", 
                                                       dropRandom = "Row + Column",
                                                       degree = c(1,1), difforder = c(1,1),
                                                       asreml.option = "grp", 
                                                       IClikelihood = "full")
-  spatialEach.asrts[["TPP1LS"]] <- rmboundary(spatialEach.asrts[["TPP1LS"]], IClikelihood = "full")
+  spatialEach.asrts[["TPPSL1"]] <- rmboundary(spatialEach.asrts[["TPPSL1"]], IClikelihood = "full")
   
   
   infoEach <- do.call(rbind, 
@@ -107,19 +107,19 @@ test_that("Wheat_spatial_asreml42", {
                                           rotateX = TRUE, ngridangles = NULL, 
                                           asreml.option = "mbf", return.asrts = "all")
   
-  #Note that the fits of addSpatialModelOnIC and chooseSpatialModelOnIC differ for TPP1LS;
+  #Note that the fits of addSpatialModelOnIC and chooseSpatialModelOnIC differ for TPPSL1;
   #The fit for addSpatialModelOnIC has an extra variance parameter, but big changes 
   #   on last iteration; Very strange!
   print(spatial.asrts$spatial.IC)
   print(spatial.asrts$asrts$TPNCSS)
   testthat::expect_equal(length(spatial.asrts$asrts), 4)
-  testthat::expect_equal(spatial.asrts$spatial.IC$varDF, c(3,5,6,7,3))
+  testthat::expect_equal(spatial.asrts$spatial.IC$varDF, c(3,5,6,7,4))
   testthat::expect_true(all(abs(spatial.asrts$spatial.IC$AIC - 
-                                  c(1718.609, 1651.317, 1639.489, 1642.838, 1708.443) ) < 1e-02))
+                                  c(1718.609, 1651.317, 1639.489, 1642.838, 1652.157) ) < 1e-02))
   testthat::expect_true(all.equal(spatial.asrts$spatial.IC[2:4,], infoEach[1:3 ,-3], 
                                   tolerance = 0.5))
   #theta.opt == c(0,0) because rotation Unswapped
-  testthat::expect_true(all(abs(attr(spatial.asrts$asrts$TPPCS$asreml.obj, which = "theta.opt")[[1]] 
+  testthat::expect_true(all(abs(attr(spatial.asrts$asrts$TPSC2$asreml.obj, which = "theta.opt")[[1]] 
                             - c(20.20269, 64.97291)) < 1e-04))
   
   current.asr <- spatial.asrts$asrts$TPNCSS$asreml.obj
