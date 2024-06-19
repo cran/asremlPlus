@@ -38,6 +38,21 @@ assign("all.specials",  all.specs, envir=.asremlPlusEnv)
 #Function to allow testing for NULL when objects of length > 1 are possible
 is.allnull <- function(x) all(is.null(x))
 
+#Function to test for compound symmetry in a matrix
+isCompoundSymmetric.matrix <- function(object, tol = 100 * .Machine$double.eps, ...)
+{
+  cs <- FALSE
+  if (isSymmetric(object))
+  { 
+    d <- diag(object)
+    offd <- object[upper.tri(object)]
+    cs <- all(abs(d[-1] - d[1]) < 1e-08) && all(abs(offd[-1] - offd[1]) < 1e-08)
+  }
+  return(cs)
+}
+
+
+
 #Test for a large change in at least one variance parameter
 largeVparChange <- function(asreml.obj, threshold = 0.75)
 {
@@ -133,12 +148,13 @@ isFixedCorrelOK.asreml <- function(asreml.obj, allow.fixedcorrelation = TRUE, ..
   return(vers)
 }
 
-#Checks whether the loaded version is greater than version
-"isASReml4_2Loaded" <- function(version = 4.2, notloaded.fault = FALSE)
+#Checks whether the loaded version is greater than or equal "4.2" 
+# - version is ignored, but is retained because it is throughout the calling code
+"isASReml4_2Loaded" <- function(version = "4.2", notloaded.fault = FALSE)
 {
   vers <- getASRemlVersionLoaded(nchar = 3, notloaded.fault = notloaded.fault)
   if (!is.null(vers)) 
-    vers <- as.numeric_version(vers) >= 4.2
+    vers <- as.numeric_version(vers) >= "4.2"
   return(vers)
 }
 
