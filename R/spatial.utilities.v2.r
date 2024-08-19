@@ -83,7 +83,8 @@ checkSections4RanResTerms <- function(asrtests.obj, sections = NULL, asr4)
   invisible()
 }
 
-#Function to identify residual and correlation model terms that are currently fitted
+#Function to identify residual and random correlation model terms (i.e. variance & correlations) 
+#   that are currently fitted
 #Returns NULL if the residual model cannot accommodate nugget variances
 # when there are multiple residual terms, but none include sections
 getSectionVpars <- function(asreml.obj, sections, stub, corr.facs, which = c("res", "ran"), 
@@ -163,10 +164,10 @@ getSectionVpars <- function(asreml.obj, sections, stub, corr.facs, which = c("re
       vpc.ran <- vpc.ran[sapply(names(vpc.ran),
                                 function(term, corr.facs)
                                 {
-                                  term <- fac.getinTerm(rmTermDescription(term), asr4.2 = asr4.2)
+                                  facs <- fac.getinTerm(rmTermDescription(term), asr4.2 = asr4.2)
                                   ran.corr <- 
                                     {
-                                      if (length(term) == length(corr.facs))
+                                      if (length(facs) == length(corr.facs))
                                         all(sapply(corr.facs,
                                                    {
                                                      function(fac, term)
@@ -221,19 +222,29 @@ addSetterms2inargs <- function(setterms, inargs)
   return(inargs)
 }
 
+#Function to check that a resdual term that is P, does not have is.na(std.error)
+isValidResTerm <- function(asreml.obj, vpc.res)
+{
+  vpc.res <- vpc.res
+  vcomp <- summary(asreml.obj)$varcomp
+  vcomp <- vcomp[rownames(vcomp) == names(vpc.res), "std.error"]
+  res.ok <- !(vpc.res == "P" & is.na(vcomp))
+  return(res.ok)
+}
+
 #Function to fix a single residual term or the residual variance for current level of section 
 chgResTermBound <- function(corr.asrt, sections, stub, asr4, asr4.2, 
                             fitfunc = "changeTerms", 
-                            vpc.res, maxit = 30, 
-                            allow.unconverged = allow.unconverged, 
-                            allow.fixedcorrelation = allow.fixedcorrelation,
+                            corr.facs, vpc.res, maxit = 30, 
+                            allow.unconverged = FALSE, 
+                            allow.fixedcorrelation = FALSE,
                             checkboundaryonly = TRUE, 
-                            update = update, 
-                            IClikelihood = IClikelihood, 
-                            which.IC = which.IC, ...)
+                            update = TRUE, 
+                            IClikelihood = "full", 
+                            which.IC = "AIC", ...)
 {
-  #Exclude used fitfunc args from the ellipsis
   inargs <- list(...)
+  #Exclude used fitfunc args from the ellipsis
   # fitfunc.args <- c("asrtests.obj", "newResidual", "label", 
   #                   "set.terms", "initial.values", "bounds", "ignore.suffices", 
   #                   "maxit", "allow.unconverged", "allow.fixedcorrelation",
@@ -268,20 +279,30 @@ chgResTermBound <- function(corr.asrt, sections, stub, asr4, asr4.2,
     lab <- paste("Try", bound.lab, "nugget (residual) variance")
     if (fitfunc == "changeTerms")
       lab <- gsub("Try", "Force", lab)
-    corr.asrt <- do.call(fitfunc, 
-                         c(list(corr.asrt, label = lab, 
-                                newResidual = resmod, 
-                                maxit = maxit, 
-                                allow.unconverged = allow.unconverged, 
-                                allow.fixedcorrelation = allow.fixedcorrelation,
-                                checkboundaryonly = TRUE, 
-                                update = update, 
-                                IClikelihood = IClikelihood, 
-                                which.IC = which.IC), 
-                           inargs))
-    
-    if (largeVparChange(corr.asrt$asreml.obj, 0.75))
-      corr.asrt <- iterate(corr.asrt)
+    tmp.asrt <- tryCatchLog(
+      do.call(fitfunc, 
+              c(list(corr.asrt, label = lab, 
+                     newResidual = resmod, 
+                     maxit = maxit, 
+                     allow.unconverged = allow.unconverged, 
+                     allow.fixedcorrelation = allow.fixedcorrelation,
+                     checkboundaryonly = TRUE, 
+                     update = update, 
+                     IClikelihood = IClikelihood, 
+                     which.IC = which.IC), 
+                inargs)),
+      error = function(e) {print(paste("Failed attempting to fit correlations to both dimensions;",
+                                       "continued analysis without them")); NULL}, 
+      include.full.call.stack = FALSE, include.compact.call.stack = FALSE)
+    if (!is.asrtests(tmp.asrt))
+    {
+      test.summary <- addtoTestSummary(corr.asrt$test.summary, terms = lab, 
+                                       DF = NA, denDF = NA, p = NA, 
+                                       AIC = NA, BIC = NA, 
+                                       action = "Unchanged - Singular")
+      tmp.asrt <- corr.asrt
+      tmp.asrt$test.summary <- test.summary
+    }
   } else #sections with multiple residuals - fix the one for this section
   {
     if (vpc.res %in% bounds.excl)
@@ -291,16 +312,51 @@ chgResTermBound <- function(corr.asrt, sections, stub, asr4, asr4.2,
     #      fitfunc <- "changeModelOnIC"
     if (fitfunc == "changeTerms")
       lab <- gsub("Try", "Force", lab)
-    corr.asrt <- do.call(fitfunc, 
-                         c(list(corr.asrt, label = lab, 
-                                maxit = maxit, 
-                                allow.unconverged = allow.unconverged, 
-                                allow.fixedcorrelation = allow.fixedcorrelation,
-                                checkboundaryonly = TRUE, 
-                                update = update, 
-                                IClikelihood = IClikelihood, 
-                                which.IC = which.IC), 
-                           inargs))
+    #newResidual not needed here because the residual must be named i.e. cannot be units
+    #- only need to set the residual
+    tmp.asrt <- tryCatchLog(
+      do.call(fitfunc, 
+              c(list(corr.asrt, label = lab, 
+                     maxit = maxit, 
+                     allow.unconverged = allow.unconverged, 
+                     allow.fixedcorrelation = allow.fixedcorrelation,
+                     checkboundaryonly = TRUE, 
+                     update = update, 
+                     IClikelihood = IClikelihood, 
+                     which.IC = which.IC), 
+                inargs)),
+      error = function(e) {print(paste("Failed attempting to fit correlations to both dimensions;",
+                                       "continued analysis without them")); NULL}, 
+      include.full.call.stack = FALSE, include.compact.call.stack = FALSE)
+  }
+  if (!is.asrtests(tmp.asrt))
+  {
+    test.summary <- addtoTestSummary(corr.asrt$test.summary, terms = lab, 
+                                     DF = NA, denDF = NA, p = NA, 
+                                     AIC = NA, BIC = NA, 
+                                     action = "Unchanged - Singular")
+    tmp.asrt <- corr.asrt
+    tmp.asrt$test.summary <- test.summary
+  } else
+  { 
+    if (largeVparChange(tmp.asrt$asreml.obj, 0.75))
+      tmp.asrt <- iterate(tmp.asrt)
+    #Get bound for Res in tmp.asrt
+    vpc.res <- getSectionVpars(tmp.asrt$asreml.obj, 
+                               sections = sections, stub = stub,
+                               corr.facs = corr.facs,
+                               asr4.2 = asr4.2)$res
+    if (allow.unconverged || 
+        (tmp.asrt$asreml.obj$converge && isValidResTerm(corr.asrt$asreml.obj, vpc.res = vpc.res)))
+      corr.asrt <- tmp.asrt
+    else
+    { 
+      lastline <- tail(tmp.asrt$test.summary, n = 1)
+      lastline$action <- gsub("Changed", "Unchanged", lastline$action)
+      lastline$action <- gsub("Swapped", "Unswapped", lastline$action)
+      test.summary <- rbind(corr.asrt$test.summary, lastline)
+      corr.asrt$test.summary <- test.summary
+    }
   }
   return(corr.asrt)
 }
@@ -369,12 +425,6 @@ makeCorrSpec1D <- function(corr.funcs, corr.orders, dimension,
         corr1D <- paste0(corr.funcs[dimension],"(",
                          ifelse(dimension == 1, row.factor, col.factor),")")
     }
-    # if (corr.orders[dimension] != 0)
-    # { 
-    #   corr1D <- gsub("\\)", paste0(", k = ", corr.orders[dimension], ")"), corr1D)
-    #   if (corr.funcs[dimension] == "corb")
-    #     corr1D <- gsub("k =", "b =", corr1D)
-    # }
     if (grepl("^corb", corr.funcs[dimension])) #at the moment, corb is the only function with an order
     {
       if (is.null(corr.orders) || corr.orders[dimension] == 0)
@@ -388,25 +438,28 @@ makeCorrSpec1D <- function(corr.funcs, corr.orders, dimension,
 chk4SingularCorrTerms <- function(asrtests.obj, corr.asrt, label, 
                                   sections, stub, corr.facs, asr4, asr4.2)
 {
-  vpc.corr <- getSectionVpars(asrtests.obj$asreml.obj, 
-                              sections = sections, stub = stub, 
-                              corr.facs = corr.facs, 
-                              asr4.2 = asr4.2)
-  
-  
-  #Determine the correlation terms, if any
-  vpt.corr <- getVpars(asrtests.obj$asreml.obj, asr4.2)$vpt
-  vpt.ran <- vpt.corr[names(vpc.corr$ran)]
-  vpt.r <- vpt.ran[vpt.ran %in% c("R", "P", "C")]
-  vpc.r <- vpc.corr$ran[names(vpt.r)]
-  #Are there singular r terms
-  if (length(vpc.r) > 0 && any(unlist(vpc.r) %in% "S"))
-  {
-    entry <- getTestEntry(asrtests.obj, label = label)
-    entry$action <- "Unchanged - singular term(s)"
-    corr.asrt$test.summary <- rbind(corr.asrt$test.summary, entry) 
-  } else #no S terms
-    corr.asrt <- asrtests.obj
+  if (!is.allnull(asrtests.obj))
+  { 
+    vpc.corr <- getSectionVpars(asrtests.obj$asreml.obj, 
+                                sections = sections, stub = stub, 
+                                corr.facs = corr.facs, 
+                                asr4.2 = asr4.2)
+    
+    
+    #Determine the correlation terms, if any
+    vpt.corr <- getVpars(asrtests.obj$asreml.obj, asr4.2)$vpt
+    vpt.ran <- vpt.corr[names(vpc.corr$ran)]
+    vpt.r <- vpt.ran[vpt.ran %in% c("R", "P", "C")]
+    vpc.r <- vpc.corr$ran[names(vpt.r)]
+    #Are there singular r terms
+    if (length(vpc.r) > 0 && any(unlist(vpc.r) %in% "S"))
+    {
+      entry <- getTestEntry(asrtests.obj, label = label)
+      entry$action <- "Unchanged - singular term(s)"
+      corr.asrt$test.summary <- rbind(corr.asrt$test.summary, entry) 
+    } else #no S terms
+      corr.asrt <- asrtests.obj
+  }
   return(corr.asrt)
 }
 
@@ -418,15 +471,16 @@ chk4SingularCorrTerms <- function(asrtests.obj, corr.asrt, label,
 # 1 indicates change the part of the ran.term for the first grid dimension. 
 # 2 indicates change the part of the ranterm for the second grid dimension. 
 "fitCorbPlus1" <- function(corr.asrt, ran.term, rorder, lab, result, dimension = 0, 
-                           IClikelihood = "full", ...)
+                           IClikelihood = "full", trace = FALSE,  ...)
 { 
   inargs <- list(...)
   b <- 1
   last.term <- ran.term
   last.lab <- lab
   if (grepl("corb", ran.term) && (rorder == 0) && #corb with b == 0
-      (!grepl("Unswapped", result) && !grepl("Unchanged", result))) #corb is fitted)
+      (!grepl("Unswapped", result) && !grepl("Unchanged", result))) #corb is fitted
   {
+    if (trace) cat("\n#### Try fitting additional bands to corb\n\n")
     if (!(dimension %in% 0:2))
       stop("dimension must be  eiother 0, 1 or 2")
     if (dimension > 0)
@@ -456,14 +510,17 @@ chk4SingularCorrTerms <- function(asrtests.obj, corr.asrt, label,
         ran.term <- stringr::str_c(ran.parts, collapse = ":")
         lab <- gsub(old.ran.part, ran.parts[dimension], last.lab, fixed = TRUE)
       }
-      corr.asrt <- do.call(changeModelOnIC,
-                           c(list(corr.asrt, 
-                                  dropRandom = last.term, 
-                                  addRandom = ran.term, 
-                                  label = lab, 
-                                  allow.fixedcorrelation = FALSE, allow.unconverged = FALSE, 
-                                  IClikelihood = IClikelihood),
-                             inargs))
+      corr.asrt <- tryCatchLog(
+        do.call(changeModelOnIC,
+                c(list(corr.asrt, 
+                       dropRandom = last.term, 
+                       addRandom = ran.term, 
+                       label = lab, 
+                       allow.fixedcorrelation = FALSE, allow.unconverged = FALSE, 
+                       IClikelihood = IClikelihood),
+                  inargs)),
+        error = function(e) {print("Analysis continued"); NULL}, 
+        include.full.call.stack = FALSE, include.compact.call.stack = FALSE)
       if (!grepl("Swapped", getTestEntry(corr.asrt, label = lab)$action, fixed = TRUE)) 
         break
     }
