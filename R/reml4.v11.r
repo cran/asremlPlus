@@ -1,25 +1,56 @@
 
-"getTestPvalue.asrtests" <- function(asrtests.obj, label, ...)
+"findEntry.asrtests" <- function(asrtests.obj, label, ...)
 {
-  #  k <- tail(which(as.character(asrtests.obj$test.summary$terms)==label),1)
-  k <- tail(findterm(label, as.character(asrtests.obj$test.summary$terms)),1)
+  tests <- asrtests.obj$test.summary
+  #Assume if label has spaces then cannot be just a term that is factors separated by colons. 
+  #Thus labels that are a combination of text and terms or terms with spaces (e.g. str and 
+  #  at) must match the label exactly. 
+  #  - the problem is to identify terms and separate them from ordinary text when there are 
+  #    spaces in label.
+  if (grepl(" ", label)) 
+    k <- tail(which(as.character(tests$terms)==label),1)
+  else #no spaces in label
+  {  
+    k <- 0
+    nospace.terms <- !grepl(" ",as.character(asrtests.obj$test.summary$terms))
+    if (any(nospace.terms))
+    {  
+      tests <- tests[nospace.terms,]
+      #findterm allows for differences in factor order between label and tests$terms
+      k <- tail(findterm(label, as.character(tests$terms)),1) 
+    }
+  }
   if (length(k) == 0 || k == 0)
-    stop(label, " not found in test.summary of supplied asrtests.obj")
-  p <- asrtests.obj$test.summary$p
-  return(p[k])
-}
-
-"getTestEntry.asrtests" <- function(asrtests.obj, label, ...)
-{
-  k <- tail(which(as.character(asrtests.obj$test.summary$terms)==label),1)
-  #k <- tail(findterm(label, as.character(asrtests.obj$test.summary$terms)),1)
-  if (length(k) == 0 || k == 0)
-    stop(label, " not found in test.summary of supplied asrtests.obj")
-  entry <- asrtests.obj$test.summary[k,]
-  class(entry) <- "data.frame"
+    entry <- NULL
+  else
+    entry <- tests[k,]
   return(entry)
 }
 
+"getTestPvalue.asrtests" <- function(asrtests.obj, label, ...)
+{
+  entry <- findEntry.asrtests(asrtests.obj, label, ...)
+  if (is.allnull(entry))
+      stop(label, " not found in test.summary of supplied asrtests.obj")
+  p <- entry$p
+  return(p)
+}
+
+"getTestEntry.asrtests" <- function(asrtests.obj, label, error.absent = TRUE, ...)
+{
+  entry <- findEntry.asrtests(asrtests.obj, label, ...)
+  if (is.allnull(entry))
+  {
+    if (error.absent)
+      stop(label, " not found in test.summary of supplied asrtests.obj")
+    else 
+      entry <- NULL
+  } else
+  { 
+    class(entry) <- "data.frame"
+  }
+  return(entry)
+}
 
 "recalcWaldTab.asrtests" <- function(asrtests.obj, recalc.wald = FALSE, 
                                      denDF="numeric", dDF.na = "none", 
@@ -651,8 +682,8 @@ atLevelsMatch <- function(new, old, call, single.new.term = FALSE, always.levels
       kresp <- asreml.obj$formulae$fixed[[2]]
     else
       kresp <- asreml.obj$fixed.formula[[2]]
-    warning(paste("The estimated value of one or more correlations in the supplied asreml fit for", kresp,
-                  "is bound or fixed and allow.fixedcorrelation is FALSE"))
+    warning(paste("The estimated value of one or more correlations in the supplied asreml fit for", 
+                  kresp, "is bound or fixed and allow.fixedcorrelation is FALSE"))
   }
   
   if (is.null(call <- asreml.obj$call) && 
@@ -674,6 +705,10 @@ atLevelsMatch <- function(new, old, call, single.new.term = FALSE, always.levels
     if (!is.null(languageEl(call, which = "rcov")))
       languageEl(call, which = "rcov") <- eval(languageEl(call, which = "rcov"))
   }
+  
+  #Make sure that call has current value of update
+  languageEl(call, which = "update") <- update
+  
   
   #Now update formulae
   if (!missing(fixed.)) 
@@ -1328,8 +1363,10 @@ findboundary.asreml <- function(asreml.obj, asr4, asr4.2)
   else
     kresp <- asrtests.obj$asreml.obj$fixed.formula[[2]]
   #Check for fixed correlations in supplied asrtests.obj
-  if (!isFixedCorrelOK.asreml(asrtests.obj$asreml.obj, allow.fixedcorrelation = allow.fixedcorrelation))
-    warning(paste("The estimated value of one or more correlations in the supplied asreml fit for", kresp,
+  if (!isFixedCorrelOK.asreml(asrtests.obj$asreml.obj, 
+                              allow.fixedcorrelation = allow.fixedcorrelation))
+    warning(paste("The estimated value of one or more correlations in the supplied asreml fit for", 
+                  kresp,
                   "is bound or fixed and allow.fixedcorrelation is FALSE"))
   all.terms <- c(dropFixed, addFixed, dropRandom, addRandom, newResidual,set.terms)
   if (is.allnull(all.terms))
