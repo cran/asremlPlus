@@ -523,7 +523,7 @@ fitCorrMod <- function(asrtests.obj, sections = NULL,
 
     startFixRes <- FALSE
     #### For corb, add random variance with fixed Residual
-    if (any(grepl("corb", corr.funcs)) || !nuggsOK)
+    if (any(grepl("corb", corr.funcs)) && nuggsOK)
     {  
       if (trace) 
       {cat("\n#### Try to fit nugget variance before fitting correlations\n\n"); print(corr.asrt)}
@@ -532,7 +532,7 @@ fitCorrMod <- function(asrtests.obj, sections = NULL,
       if (any(grepl("corb", corr.funcs)))
           asreml::asreml.options(ai.sing = FALSE)
       
-      lab0 <- paste("Add random", spat.var, "and fix residual")
+      lab0 <- paste("Add random",  paste0(sterms, collapse = ":"), "and fix residual")
       if (nsect > 1)
         lab0 <- paste0(lab0, " for ", sections, " ",stub)
       #Get random and residual terms for correlation model for the current section
@@ -710,7 +710,7 @@ fitCorrMod <- function(asrtests.obj, sections = NULL,
     #### Try 2nd correl in current section
     if (!any(rfuncs[2] == get.specials("id.specials")))
     {  
-      #init.asrt <- corr.asrt
+      first.asrt <- corr.asrt
       lab <- paste0("Try ", rterms[2])
       if (nsect > 1)
         lab <- paste0(lab, " for ", sections, " ",stub)
@@ -785,6 +785,17 @@ fitCorrMod <- function(asrtests.obj, sections = NULL,
           result <- corr.lis$result
           ran.term <- corr.lis$last.term
         }
+        #If all correlation model terms are bound, reinstate first correlation model
+        lab.drop <- "Dropped seconf correlation"
+        corr.asrt <- allBoundSectionVpars(corr.asrt, first.asrt, 
+                                          lab = lab.drop, #lab1, 
+                                          sections = sections, stub = stub, 
+                                          sterm.facs = sterms, 
+                                          all.bounds.excl  = all.bounds.excl, 
+                                          asr4.2 = asr4.2)
+        result.drop <- getTestEntry(corr.asrt, label = lab.drop, error.absent = FALSE)$action
+        if (!is.null(result.drop)) 
+          result <- result.drop
       } else #### no first fac corr
       { 
         if (trace) 
@@ -978,7 +989,7 @@ fitCorrMod <- function(asrtests.obj, sections = NULL,
                                    sterm.facs = sterms, 
                                    asr4.2 = asr4.2)$ran
         spat.term <- findterm(spat.var, names(vpc.ran)) #allows for changed order
-        if (length(spat.term) == 1) #have got a single spat.term in fit
+        if (length(spat.term) == 1 && spat.term != 0) #have got a single spat.term in fit
           drop.spatvar <- names(spat.term)
         else
           drop.spatvar <- NULL
@@ -1077,7 +1088,6 @@ fitCorrMod <- function(asrtests.obj, sections = NULL,
     #Determine if any correlations have been fitted
     corr.term <- setCorrTerm(corr.asrt$asreml.obj, spat.var = spat.var, 
                              asr4.2 = asr4.2)
-    
     ##### Test for nugget variance, 
     # - only if the residual model is a variance model related to sections
     # - chooseOnIC is TRUE 
@@ -1155,87 +1165,17 @@ fitCorrMod <- function(asrtests.obj, sections = NULL,
     } #end of nugget variance test
 
     
-    #Check that the spatial variance is not bound and the Residual is P 
-    if (corr.term && nuggsOK) #nuggsOK protects against hetero residuals unrelated to sections
-      #&& is.null(sections))
-    {
-      vpc.corr <- getSectionVpars(corr.asrt$asreml.obj, 
-                                  sections = sections, stub = stub, 
-                                  sterm.facs = sterms, 
-                                  asr4.2 = asr4.2)
-      spat.term <- names(findterm(spat.var, names(vpc.corr$ran),  #allows for changed order
-                                  rmDescription = FALSE))
-      
-      #If spatial variance is P and Residual is S and, then try to set spatial variance to F
-      if (length(spat.term) > 0 && 
-          vpc.corr$ran[spat.term]  == "P" && vpc.corr$res %in% sing.excl)
-      {
-        asr <- corr.asrt$asreml.obj
-        asr <- setvarianceterms(asr$call, terms = c(spat.term, names(vpc.corr$res)), 
-                                bound = c("F","P"), initial.values = 1, 
-                                ignore.suffices = FALSE, update = FALSE)
-        vpc.corr <- getSectionVpars(asreml.obj = asr, 
-                                    sections = sections, stub = stub, 
-                                    sterm.facs = sterms, 
-                                    asr4.2 = asr4.2)
-        #If not one of spat. var. and residual equal to P and the other to F or both equal to P, 
-        #then need to revert to a non-spatial model.
-        vpc.vars <- c(vpc.corr$ran[spat.term], vpc.corr$res)
-        if ((!all(vpc.vars == "P") && !(("P" %in% vpc.vars) && ("F" %in% vpc.vars))) || 
-            (!allow.unconverged && !asr$converge))
-        {
-          corr.asrt <- revert2previousFit(corr.asrt, init.asrt, 
-                                          terms = "Singular variance", 
-                                          action = "Drop correlations")
-        } else #make asr the current fit
-        {
-          corr.asrt <- within(corr.asrt,
-                              { 
-                                asreml.obj  <- asr 
-                                test.summary = addtoTestSummary(test.summary,
-                                                                terms = paste("Force fixed", spat.var), 
-                                                                action = "Swapped")
-                              })
-        }
-      } else
-      {
-        #If spatial variance is bound and Residual is P, 
-        #try to make the spatial variance P and the Residual F
-        if (vpc.corr$ran[spat.term] %in% all.bounds.excl && vpc.corr$res == "P")
-        {
-          asr <- corr.asrt$asreml.obj
-          asr <- setvarianceterms(asr$call, terms = names(vpc.corr$res), bound = "F", 
-                                  initial.values = 1, ignore.suffices = FALSE, update = FALSE)
-          vpc.corr <- getSectionVpars(asreml.obj = asr, 
-                                      sections = sections, stub = stub, 
-                                      sterm.facs = sterms, 
-                                      asr4.2 = asr4.2)
-          #Is the spatial variance not bound and the Residual is either F or P
-          if (!(vpc.corr$ran[spat.term] %in% all.bounds.excl) && vpc.corr$res %in% c("F","P") || 
-              (!allow.unconverged && !asr$converge))
-          { 
-            corr.asrt <- within(corr.asrt,
-                                { 
-                                  asreml.obj  <- asr 
-                                  test.summary = addtoTestSummary(test.summary,
-                                                                  terms = "Fix terms", 
-                                                                  action = "Swapped")
-                                })
-          } else #spatial variance is bound and/or the Residual is not F or P
-          {
-            if (any(c(vpc.corr$ran[spat.term], vpc.corr$res) %in% sing.excl) || 
-                all(c(vpc.corr$ran[spat.term], vpc.corr$res) %in% all.bounds.excl))
-            { 
-              corr.asrt <- revert2previousFit(corr.asrt, init.asrt, 
-                                              terms = "Singular variance", 
-                                              action = "Drop correlations")
-            }
-          } 
-        }
-      } # End one of spatial and Residual variance is bound
-      if (largeVparChange(corr.asrt$asreml.obj, 0.75))
-        corr.asrt <- iterate(corr.asrt)
-    } #End bound spatial variance and Residual P
+    #Check for either singular spatial variance ot residual variance
+    corr.asrt <- chk4SingularSpatResVarTerms(corr.asrt, init.asrt, 
+                                             corr.term = corr.term, 
+                                             spat.var = spat.var, nuggsOK = nuggsOK, 
+                                             sections = sections, stub = stub, 
+                                             sterms = sterms, 
+                                             allow.unconverged = allow.unconverged, 
+                                             sing.excl = sing.excl, 
+                                             bounds.excl = bounds.excl,
+                                             all.bounds.excl = all.bounds.excl, 
+                                             trace = trace, asr4.2 = asr4.2)
 
     #### Having made all model changes with checkboundaryonly = TRUE, 
     #### update for checkboundaryonly set to FALSE
@@ -1312,13 +1252,7 @@ fitCorrMod <- function(asrtests.obj, sections = NULL,
                                              update = update,
                                              IClikelihood = IClikelihood,
                                              inargs = inargs)
-                #Have terms not been removed? If they have not, What should be done? Revert2 initial?
-                # result.drop <- tail(corr.asrt$test.summary, 1)$action
-                # if (grepl("Unswapped", result.drop) || grepl("Unchanged", result.drop))
-                # {
-                #   
-                # }
-                  
+
                 if (largeVparChange(corr.asrt$asreml.obj, 0.75))
                   corr.asrt <- iterate(corr.asrt)
                 
@@ -1333,6 +1267,21 @@ fitCorrMod <- function(asrtests.obj, sections = NULL,
         } #end dealing with bound vpars
       } #end bounds within a sections
     } #end checking bounds
+    
+    if (largeVparChange(corr.asrt$asreml.obj, 0.75))
+      corr.asrt <- iterate(corr.asrt)
+    
+    #Final check for either singular spatial variance ot residual variance
+    corr.asrt <- chk4SingularSpatResVarTerms(corr.asrt, init.asrt, 
+                                             corr.term = corr.term, 
+                                             spat.var = spat.var, nuggsOK = nuggsOK, 
+                                             sections = sections, stub = stub, 
+                                             sterms = sterms, 
+                                             allow.unconverged = allow.unconverged, 
+                                             sing.excl = sing.excl, 
+                                             bounds.excl = bounds.excl,
+                                             all.bounds.excl = all.bounds.excl, 
+                                             trace = trace, asr4.2 = asr4.2)
   } #end of sections loop
   
   if (trace) {cat("\n#### Exiting corr model fitting\n\n"); print(corr.asrt)}
@@ -1876,7 +1825,9 @@ fitTPSModSect <- function(tspl.asrt, data, mat, ksect, sect.fac,
   } else #grp
   {    
     grp <- mat$grp
-    
+    #Following needed to ensure that group information is present in the asreml.obj
+    tspl.asrt$asreml.obj <-  newfit(tspl.asrt$asreml.obj, group = grp)
+
     ran.ch <- paste(paste0(sect.fac,  
                            c(paste0("grp(TP.C.",1:difforder[1],"_frow)"), 
                              paste0("grp(TP.R.",1:difforder[2],"_fcol)"), 
@@ -1915,17 +1866,19 @@ fitTPSModSect <- function(tspl.asrt, data, mat, ksect, sect.fac,
                                rotateX = rotateX, theta = theta.opt, 
                                asreml.opt = "grp")[[ksect]]
       grp <- mat$grp
+      #Following needed to ensure that group information is present in the asreml.obj
+      tspl.asrt$asreml.obj <-  newfit(tspl.asrt$asreml.obj, group = grp)
       if (chooseOnIC)
       { 
         tspl.asrt <- updateOnIC.asrtests(tspl.asrt, data = mat$data.plus, 
-                                         grp = grp, maxit = maxit, 
+                                         group = grp, maxit = maxit, 
                                          label = labrot, IClikelihood = IClikelihood, 
                                          which.IC = which.IC)
         if (grepl("Unswapped", getTestEntry(tspl.asrt, label = labrot)$action))
           theta <- c(0,0)
       } else
         tspl.asrt <- update.asrtests(tspl.asrt, data = mat$data.plus, 
-                                     grp = grp, maxit = maxit, 
+                                     group = grp, maxit = maxit, 
                                      label = labrot, IClikelihood = IClikelihood)
     }
   }
@@ -2085,6 +2038,26 @@ fitTPSModSect <- function(tspl.asrt, data, mat, ksect, sect.fac,
       # asreml::asreml.options(ai.sing = ksing)
     }
   }
+  
+  #Check for singular fixed P-spline terms and, if any, remove
+  
+  asreml.obj <- tspl.asrt$asreml.obj
+  coefF <- summary(asreml.obj, coef=TRUE)$coef.fixed
+  which.cF <- rownames(coefF)[is.na(coefF[, "z.ratio"])]
+  if (any(grepl("TP.CR.", which.cF)))
+  {
+    which.cF <- which.cF[grepl("TP.CR.", which.cF)]
+    asreml.obj <- newfit(asreml.obj, 
+                         fixed. = as.formula(paste("~ . - ", 
+                                                   paste(which.cF, collapse = " - "))))
+    tspl.asrt$asreml.obj <- asreml.obj
+    test.summary <- addtoTestSummary(tspl.asrt$test.summary, terms = "Aliased fixed spline term(s)", 
+                                     DF = NA, denDF = NA, p = NA, 
+                                     AIC = NA, BIC = NA, 
+                                     action = "Dropped")
+    tspl.asrt$test.summary <- test.summary
+  }
+  
   tspl.asrt <- rmboundary(tspl.asrt, checkboundaryonly = checkboundaryonly, 
                           update = update, IClikelihood = IClikelihood)
   attr(tspl.asrt$asreml.obj, which = "theta.opt") <- theta.opt
@@ -2172,8 +2145,10 @@ fitTPPSMod <- function(asrtests.obj, sections = NULL,
   #Update the asreml.obj for the new data.frame
   asreml.obj  <- asrtests.obj$asreml.obj
   asreml.obj <- newfit(asreml.obj, data = dat)
-  tspl.asrt <- as.asrtests(asreml.obj = asreml.obj, NULL, NULL, 
-                           IClikelihood = "full", label = "Change to new data.frame with TPS bits")
+  tspl.asrt <- as.asrtests(asreml.obj = asreml.obj, NULL, 
+                           test.summary = asrtests.obj$test.summary, 
+                           IClikelihood = "full", 
+                           label = "Change to new data.frame with TPS bits")
 
   #Prepare for model fitting
   nsect <- calc.nsect(dat.in, sections)

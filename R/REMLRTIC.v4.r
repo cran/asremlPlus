@@ -65,7 +65,7 @@ REMLRT.asreml <- function(h0.asreml.obj, h1.asreml.obj,
                           positive.zero = FALSE, bound.test.parameters = "none", 
                           DF = NULL, bound.exclusions = c("F","B","S","C"), ...)
 {
-  #asreml codes (vparameters.con code):
+  #asreml codes (vparameters.con code) from ASReml4-SA User Guide Functional Sec. 16.4:
   # (1) P - positive definite
   # (2) ? - liable to change from P to B    
   # (3) U - unbounded
@@ -254,8 +254,7 @@ infoCriteria.asreml <- function(object, DF = NULL,
         bound <- asreml.obj$vparameters.con
       else
         bound <- vpc.char(asreml.obj)
-    }
-    else
+    } else
     {
       bound <- names(asreml.obj$gammas.con)
       names(bound) <- names(asreml.obj$gammas)
@@ -272,8 +271,7 @@ infoCriteria.asreml <- function(object, DF = NULL,
       if (!(length(bound.exclusions) > 0) & !all(bound.exclusions %in% c("F","B","S","C")))
       {
         stop("At least one bound.type is not one of those allowed with ASReml-R version 3")
-      }
-      else
+      } else
       {
         bound.exclusions3 <- c("Fixed","Boundary","Singular","Constrained")
         bound.exclusions3 <- bound.exclusions3[bound.exclusions %in% c("F","B","S","C")]
@@ -283,7 +281,7 @@ infoCriteria.asreml <- function(object, DF = NULL,
     NBound <- sum(Bound)
     Bound <- names(bound)[Bound]
     #Calculate the varDF
-    if (is.null(DF) & is.null(varDF))
+    if (is.null(DF) && is.null(varDF))
     {
       varDF <- length(bound)
       varDF <- varDF - NBound
@@ -310,8 +308,10 @@ infoCriteria.asreml <- function(object, DF = NULL,
         which.cF <- rownames(coefF)[!is.na(coefF[, "z.ratio"])]
         #      logdetC <- log(prod(svd(as.matrix(asreml.obj$Cfixed[which.cF, which.cF]))$d))
         if (length(asreml.obj$Cfixed) ==  1)
+        { 
           logdetC <- log(asreml.obj$Cfixed)
-        else
+          if (inherits(logdetC, what = "dspMatrix")) logdetC <- logdetC[1,1]
+        } else
           logdetC <- sum(log(svd(as.matrix(asreml.obj$Cfixed[which.cF, which.cF]))$d))
       } else #asr3
       {

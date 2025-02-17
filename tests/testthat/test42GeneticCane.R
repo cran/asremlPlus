@@ -26,7 +26,7 @@ test_that("HEB25_estimateV_asreml42", {
   names(V.el) <- test.specials
   
   ### Model with genetic variance only
-  asreml::asreml.options(extra = 5, ai.sing = TRUE, fail = "soft")
+  asreml::asreml.options(extra = 5, ai.sing = TRUE, fail = "soft", design = TRUE)
   for (func in test.specials[test.specials != "arma"])
   {
     ranform <- as.formula(paste("~ ar1(Col):", func, "(Row)", sep = ""))
@@ -66,12 +66,14 @@ test_that("HEB25_estimateV_asreml42", {
     if (func %in% c("exp", "gau"))
     { 
       rowcorrs <- asreml.obj$vparameters[grepl("Row!pow", names(asreml.obj$vparameters))]
-      R.calc <- asreml.obj$sigma2 * kronecker(mat.ar1(colcorr, 10), models[[func]](rowcorrs, c(1:24)))
+      R.calc <- asreml.obj$sigma2 * kronecker(mat.ar1(colcorr, 10), 
+                                              models[[func]](rowcorrs, c(1:24)))
     }
     else
     { 
       rowcorrs <- asreml.obj$vparameters[grepl("Row!cor", names(asreml.obj$vparameters))]
-      R.calc <- asreml.obj$sigma2 * kronecker(mat.ar1(colcorr, 10), models[[func]](rowcorrs, 24))
+      R.calc <- asreml.obj$sigma2 * kronecker(mat.ar1(colcorr, 10), 
+                                              models[[func]](rowcorrs, 24))
     }
     V <- estimateV(asreml.obj, which.matrix = "R")
     testthat::expect_true(all.equal(R.calc, V))
@@ -96,7 +98,7 @@ test_that("HEB25_estimateV_asreml42", {
   ### Random model with New + cor - test G estimated using estimateV
   for (func in names(models))
   {
-    site2 <- site2 #needed to make site2 local to the for loop
+    tmp <- site2 #needed to make site2 local to the for loop
     ranform <- as.formula(paste0("~ New + ar1(Col):", func, "(Row)"))
     asreml.obj <- asreml(tch ~ Control/Check, 
                          random = ranform, 
@@ -107,12 +109,13 @@ test_that("HEB25_estimateV_asreml42", {
     if (func %in% c("exp", "gau"))
     { 
       rowcorrs <- asreml.obj$vparameters[grepl("Row!pow", names(asreml.obj$vparameters))]
-      G.calc <- asreml.obj$vparameters["Col:Row"] * kronecker(mat.ar1(colcorr, 10), models[[func]](rowcorrs, c(1:24)))
-    }
-    else
+      G.calc <- asreml.obj$vparameters["Col:Row"] * kronecker(mat.ar1(colcorr, 10),
+                                                              models[[func]](rowcorrs, c(1:24)))
+    } else
     { 
       rowcorrs <- asreml.obj$vparameters[grepl("Row!cor", names(asreml.obj$vparameters))]
-      G.calc <- asreml.obj$vparameters["Col:Row"] * kronecker(mat.ar1(colcorr, 10), models[[func]](rowcorrs, 24))
+      G.calc <- asreml.obj$vparameters["Col:Row"] * kronecker(mat.ar1(colcorr, 10), 
+                                                              models[[func]](rowcorrs, 24))
     }
     Z.new <- as.matrix(asreml.obj$design[,grepl("New", colnames(asreml.obj$design))])
     D <- diag(sqrt(asreml.obj$vparameters["New"]), nrow = 240, ncol = 240)
