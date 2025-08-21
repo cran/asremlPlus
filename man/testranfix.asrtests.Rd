@@ -24,7 +24,7 @@
            drop.ran.ns = TRUE, positive.zero = FALSE, 
            bound.test.parameters = "none", 
            bound.exclusions = c("F","B","S","C"), REMLDF = NULL, 
-           drop.fix.ns = FALSE, denDF="numeric", dDF.na = "none", 
+           drop.fix.ns = FALSE, denDF="numeric", dDF.fault = "none", 
            dDF.values = NULL, IClikelihood = "none", 
            trace = FALSE, update = TRUE,
            set.terms = NULL, ignore.suffices = TRUE, 
@@ -62,7 +62,7 @@
                an \code{asreml::at} function with a single level, then it can be 
                removed and either the level itself or its \code{\link{numeric}} 
                position in the levels returned by the \code{\link{levels}} function 
-               can be specified in \code{term}.}
+               can be specified in the \code{term}.}
  \item{positive.zero}{Indicates whether the hypothesized values for the 
                       variance components being tested are on the boundary 
                       of the parameter space. For example, this is true 
@@ -99,7 +99,7 @@
                an \code{asreml::at} function with a single level, then it can be 
                removed and either the level itself or its \code{\link{numeric}} 
                position in the levels returned by the \code{\link{levels}} function 
-               can be specified.}
+               can be specified in the term.}
  \item{denDF}{Specifies the method to use in computing approximate denominator 
               degrees of freedom when \code{wald.asreml} is called. Can be \code{none} 
               to suppress the computations, \code{numeric} for numerical methods,
@@ -108,20 +108,21 @@
               on problem size. The denominator degrees of freedom are calculated 
               according to Kenward and Roger (1997) for fixed terms in the dense 
               part of the model.}
- \item{dDF.na}{The method to use to obtain substitute denominator degrees of freedom. 
-              when the numeric or algebraic methods produce an \code{NA}. If 
-              \code{dDF.na = "none"}, no subtitute denominator degrees of freedom 
-              are employed; if \code{dDF.na = "residual"}, 
-              the residual degrees of freedom from \code{asreml.obj$nedf} are used; 
-              if \code{dDF.na = "maximum"}, the maximum of those denDF that are available, 
-              excluding that for the Intercept, is used; if all denDF are \code{NA}, 
-              \code{asreml.obj$nedf} is used. If \code{dDF.na = "supplied"}, 
-              a \code{vector} of values for the denominator degrees of freedom is to 
-              be supplied in \code{dDF.values}. Any other setting is ignored and 
-              a warning message produced. Generally, substituting these degrees of freedom is 
-              anticonservative in that it is likely that the degrees of freedom used will be
-              too large.}
- \item{dDF.values}{A \code{vector} of values to be used when \code{dDF.na = "supplied"}. 
+ \item{dDF.fault}{A \code{\link{character}} specifying the method to use to obtain substitute 
+              denominator degrees of freedom. when the numeric or algebraic methods produce 
+              faulty values, viz. \code{NA}, \code{Inf} or less than 0.01. Consistent with 
+              when no denDF are available, the default is \code{"residual"} and so the 
+              residual degrees of freedom from \code{asreml.obj$nedf} are used. 
+              If \code{dDF.fault = "none"}, no substitute denominator degrees of freedom are 
+              employed; if \code{dDF.fault = "residual"}; if \code{dDF.fault = "maximum"}, 
+              the maximum of those denDF that are available, excluding that for the 
+              Intercept, is used; if all denDF are faulty, \code{asreml.obj$nedf} is used. 
+              If \code{dDF.fault = "supplied"}, a \code{vector} of values for the denominator 
+              degrees of freedom is to be supplied in \code{dDF.values}. Any other setting 
+              is ignored and a warning message produced. Generally, substituting these 
+              degrees of freedom is anticonservative in that it is likely that the degrees 
+              of freedom used will be too large.}
+ \item{dDF.values}{A \code{vector} of values to be used when \code{dDF.fault = "supplied"}. 
               Its values will be used when \code{denDF} in a test for a fixed effect
               is \code{NA}. This vector must be the same length as the number of 
               fixed terms, including (Intercept) whose value could be \code{NA}.}
