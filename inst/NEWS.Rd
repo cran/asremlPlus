@@ -1,13 +1,30 @@
 \name{news}
 \title{News for Package asremlPlus}
-\section{asremlPlus Version 4.4.51 (2025-08-22)}{
+\section{asremlPlus Version 4.4.55 (2025-11-08)}{
+  \itemize{
+  \item Fix bug in the function estimateV that arises from reordering of term names in \code{G.param} by \code{ASReml-R}.
+}}
+\section{asremlPlus Version 4.4.54 (2025-08-30)}{
+  \itemize{
+  \item Add catch-all checks on exit for unconverged models when \code{allow.unconverged} is \code{FALSE} to spatial-fitting functions called by addSpatialModel.asrtests, addSpatialModelOnIC.asrtests and chooseSpatialModelOnIC.asrtests.
+}}
+\section{asremlPlus Version 4.4.53 (2025-08-25)}{
+  \itemize{
+  \item Modify printFormulae.asreml so that output will be broken into lines with print width equal to the option \code{width}.
+}}
+\section{asremlPlus Version 4.4.52 (2025-08-23)}{
+  \itemize{
+  \item Added the \code{class} \code{list} class to the classs of an \code{alldiffs.obj}.
+  \item Internal streamlining of code that deals with cases when the sed and LSD go to zero because all comparions are between multiple instances of the same prediction.
+}}
+\section{asremlPlus Version 4.4.51 (2025-08-15)}{
   \itemize{
   \item The argument \code{dDF.na} has been deprecated and replaced  by a new argument \code{dDF.fault} in recalcWaldTab, predictPlus, predictPresent, and testranfix. The argument \code{dDF.fault} expands the replacement of \code{denDF} in a \code{wald.tab} to include the replacement of values that that are \code{NA}, \code{Inf} or less than 0.01.
-  \item Debugging information from findLSDminerrors.alldiffs that was always being output will now only be produced when the argument \code{trace} is set to \code{TRUE}. 
+  \item Debugging output from findLSDminerrors.alldiffs that was always being produced will now only be produced when the argument \code{trace} is set to \code{TRUE}. 
 }}
 \section{asremlPlus Version 4.4.50 (2025-07-17)}{
   \itemize{
-  \item Add the calculation of a notional LSD for \code{LSDtype} is \code{overall} when the all values of the sed are zero because there is, in reality, only a single predicted value.
+  \item Add the calculation of a notional LSD for \code{LSDtype} is \code{overall} when all of the values of the sed are zero because there is, in reality, only a single predicted value.
 }}
 \section{asremlPlus Version 4.4.49 (2025-06-10)}{
   \itemize{

@@ -62,7 +62,7 @@
                an \code{asreml::at} function with a single level, then it can be 
                removed and either the level itself or its \code{\link{numeric}} 
                position in the levels returned by the \code{\link{levels}} function 
-               can be specified in the \code{term}.}
+               can be specified in \code{term}.}
  \item{positive.zero}{Indicates whether the hypothesized values for the 
                       variance components being tested are on the boundary 
                       of the parameter space. For example, this is true 
@@ -99,7 +99,7 @@
                an \code{asreml::at} function with a single level, then it can be 
                removed and either the level itself or its \code{\link{numeric}} 
                position in the levels returned by the \code{\link{levels}} function 
-               can be specified in the term.}
+               can be specified.}
  \item{denDF}{Specifies the method to use in computing approximate denominator 
               degrees of freedom when \code{wald.asreml} is called. Can be \code{none} 
               to suppress the computations, \code{numeric} for numerical methods,

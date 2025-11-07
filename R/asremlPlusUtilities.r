@@ -366,7 +366,12 @@ checkNamesInData <- function(Names, data)
                           paste0(mname,": ", mod.ch[[mname]]), mod.ch))
   
   cat("\n\n#### Formulae from asreml object\n\n")
-  cat(paste0(m.ch, collapse = "\n"), "\n\n\n")
+  #cat(paste0(m.ch, collapse = "\n"), "\n\n\n", fill = TRUE)
+  nch.line <- getOption("width")
+  sapply(m.ch, 
+         function(m) cat(paste0(stringr::str_wrap(m, exdent = 5, 
+                                                  whitespace_only = FALSE), "\n")))
+  cat("\n\n")
   invisible(m.ch)
 }
 
@@ -475,7 +480,7 @@ convTerm2VparFacs <- function(term, asreml.obj = NULL, asr4.2 = FALSE)
   {
     term.parts <- strsplit(term, sep)[[1]]
     term.source <- term.parts[1]
-    term.end <- gsub(term.source, "", term)
+    term.end <- gsub(term.source, "", term, fixed = TRUE)
     
   } else #not a compound term
   { 
